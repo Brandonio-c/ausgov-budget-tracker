@@ -1,0 +1,16 @@
+name: ausgov-budget-tracker
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas
+  - requests
+  - beautifulsoup4
+  - openpyxl
+  - pyyaml
+  - jupyter
+  - pip
+  - pip:
+    - fastapi
+    - "uvicorn[standard]"

@@ -1,0 +1,50 @@
+# Declarative registry of data sources for the AusGov Budget Tracker pipeline.
+#
+# Every source is discovered through data.gov.au's CKAN API (package_show), which
+# harvests metadata from federal AND state open-data portals into one surface -
+# even when the actual file is hosted on a different domain (e.g. data.sa.gov.au,
+# audit.vic.gov.au). fetch_sources.py resolves the current resource URL at fetch
+# time rather than hardcoding it, since CKAN resources can be replaced/re-uploaded.
+#
+# Some state portals (e.g. data.qld.gov.au) sit behind a bot-challenge WAF and will
+# reject scripted downloads outright - fetch_sources.py detects this, records a
+# fetch_failed status with the source_url preserved, and moves on rather than
+# crashing the run or fabricating data.
+#
+# To add a source: add an entry here with a `parser` that matches a module in
+# scripts/parsers/, then re-run fetch_sources.py && build_processed_db.py.
+
+sources:
+  - id: federal_expense_by_function
+    level: federal
+    jurisdiction: Commonwealth
+    title: "Australian Government general government sector Monthly Financial Statements - Note 3 Function Statement"
+    ckan_package_id: 2b690e28-8239-48c6-a71d-2658f37d51d7
+    resource_match: "Note 3 Function Statement"
+    parser: federal_ggs_function
+    raw_filename: federal_expense_by_function.xlsx
+
+  - id: sa_gfs_by_function
+    level: state
+    jurisdiction: SA
+    title: "South Australian Government Finance Statistics - general government sector expenses by function and by economic type"
+    ckan_package_id: e77f59d9-3df9-43ad-acf0-b7f8928ee827
+    resource_match: "expenses by function and by economic type"
+    parser: sa_gfs_by_function
+    raw_filename: sa_gfs_by_function.xlsx
+
+  - id: vic_local_govt_financial
+    level: local
+    jurisdiction: VIC
+    title: "Victorian Auditor-General's Office - Results of Audits: Local Government dashboard data"
+    ckan_package_id: auditor-general-s-report-on-the-annual-financial-report-of-the-state-of-victoria-2017-18
+    resource_id: 0861a165-153a-4a00-8bcd-9ccf6dbc7db5
+    parser: vic_local_govt_financial
+    raw_filename: vic_local_govt_financial.xlsx
+
+  # --- Known-unreachable from this environment (documented, not silently dropped) ---
+  # QLD local government comparative financial data on data.qld.gov.au returns an
+  # AWS WAF bot challenge (HTTP 202, x-amzn-waf-action: challenge) on every scripted
+  # request tried. PBO's historical fiscal data (pbo.gov.au) hangs on scripted
+  # requests (Akamai bot protection). Both would need a manual browser download
+  # dropped into data/raw/<level>/<id>/ and a matching parser to be added.

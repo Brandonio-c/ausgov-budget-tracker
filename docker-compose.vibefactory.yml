@@ -1,0 +1,27 @@
+# Production self-hosted origin for ausgov-budget-tracker, following the same
+# shape as RAG-DAT's docker-compose.vibefactory.backend.yml: a single plain
+# service, no process supervisor layered on top (Docker's restart policy is
+# the only supervision, matching every sibling project on this host).
+#
+# The processed SQLite DB and pipeline-cached raw sources are bind-mounted
+# read-only rather than baked into the image, so the weekly refresh timer can
+# update both on the host without requiring an image rebuild/redeploy.
+#
+# Usage:
+#   docker compose -f docker-compose.vibefactory.yml up --build -d
+
+name: ausgov-budget-tracker
+
+services:
+  backend:
+    build:
+      context: ./src/backend
+    restart: unless-stopped
+    environment:
+      SPENDING_DB_PATH: /app/data/processed/spending.db
+      SPENDING_RAW_DATA_PATH: /app/data/raw
+    volumes:
+      - ./data/processed:/app/data/processed:ro
+      - ./data/raw:/app/data/raw:ro
+    ports:
+      - "127.0.0.1:8010:8010"

@@ -1,0 +1,13 @@
+{
+  "name": "ausgov-budget-tracker-backend-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reverse-proxy Worker for the AusGov Budget Tracker API",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.vibefactory.toml",
+    "deploy:vibefactory": "wrangler deploy --config wrangler.vibefactory.toml"
+  },
+  "devDependencies": {
+    "wrangler": "^4.90.0"
+  }
+}

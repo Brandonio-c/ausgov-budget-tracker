@@ -1,0 +1,13 @@
+name = "ausgov-budget-tracker-frontend-vibefactory"
+main = "asset-worker.js"
+compatibility_date = "2026-07-20"
+workers_dev = false
+
+[[routes]]
+pattern = "vibefactory.app/ausgov-budget-tracker/*"
+zone_name = "vibefactory.app"
+
+[assets]
+directory = "./out"
+binding = "ASSETS"
+not_found_handling = "single-page-application"

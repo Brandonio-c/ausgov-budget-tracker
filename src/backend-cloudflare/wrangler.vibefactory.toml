@@ -1,0 +1,11 @@
+name = "ausgov-budget-tracker-backend-vibefactory"
+main = "src/index.js"
+compatibility_date = "2026-07-20"
+workers_dev = false
+
+routes = [
+  { pattern = "ausgov-budget-api.vibefactory.app", custom_domain = true }
+]
+
+[vars]
+ORIGIN_BASE_URL = "https://ausgov-budget-origin.vibefactory.app"
