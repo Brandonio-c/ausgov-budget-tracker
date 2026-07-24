@@ -1,0 +1,5 @@
+# Shared ABS GFS Table_4 melt template (see adapters/abs_gfs.py).
+# All abs_gfs_* jurisdiction workbooks share sheets Contents+Table_1..4.
+measure_type: gfs_expense
+accounting_basis: gfs
+estimate_status: actual

@@ -1,0 +1,9 @@
+id: abs_gfs_table3_liabilities
+compatibility_group: gfs_liability
+source_key_prefix: abs_gfs_
+source_key_suffix: _liabilities
+skip:
+  - Total Liabilities
+  - Total liabilities
+# Liability components are published as flat lines under each jurisdiction.
+child_to_parent: {}

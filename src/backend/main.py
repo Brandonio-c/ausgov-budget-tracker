@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import spending
+from .routers.v2 import router as v2_router
 
 app = FastAPI(title="AusGov Budget Tracker API")
 
@@ -13,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(spending.router)
+app.include_router(v2_router)
 
 
 @app.get("/api/health")

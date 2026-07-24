@@ -1,0 +1,25 @@
+source_id: synthetic_demo
+title: Synthetic demo expense table
+publisher: AusGov Budget Tracker (test)
+jurisdiction: Commonwealth
+government_level: federal
+source_family: synthetic
+measure_type: actual_accrual_expense
+accounting_basis: accrual
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: tests/fixtures/ingest/synthetic_demo.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: tests/fixtures/ingest/synthetic_demo.csv
+fact_key_template: "{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}"

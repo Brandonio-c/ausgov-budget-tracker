@@ -20,8 +20,14 @@ services:
     environment:
       SPENDING_DB_PATH: /app/data/processed/spending.db
       SPENDING_RAW_DATA_PATH: /app/data/raw
+      FACTS_DB_PATH: /app/data/facts.db
+      SEARCH_DB_PATH: /app/data/search.db
     volumes:
       - ./data/processed:/app/data/processed:ro
       - ./data/raw:/app/data/raw:ro
+      - ./data/facts.db:/app/data/facts.db:ro
+      - ./data/search.db:/app/data/search.db:ro
+      - ./data/fastembed-cache:/root/.cache/fastembed:ro
+      - ./config:/app/config:ro
     ports:
       - "127.0.0.1:8010:8010"

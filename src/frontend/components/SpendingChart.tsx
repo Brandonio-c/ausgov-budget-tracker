@@ -2,29 +2,182 @@
 
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
-import { useEffect, useMemo, useRef } from "react";
+import { PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { TreeNode } from "@/lib/types";
 import { colorsFor, formatAud, formatAudFull } from "@/lib/colors";
+import {
+  buildSunburst,
+  resolveSunburstNode,
+  sunburstLevelStyles,
+} from "@/lib/sunburstTree";
+import { useSplitPaneLayout } from "@/components/ResizableSplitPane";
 
-export type ChartType = "pie" | "bar";
+export type ChartType = "pie" | "bar" | "rings";
 
 interface Props {
-  nodes: TreeNode[]; // already folded to top-N + "Other"
+  nodes: TreeNode[];
   chartType: ChartType;
   dark: boolean;
   onNodeClick: (node: TreeNode) => void;
   onNodeHover: (node: TreeNode) => void;
+  totalNote?: string | null;
+  ringDepth?: number;
+  centerLabel?: string | null;
 }
 
-export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onNodeHover }: Props) {
+const MIN_CHART_HEIGHT = 360;
+const MAX_CHART_HEIGHT = 1600;
+const DEFAULT_HEIGHT: Record<ChartType, number> = {
+  pie: 480,
+  rings: 680,
+  bar: 480,
+};
+
+export default function SpendingChart({
+  nodes,
+  chartType,
+  dark,
+  onNodeClick,
+  onNodeHover,
+  totalNote,
+  ringDepth = 2,
+  centerLabel = null,
+}: Props) {
+  const { chartMaximized } = useSplitPaneLayout();
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartAreaRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
+  const dragStartY = useRef(0);
+  const dragStartHeight = useRef(0);
+  const manualHeight = useRef<number | null>(null);
+  const [chartHeight, setChartHeight] = useState(() => DEFAULT_HEIGHT[chartType]);
+
+  useEffect(() => {
+    if (chartMaximized) return;
+    setChartHeight((h) => {
+      const next = Math.max(h, DEFAULT_HEIGHT[chartType]);
+      manualHeight.current = next;
+      return next;
+    });
+  }, [chartType, chartMaximized]);
+
+  // Maximized: size from the flex chart area after layout (not a brittle viewport-top math).
+  useEffect(() => {
+    if (!chartMaximized) {
+      if (manualHeight.current != null) setChartHeight(manualHeight.current);
+      return;
+    }
+
+    const area = chartAreaRef.current;
+    if (!area) return;
+
+    function applySize(height: number) {
+      const floor = Math.max(DEFAULT_HEIGHT[chartType], Math.round(window.innerHeight * 0.62));
+      const next = Math.min(
+        MAX_CHART_HEIGHT,
+        Math.max(MIN_CHART_HEIGHT, floor, Math.floor(height)),
+      );
+      setChartHeight(next);
+    }
+
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height ?? 0;
+      if (h > 0) applySize(h);
+    });
+    ro.observe(area);
+    // Double-rAF so flex parents finish expanding before first read
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (area.clientHeight > 0) applySize(area.clientHeight);
+        else applySize(window.innerHeight * 0.72);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [chartMaximized, chartType]);
+
   const colors = useMemo(() => colorsFor(nodes, dark), [nodes, dark]);
   const total = useMemo(() => nodes.reduce((s, n) => s + n.value, 0), [nodes]);
+
+  const sunburst = useMemo(() => {
+    if (chartType !== "rings") return null;
+    return buildSunburst(nodes, ringDepth, dark);
+  }, [nodes, chartType, ringDepth, dark]);
+
+  const lookupRef = useRef(sunburst?.lookup);
+  lookupRef.current = sunburst?.lookup;
 
   const option: EChartsOption = useMemo(() => {
     const textColor = dark ? "#ffffff" : "#0b0b0b";
     const mutedColor = "#898781";
+
+    if (chartType === "rings" && sunburst) {
+      const depth = Math.max(1, Math.round(ringDepth));
+      return {
+        backgroundColor: "transparent",
+        tooltip: {
+          trigger: "item",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter: (p: any) => {
+            const treePath = (p.treePathInfo || [])
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .filter((x: any) => x.name)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .map((x: any) => x.name)
+              .join(" › ");
+            const val = p.value ?? 0;
+            const pct =
+              typeof p.percent === "number" ? ` (${p.percent.toFixed(1)}%)` : "";
+            const hint =
+              p.data?.children?.length > 0
+                ? "<br/><span style='opacity:.75'>Click to expand</span>"
+                : "";
+            return `${treePath || p.name}<br/>${formatAudFull(val)}${pct}${hint}`;
+          },
+        },
+        series: [
+          {
+            type: "sunburst",
+            radius: chartMaximized ? ["8%", "96%"] : ["12%", "98%"],
+            center: ["50%", "50%"],
+            sort: undefined,
+            // App-owned drill (re-root via drillPath); disable ECharts built-in zoom
+            nodeClick: false,
+            emphasis: {
+              focus: "ancestor",
+              itemStyle: { borderWidth: 2 },
+            },
+            levels: [{}, ...sunburstLevelStyles(dark, depth)],
+            label: {
+              color: textColor,
+              minAngle: 8,
+              overflow: "truncate",
+            },
+            data: sunburst.data,
+          },
+        ],
+        graphic: centerLabel
+          ? [
+              {
+                type: "text",
+                left: "center",
+                top: "middle",
+                style: {
+                  text: `${centerLabel}\n${formatAud(sunburst.total)}`,
+                  fill: textColor,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  align: "center",
+                  lineHeight: 22,
+                },
+                z: 100,
+              },
+            ]
+          : undefined,
+      };
+    }
 
     if (chartType === "pie") {
       return {
@@ -37,7 +190,9 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
         series: [
           {
             type: "pie",
-            radius: ["38%", "72%"],
+            // Maximized: use more of the plot so the ring isn't a small island
+            radius: chartMaximized ? ["30%", "86%"] : ["38%", "72%"],
+            center: ["50%", "50%"],
             avoidLabelOverlap: true,
             itemStyle: {
               borderColor: dark ? "#1a1a19" : "#fcfcfb",
@@ -47,7 +202,7 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
               color: textColor,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter: (p: any) => `${p.name}\n${formatAud(p.value ?? 0)}`,
-              fontSize: 12,
+              fontSize: chartMaximized ? 13 : 12,
             },
             labelLine: { lineStyle: { color: mutedColor } },
             data: nodes.map((n, i) => ({
@@ -60,9 +215,7 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
       };
     }
 
-    // Horizontal bar — long jurisdiction/category names read better this way,
-    // and it keeps a single value axis (no dual-axis).
-    const sorted = [...nodes].sort((a, b) => a.value - b.value); // ascending so largest ends up on top
+    const sorted = [...nodes].sort((a, b) => a.value - b.value);
     const sortedColors = colorsFor(sorted, dark);
 
     return {
@@ -103,9 +256,9 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
         },
       ],
     };
-  }, [nodes, chartType, dark, colors]);
+  }, [nodes, chartType, dark, colors, sunburst, ringDepth, centerLabel, chartMaximized]);
 
-  const nodeForEvent = (params: { dataIndex: number }) => {
+  const nodeForPieBar = (params: { dataIndex: number }) => {
     if (chartType === "bar") {
       const sorted = [...nodes].sort((a, b) => a.value - b.value);
       return sorted[params.dataIndex];
@@ -113,9 +266,25 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
     return nodes[params.dataIndex];
   };
 
-  const handleClick = (params: { dataIndex: number }) => onNodeClick(nodeForEvent(params));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleClick = (params: any) => {
+    if (chartType === "rings") {
+      const node = resolveSunburstNode(params, lookupRef.current);
+      if (node) onNodeClick(node);
+      return;
+    }
+    onNodeClick(nodeForPieBar(params));
+  };
 
-  const handleMouseOver = (params: { dataIndex: number }) => onNodeHover(nodeForEvent(params));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleMouseOver = (params: any) => {
+    if (chartType === "rings") {
+      const node = resolveSunburstNode(params, lookupRef.current);
+      if (node) onNodeHover(node);
+      return;
+    }
+    onNodeHover(nodeForPieBar(params));
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -125,22 +294,117 @@ export default function SpendingChart({ nodes, chartType, dark, onNodeClick, onN
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    chartRef.current?.getEchartsInstance().resize();
+  }, [chartHeight]);
+
+  function clampHeight(h: number) {
+    return Math.min(MAX_CHART_HEIGHT, Math.max(MIN_CHART_HEIGHT, Math.round(h)));
+  }
+
+  function setManualHeight(h: number) {
+    const next = clampHeight(h);
+    manualHeight.current = next;
+    setChartHeight(next);
+  }
+
+  function handleResizePointerDown(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStartY.current = event.clientY;
+    dragStartHeight.current = chartHeight;
+  }
+
+  function handleResizePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const delta = event.clientY - dragStartY.current;
+    setManualHeight(dragStartHeight.current + delta);
+  }
+
+  function handleResizePointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
   if (nodes.length === 0) {
     return <p className="text-sm text-zinc-500">No data at this level.</p>;
   }
 
+  const displayTotal = chartType === "rings" && sunburst ? sunburst.total : total;
+
   return (
-    <div ref={containerRef}>
-      <ReactECharts
-        ref={chartRef}
-        option={option}
-        style={{ height: 480, width: "100%" }}
-        onEvents={{ click: handleClick, mouseover: handleMouseOver }}
-        notMerge
-      />
-      <p className="mt-1 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Total: {formatAudFull(total)}
+    <div
+      ref={containerRef}
+      data-chart-panel
+      className={
+        chartMaximized
+          ? "flex h-[calc(100dvh-9rem)] min-h-[calc(100dvh-9rem)] flex-col"
+          : "flex flex-col"
+      }
+    >
+      <div
+        ref={chartAreaRef}
+        className={chartMaximized ? "min-h-0 w-full flex-1" : "w-full"}
+      >
+        <ReactECharts
+          ref={chartRef}
+          option={option}
+          style={{ height: chartHeight, width: "100%" }}
+          onEvents={{ click: handleClick, mouseover: handleMouseOver }}
+          notMerge
+        />
+      </div>
+      <p className="mt-1 shrink-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        Total: {formatAudFull(displayTotal)}
+        {totalNote ? (
+          <span className="block text-xs text-amber-700 dark:text-amber-300/90">
+            {totalNote}
+          </span>
+        ) : null}
       </p>
+
+      {!chartMaximized ? (
+        <>
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Drag down to enlarge chart"
+            aria-valuemin={MIN_CHART_HEIGHT}
+            aria-valuemax={MAX_CHART_HEIGHT}
+            aria-valuenow={chartHeight}
+            tabIndex={0}
+            title="Drag down to enlarge the chart; double-click to reset"
+            onDoubleClick={() => setManualHeight(DEFAULT_HEIGHT[chartType])}
+            onPointerDown={handleResizePointerDown}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={handleResizePointerUp}
+            onPointerCancel={handleResizePointerUp}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setManualHeight(chartHeight + 40);
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setManualHeight(chartHeight - 40);
+              } else if (e.key === "Home") {
+                e.preventDefault();
+                setManualHeight(DEFAULT_HEIGHT[chartType]);
+              }
+            }}
+            className="group mt-3 flex h-5 touch-none cursor-row-resize items-center justify-center outline-none"
+          >
+            <div className="relative flex h-1 w-24 items-center justify-center rounded-full bg-black/15 transition-colors group-hover:bg-blue-500 group-focus:bg-blue-500 dark:bg-white/15">
+              <span className="absolute flex h-6 w-6 items-center justify-center rounded-full border border-black/15 bg-white text-xs font-semibold text-zinc-500 shadow-sm group-hover:border-blue-500 group-hover:text-blue-600 group-focus:border-blue-500 group-focus:text-blue-600 dark:border-white/20 dark:bg-zinc-800 dark:text-zinc-300">
+                ↕
+              </span>
+            </div>
+          </div>
+          <p className="mt-1 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+            Drag ↕ down to enlarge
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }

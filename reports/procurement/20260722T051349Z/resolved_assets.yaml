@@ -1,0 +1,228 @@
+abs_gfs_annual_all_workbooks:
+  asset_count: 1
+  status: unchanged
+abs_gfs_commonwealth_130:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_nsw_331:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_nt_337:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_qld_333:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_sa_334:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_tas_336:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_vic_332:
+  asset_count: 1
+  status: unchanged
+abs_gfs_local_wa_335:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_act_238:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_nsw_231:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_nt_237:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_qld_233:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_sa_234:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_tas_236:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_vic_232:
+  asset_count: 1
+  status: unchanged
+abs_gfs_state_wa_235:
+  asset_count: 1
+  status: unchanged
+act_actual_financial_publications:
+  asset_count: 1
+  status: downloaded
+act_budget_2026_27:
+  asset_count: 0
+  status: manual_required
+act_notifiable_invoices:
+  asset_count: 1
+  status: unchanged
+dss_income_support_monthly:
+  asset_count: 1
+  status: unchanged
+dss_jobseeker_monthly_profile:
+  asset_count: 81
+  status: unchanged
+dss_payment_demographics_quarterly:
+  asset_count: 21
+  status: unchanged
+dss_payments_by_lga:
+  asset_count: 5
+  status: unchanged
+federal_agency_resourcing_bp4_2026_27:
+  asset_count: 1
+  status: unchanged
+federal_austender_ocds_api:
+  asset_count: 18
+  status: unchanged
+federal_austender_weekly_export:
+  asset_count: 0
+  status: no_public_bulk_export
+federal_budget_measures_bp2_2026_27:
+  asset_count: 1
+  status: unchanged
+federal_budget_statement_6_2026_27:
+  asset_count: 1
+  status: unchanged
+federal_cfs_2024_25:
+  asset_count: 1
+  status: downloaded
+federal_dss_pbs_2026_27:
+  asset_count: 1
+  status: downloaded
+federal_dva_pbs_2026_27:
+  asset_count: 1
+  status: downloaded
+federal_fbo_2024_25_function_subfunction:
+  asset_count: 1
+  status: unchanged
+federal_financial_relations_bp3_2026_27:
+  asset_count: 1
+  status: unchanged
+federal_grantconnect:
+  asset_count: 0
+  status: manual_required
+federal_health_disability_ageing_pbs_2026_27:
+  asset_count: 1
+  status: downloaded
+federal_monthly_financial_statements:
+  asset_count: 10
+  status: downloaded
+federal_ndia_pbs_2026_27:
+  asset_count: 1
+  status: downloaded
+federal_pbs_index_2026_27:
+  asset_count: 2
+  status: downloaded
+federal_social_services_pbs_2025_26_archive:
+  asset_count: 1
+  status: downloaded
+federal_transparency_portal:
+  asset_count: 16
+  status: unchanged
+ndis_financial_sustainability_reports:
+  asset_count: 368
+  status: unchanged
+ndis_participant_datasets:
+  asset_count: 233
+  status: unchanged
+ndis_payment_datasets:
+  asset_count: 233
+  status: unchanged
+ndis_quarterly_reports:
+  asset_count: 379
+  status: unchanged
+nsw_budget_2026_27:
+  asset_count: 13
+  status: downloaded
+nsw_budget_open_data_2026_27:
+  asset_count: 16
+  status: downloaded
+nsw_buy_register:
+  asset_count: 0
+  status: manual_required
+nsw_local_olg_time_series:
+  asset_count: 31
+  status: downloaded
+nsw_report_on_state_finances:
+  asset_count: 24
+  status: unchanged
+nt_awarded_government_contracts:
+  asset_count: 1
+  status: downloaded
+nt_budget_2026_27:
+  asset_count: 1
+  status: downloaded
+nt_local_grants_commission_return:
+  asset_count: 0
+  status: no_public_bulk_export
+nt_treasury_annual_reports:
+  asset_count: 0
+  status: manual_required
+qld_budget_2026_27:
+  asset_count: 50
+  status: unchanged
+qld_local_qao_2025:
+  asset_count: 0
+  status: flaky_unreliable
+qld_qgip_expenditure:
+  asset_count: 0
+  status: manual_required
+qld_report_on_state_finances:
+  asset_count: 187
+  status: unchanged
+sa_budget_2026_27:
+  asset_count: 0
+  status: manual_required
+sa_councils_in_focus:
+  asset_count: 0
+  status: manual_required
+sa_final_budget_outcome_and_cfr:
+  asset_count: 0
+  status: manual_required
+sa_tenders_contracts:
+  asset_count: 0
+  status: manual_required
+services_australia_annual_reports:
+  asset_count: 0
+  status: manual_required
+tas_budget_2026_27:
+  asset_count: 40
+  status: downloaded
+tas_local_cdc:
+  asset_count: 0
+  status: manual_required
+tas_procurement:
+  asset_count: 18
+  status: discovered_only
+tas_treasurers_annual_financial_reports:
+  asset_count: 89
+  status: unchanged
+vic_budget_2026_27:
+  asset_count: 0
+  status: manual_required
+vic_dtf_annual_report_bpo:
+  asset_count: 0
+  status: manual_required
+vic_financial_report_2024_25:
+  asset_count: 0
+  status: manual_required
+vic_local_budget_and_reporting_models:
+  asset_count: 0
+  status: manual_required
+vic_local_vgc_abs_returns:
+  asset_count: 0
+  status: manual_required
+wa_annual_report_state_finances_2024_25:
+  asset_count: 99
+  status: downloaded
+wa_budget_2026_27:
+  asset_count: 106
+  status: downloaded
+wa_mycouncil:
+  asset_count: 0
+  status: no_public_bulk_export
+wa_tenders:
+  asset_count: 0
+  status: no_public_bulk_export

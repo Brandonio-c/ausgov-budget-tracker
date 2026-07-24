@@ -1,0 +1,44 @@
+# Crosswalk ABS COFOG-A purpose labels ↔ BP1 Statement 6 budget functions.
+id: cofog_to_budget_function
+match_quality_default: approx
+notes: >
+  ABS Table_4 uses COFOG-A purpose names; Statement 6 uses Commonwealth budget
+  functions. Amounts are not interchangeable; related_breakdown edges are for
+  navigation only and must not roll into the parent GFS pie total.
+mappings:
+  - abs: General public services
+    budget: General public services
+    quality: exact
+  - abs: Defence
+    budget: Defence
+    quality: exact
+  - abs: Public order and safety
+    budget: Public order and safety
+    quality: exact
+  - abs: Education
+    budget: Education
+    quality: exact
+  - abs: Health
+    budget: Health
+    quality: exact
+  - abs: Social protection
+    budget: Social security and welfare
+    quality: approx
+    notes: ABS COFOG Social protection ≈ Budget SSW; ~$1b headline gap on 2024-25.
+  - abs: Housing and community amenities
+    budget: Housing and community amenities
+    quality: exact
+  - abs: Recreation, culture and religion
+    budget: Recreation and culture
+    quality: approx
+  - abs: Economic affairs
+    budget: Other economic affairs
+    quality: approx
+    notes: ABS rolls several S6 economic functions into Economic affairs.
+  - abs: Environmental protection
+    budget: Housing and community amenities
+    quality: approx
+    notes: ABS has a separate Environmental protection purpose; S6 nests environment under housing amenities.
+  - abs: Transport
+    budget: Transport and communication
+    quality: approx

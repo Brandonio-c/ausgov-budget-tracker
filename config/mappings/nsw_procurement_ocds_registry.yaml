@@ -1,0 +1,25 @@
+source_id: nsw_procurement_ocds_registry
+title: NSW procurement OCDS awards (2024 file)
+publisher: NSW Government
+jurisdiction: NSW
+government_level: state
+source_family: procurement_contracts
+measure_type: contract_value
+accounting_basis: commitment
+estimate_status: contract
+period_granularity: financial_year
+input:
+  path: data/staging/m6/nsw_procurement_ocds_registry.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/nsw_procurement_ocds_registry/snapshots/20260722T065241Z/files/australia_new_south_wales_2024.jsonl.gz
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

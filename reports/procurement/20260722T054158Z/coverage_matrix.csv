@@ -1,0 +1,19 @@
+jurisdiction,government_level,discovered_only,downloaded,flaky_unreliable,manual_required,no_public_bulk_export,unchanged,total
+ACT,territory,0,2,0,0,0,2,4
+Australia,cross_level,0,0,0,0,0,1,1
+Commonwealth,federal,0,9,0,1,1,15,26
+Commonwealth and states,cross_level,0,0,0,0,0,1,1
+NSW,local,0,1,0,0,0,1,2
+NSW,state,0,3,0,0,0,2,5
+NT,local,0,0,0,0,1,1,2
+NT,territory,0,3,0,0,0,1,4
+QLD,local,0,0,1,0,0,1,2
+QLD,state,0,1,0,0,0,3,4
+SA,local,0,0,0,1,0,1,2
+SA,state,0,2,0,1,0,1,4
+TAS,local,0,1,0,0,0,1,2
+TAS,state,1,1,0,0,0,2,4
+VIC,local,0,2,0,0,0,1,3
+VIC,state,0,3,0,0,0,1,4
+WA,local,0,0,0,0,1,1,2
+WA,state,0,2,0,0,1,1,4

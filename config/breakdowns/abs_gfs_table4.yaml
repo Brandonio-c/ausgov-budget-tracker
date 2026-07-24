@@ -1,0 +1,24 @@
+# ABS GFS Table_4 hierarchy pack — same_group nesting for dashboard Actuals.
+id: abs_gfs_table4
+compatibility_group: actual_expense
+edge_kind: same_group
+source_key_prefix: abs_gfs_
+child_to_parent:
+  Public debt transactions: General public services
+  Other general public services: General public services
+  Medical products, appliances and equipment: Health
+  Outpatient services: Health
+  Hospital services: Health
+  Community health services: Health
+  Public health services: Health
+  Other health: Health
+  Pre-primary, primary and secondary education: Education
+  Tertiary education: Education
+  Other education: Education
+total_to_parent:
+  Total general public services: General public services
+  Total health: Health
+  Total education: Education
+skip:
+  - Total Expenses
+  - Total expenses

@@ -1,0 +1,25 @@
+source_id: act_notifiable_invoices
+title: ACT Notifiable Invoices Register
+publisher: ACT Government
+jurisdiction: ACT
+government_level: territory
+source_family: territory_actuals
+measure_type: invoice_paid
+accounting_basis: cash
+estimate_status: invoice
+period_granularity: financial_year
+input:
+  path: data/staging/m4/act_notifiable_invoices.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/territory/act_notifiable_invoices/snapshots/20260721T024615Z/files/Notifiable_Invoices_Register.csv
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

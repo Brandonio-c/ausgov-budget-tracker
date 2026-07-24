@@ -1,0 +1,12 @@
+abs_purpose,budget_function,crosswalk_quality,abs_commonwealth_2024_25_facts,a61_subfunctions,s6_component_nodes,pbs_program_nodes,related_child_edges,deepest_layer,state_analogue
+General public services,General public services,exact,0,0,0,0,0,abs_only,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Defence,Defence,exact,1,0,0,0,1,related_total,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Public order and safety,Public order and safety,exact,1,2,0,0,2,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Education,Education,exact,0,8,8,0,0,s6_component,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Health,Health,exact,0,7,18,0,0,s6_component,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Social protection,Social security and welfare,approx,1,8,23,17,8,pbs_program,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Housing and community amenities,Housing and community amenities,exact,1,3,0,0,3,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+"Recreation, culture and religion",Recreation and culture,approx,1,4,0,0,4,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Economic affairs,Other economic affairs,approx,1,6,0,0,6,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Environmental protection,Housing and community amenities,approx,1,3,0,0,3,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet
+Transport,Transport and communication,approx,1,6,0,0,6,s6_subfunction,ABS GFS state Table_4 same_group only; no Statement 6 / PBS analogues in packs yet

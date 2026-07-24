@@ -1,0 +1,12 @@
+id: bp1_s6_a61
+title: BP1 Statement 6 Table A.6.1 function and sub-function
+source_key: federal_budget_statement_6_a61
+compatibility_group: budget_expense
+edge_kind: same_group
+related_crosswalk_id: cofog_to_budget_function
+extractor: scripts/ingest/extractors/bp1_s6_a61.py
+cached_copy_path: data/raw/federal/federal_budget_statement_6_2026_27/snapshots/20260720T215815Z/files/bp1_bs-6.pdf
+landing_url: https://budget.gov.au/
+resource_url: https://budget.gov.au/2026-27/content/bp1/download/bp1_bs-6.pdf
+staging_csv: data/staging/breakdowns/bp1_s6_a61.csv
+mapping: config/mappings/federal_budget_statement_6_a61.yaml

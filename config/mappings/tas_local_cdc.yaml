@@ -1,0 +1,25 @@
+source_id: tas_local_cdc
+title: Tasmania LGA CDC data repository
+publisher: Tasmanian Government
+jurisdiction: TAS
+government_level: local
+source_family: local_actuals
+measure_type: actual_accrual_expense
+accounting_basis: accrual
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/m5/tas_local_cdc.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/local/tas_local_cdc/snapshots/manual-20260722T053403Z/files/tas_local_cdc__LGA_CDC_Data_Repository_2015-2025.zip
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

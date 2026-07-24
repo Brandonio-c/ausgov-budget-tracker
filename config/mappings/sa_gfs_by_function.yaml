@@ -1,0 +1,26 @@
+source_id: sa_gfs_by_function
+title: SA GFS expenses by function (Phase 1 backfill)
+publisher: Government of South Australia
+jurisdiction: SA
+government_level: state
+source_family: state_actuals
+measure_type: gfs_expense
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/phase1/sa_gfs_by_function.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+  legacy_id: legacy_id
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/sa_gfs_by_function/sa_gfs_by_function.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}|{legacy_id}'

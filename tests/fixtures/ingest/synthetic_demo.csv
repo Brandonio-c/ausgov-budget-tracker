@@ -1,0 +1,4 @@
+fy,amount,category,locator,landing_url,resource_url
+2024-25,1000000.00,Defence,"sheet:Demo!B2",https://example.gov.au/demo,https://example.gov.au/demo/synthetic.csv
+2024-25,2500000.00,Health,"sheet:Demo!B3",https://example.gov.au/demo,https://example.gov.au/demo/synthetic.csv
+2024-25,500000.00,Education,"sheet:Demo!B4",,https://example.gov.au/demo/synthetic.csv

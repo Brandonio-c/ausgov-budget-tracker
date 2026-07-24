@@ -3,6 +3,11 @@ main = "asset-worker.js"
 compatibility_date = "2026-07-20"
 workers_dev = false
 
+# Exact path (no trailing slash) must be listed separately — `…/*` does not match it.
+[[routes]]
+pattern = "vibefactory.app/ausgov-budget-tracker"
+zone_name = "vibefactory.app"
+
 [[routes]]
 pattern = "vibefactory.app/ausgov-budget-tracker/*"
 zone_name = "vibefactory.app"

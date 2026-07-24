@@ -1,0 +1,26 @@
+{
+  "top10_published": {
+    "federal_expense_by_function": 381,
+    "sa_gfs_by_function": 1893,
+    "vic_local_govt_financial": 1700,
+    "abs_gfs_commonwealth_130": 230,
+    "act_notifiable_invoices": 46714,
+    "nt_awarded_government_contracts": 1494,
+    "nsw_local_olg_time_series": 2794,
+    "tas_local_cdc": 2600,
+    "federal_monthly_financial_statements": 288,
+    "nsw_procurement_ocds_registry": 7853
+  },
+  "top10_ok": true,
+  "exposed_facts": 257706,
+  "pending_attribution": 15,
+  "incomplete_exposed_citations": 0,
+  "gate6_ok": true,
+  "reconciliations": {
+    "balanced": 30
+  },
+  "reconciliations_ok": true,
+  "regression_ok": true,
+  "regression_stdout": "default_view_regression_ok",
+  "pass": true
+}

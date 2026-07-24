@@ -13,8 +13,11 @@ from pathlib import Path
 import requests
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from unified_registry import phase1_sources
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SOURCES_FILE = Path(__file__).resolve().parent / "sources.yaml"
+SOURCES_FILE = Path(__file__).resolve().parent / "sources.yaml.retired"  # retired M11; use unified registry
 RAW_DIR = BASE_DIR / "data" / "raw"
 CKAN_PACKAGE_SHOW = "https://data.gov.au/data/api/3/action/package_show"
 USER_AGENT = "Mozilla/5.0 (compatible; AusGovBudgetTracker/0.1; +https://vibefactory.app/ausgov-budget-tracker)"
@@ -89,7 +92,8 @@ def fetch_one(source: dict) -> dict:
 
 
 def main() -> int:
-    sources = yaml.safe_load(SOURCES_FILE.read_text())["sources"]
+    # M11: unified registry (sources.yaml retired)
+    sources = phase1_sources()
     results = [fetch_one(s) for s in sources]
 
     ok = sum(1 for r in results if r["status"] == "ok")

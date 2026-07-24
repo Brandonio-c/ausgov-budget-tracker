@@ -1,0 +1,2332 @@
+manifest_version: 1
+researched_at: '2026-07-20'
+purpose: Candidate official sources for deeper Australian federal, state and local budget/spending lineage.
+not_drop_in_note: This is a research registry, not a direct replacement for scripts/sources.yaml. The current fetcher assumes
+  CKAN packages and the current schema supports only category/subcategory/department.
+traceability_tiers:
+  1: whole-of-government or jurisdiction aggregate
+  2: function/subfunction or state service aggregate
+  3: portfolio/entity/outcome/program/component/appropriation
+  4: grant award, contract or aggregated payment
+  5: published invoice-level payment above a disclosure threshold
+measure_separation_rule: Never sum budget estimates, appropriations, accrual expenses, cash payments, contract values, grant
+  awards, counts or forecasts unless an explicit reconciliation defines the bridge.
+sources:
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/All-workbooks.zip
+  formats:
+  - zip
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - level of government
+  - sector
+  - economic type
+  - function where published
+  parser_strategy: Download ZIP, hash every workbook, parse table number and series headers, retain ABS series labels and
+    footnotes.
+  caveats:
+  - Best comparable national baseline, but not an entity, program, contract or invoice ledger.
+  - Intergovernmental transfers mean levels must not be naively summed.
+  traceability_tier: 1
+  id: abs_gfs_annual_all_workbooks
+  jurisdiction: Australia
+  government_level: cross_level
+  publisher: Australian Bureau of Statistics
+  title: Government Finance Statistics, Annual - all workbooks
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO002_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 130
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_commonwealth_130
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Bureau of Statistics
+  title: Table 130. General government - Commonwealth
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO003_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 231
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_nsw_231
+  jurisdiction: NSW
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 231. General government - state - New South Wales
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO004_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 232
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_vic_232
+  jurisdiction: VIC
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 232. General government - state - Victoria
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO005_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 233
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_qld_233
+  jurisdiction: QLD
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 233. General government - state - Queensland
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO006_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 234
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_sa_234
+  jurisdiction: SA
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 234. General government - state - South Australia
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO007_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 235
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_wa_235
+  jurisdiction: WA
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 235. General government - state - Western Australia
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO008_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 236
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_tas_236
+  jurisdiction: TAS
+  government_level: state
+  publisher: Australian Bureau of Statistics
+  title: Table 236. General government - state - Tasmania
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO009_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 237
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_nt_237
+  jurisdiction: NT
+  government_level: territory
+  publisher: Australian Bureau of Statistics
+  title: Table 237. General government - state - Northern Territory
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P2
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO010_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 238
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_state_act_238
+  jurisdiction: ACT
+  government_level: territory
+  publisher: Australian Bureau of Statistics
+  title: Table 238. General government - state - Australian Capital Territory
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO012_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 331
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_nsw_331
+  jurisdiction: NSW
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 331. General government - local - New South Wales
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO013_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 332
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_vic_332
+  jurisdiction: VIC
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 332. General government - local - Victoria
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO014_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 333
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_qld_333
+  jurisdiction: QLD
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 333. General government - local - Queensland
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO015_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 334
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_sa_334
+  jurisdiction: SA
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 334. General government - local - South Australia
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO016_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 335
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_wa_335
+  jurisdiction: WA
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 335. General government - local - Western Australia
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO017_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 336
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_tas_336
+  jurisdiction: TAS
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 336. General government - local - Tasmania
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/2024-25/55120DO018_202425.xlsx
+  formats:
+  - xlsx
+  access_method: direct_file
+  automation: high
+  update_frequency: annual
+  time_coverage: historical series through 2024-25
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - assets
+  - liabilities
+  - fiscal_balance
+  accounting_basis:
+  - gfs
+  granularity:
+  - jurisdiction aggregate
+  - sector
+  - economic type
+  - ABS table 337
+  parser_strategy: Parse workbook metadata and all time-series sheets; preserve original ABS series identifiers and units.
+  caveats:
+  - Aggregate benchmark only; does not identify individual agencies, councils, programs or vendors.
+  traceability_tier: 1
+  id: abs_gfs_local_nt_337
+  jurisdiction: NT
+  government_level: local
+  publisher: Australian Bureau of Statistics
+  title: Table 337. General government - local - Northern Territory
+  landing_url: https://www.abs.gov.au/statistics/economy/government/government-finance-statistics-annual/latest-release
+  source_family: gfs_actuals
+- priority: P1
+  resource_url: https://budget.gov.au/content/bp1/download/bp1_bs-6.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: 2025-26 estimate through 2029-30 forward estimates, plus 2024-25 actual in appendix
+  measure_types:
+  - budget_estimate
+  - revised_estimate
+  - actual_accrual_expense
+  - cash_payment
+  accounting_basis:
+  - accrual
+  - cash
+  granularity:
+  - function
+  - subfunction
+  - major program
+  - financial year
+  parser_strategy: Extract named tables by table number; store each estimate column as a separate fact and preserve page/table
+    locator.
+  caveats:
+  - Program expense and program payment are different measures.
+  - This is the functional spine, not the deepest program source.
+  traceability_tier: 2
+  id: federal_budget_statement_6_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: 'Budget Paper No. 1, Statement 6: Expenses and Net Capital Investment 2026-27'
+  landing_url: https://budget.gov.au/content/bp1/index.htm
+  source_family: budget_function_program
+- priority: P2
+  resource_url: https://budget.gov.au/content/bp2/download/bp2_2026-27.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - policy_measure
+  accounting_basis:
+  - cash
+  - accrual
+  - mixed
+  granularity:
+  - portfolio
+  - measure
+  - financial year
+  parser_strategy: Extract each measure table with portfolio, expense/revenue/capital classification, year and source page.
+  caveats:
+  - Measures are changes against a baseline, not total program spending.
+  traceability_tier: 3
+  id: federal_budget_measures_bp2_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: 'Budget Paper No. 2: Budget Measures 2026-27'
+  landing_url: https://budget.gov.au/content/downloads.htm
+  source_family: budget_measures
+- priority: P1
+  resource_url: https://budget.gov.au/content/bp3/download/bp3_2026-27.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - cash_payment
+  - grant_payment
+  accounting_basis:
+  - cash
+  - mixed
+  granularity:
+  - state or territory
+  - agreement
+  - program
+  - financial year
+  parser_strategy: Extract payment tables by state, agreement and program; tag as intergovernmental transfer for double-counting
+    controls.
+  caveats:
+  - These payments are revenue to states and expenditure by the Commonwealth; do not sum both levels without eliminations.
+  traceability_tier: 3
+  id: federal_financial_relations_bp3_2026_27
+  jurisdiction: Commonwealth and states
+  government_level: cross_level
+  publisher: Australian Government Treasury
+  title: 'Budget Paper No. 3: Federal Financial Relations 2026-27'
+  landing_url: https://budget.gov.au/content/downloads.htm
+  source_family: intergovernmental_transfers
+- priority: P1
+  resource_url: https://budget.gov.au/content/bp4/download/bp4_2026_27_consolidated.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - appropriation_authority
+  - budget_estimate
+  accounting_basis:
+  - appropriation
+  - accrual
+  granularity:
+  - portfolio
+  - entity
+  - appropriation type
+  - special account
+  parser_strategy: Extract agency resource, special appropriation and special account tables; link entities to programs from
+    PBS documents.
+  caveats:
+  - Authority and resourcing are not the same as cash spent.
+  traceability_tier: 3
+  id: federal_agency_resourcing_bp4_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: 'Budget Paper No. 4: Agency Resourcing 2026-27'
+  landing_url: https://budget.gov.au/content/downloads.htm
+  source_family: agency_resourcing
+- priority: P1
+  resource_url: null
+  formats:
+  - html
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - appropriation
+  granularity:
+  - portfolio
+  - entity
+  parser_strategy: Crawl official portfolio links each budget year and version every resolved PBS URL.
+  caveats:
+  - Portfolio URLs change with machinery-of-government changes.
+  traceability_tier: 3
+  id: federal_pbs_index_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: Portfolio Budget Statements index 2026-27
+  landing_url: https://budget.gov.au/content/pbs/index.htm
+  source_family: portfolio_budget_statements_index
+- priority: P1
+  resource_url: https://www.dss.gov.au/system/files/documents/2026-05/portfolio-budget-statements-2026-27-social-services.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - estimated_actual
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - appropriation
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  - appropriation
+  parser_strategy: Extract outcome resource tables and program-component tables. Version entity/program mappings by budget
+    year.
+  caveats:
+  - Machinery-of-government changes can move disability or ageing programs to other portfolios.
+  traceability_tier: 3
+  id: federal_dss_pbs_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Social Services
+  title: Social Services Portfolio Budget Statements 2026-27
+  landing_url: https://www.dss.gov.au/budget-and-additional-estimates-statements/budget-2026-27
+  source_family: portfolio_budget_statements
+- priority: P1
+  resource_url: https://www.health.gov.au/sites/default/files/2026-06/budget-2026-27-health-disability-and-ageing-portfolio-budget-statements.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - estimated_actual
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - appropriation
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  - appropriation
+  parser_strategy: Parse portfolio overview and entity sections, especially Outcome 3 aged care and Outcome 4 disability/NDIS.
+  caveats:
+  - Contains both Commonwealth funding and receipts/transfers; keep columns semantically distinct.
+  traceability_tier: 3
+  id: federal_health_disability_ageing_pbs_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Health, Disability and Ageing
+  title: Health, Disability and Ageing Portfolio Budget Statements 2026-27
+  landing_url: https://www.health.gov.au/resources/publications/budget-2026-27-health-disability-and-ageing-portfolio-budget-statements
+  source_family: portfolio_budget_statements
+- priority: P1
+  resource_url: https://www.health.gov.au/sites/default/files/2026-06/budget_2026-27_national_disability_insurance_agency_2026-27_health_pbs.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - estimated_actual
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - cash
+  - appropriation
+  granularity:
+  - entity
+  - outcome
+  - program
+  - resource type
+  - financial statement line
+  parser_strategy: Extract NDIA outcome/program resources and budgeted financial statements; link to NDIS payment datasets
+    by support category.
+  caveats:
+  - NDIS totals can include state contributions and agency costs; do not force equality with a single Commonwealth program
+    line.
+  traceability_tier: 3
+  id: federal_ndia_pbs_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: National Disability Insurance Agency
+  title: National Disability Insurance Agency Portfolio Budget Statements 2026-27
+  landing_url: https://www.health.gov.au/resources/publications/budget-2026-27-health-disability-and-ageing-portfolio-budget-statements
+  source_family: entity_budget_statement
+- priority: P1
+  resource_url: https://www.dva.gov.au/sites/default/files/2026-05/dva-pbs-2026-27.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - estimated_actual
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - appropriation
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  parser_strategy: Extract veterans compensation, income support, health and commemorations program tables.
+  caveats:
+  - Veterans spending is classified under social security and welfare, health and other functions depending on the item.
+  traceability_tier: 3
+  id: federal_dva_pbs_2026_27
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Veterans' Affairs
+  title: Department of Veterans' Affairs Portfolio Budget Statements 2026-27
+  landing_url: https://www.dva.gov.au/about-us/publications/budgets/budget-2026-27
+  source_family: portfolio_budget_statements
+- priority: P1
+  resource_url: https://www.dss.gov.au/system/files/documents/2025-03/2025-26social-servicespbsaccessible.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: 2024-25 estimated actual through 2028-29 forward estimates
+  measure_types:
+  - budget_estimate
+  - estimated_actual
+  - appropriation_authority
+  accounting_basis:
+  - accrual
+  - appropriation
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  - appropriation
+  parser_strategy: Use for the FY2025-26 app drill-down. Program 3.2 contains NDIS component tables and exact page/table evidence.
+  caveats:
+  - Historical structure differs from 2026-27 after machinery-of-government changes.
+  traceability_tier: 3
+  id: federal_social_services_pbs_2025_26_archive
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Social Services
+  title: Social Services Portfolio Budget Statements 2025-26
+  landing_url: https://archive.budget.gov.au/2025-26/pbs/index.htm
+  source_family: portfolio_budget_statements
+- priority: P1
+  resource_url: null
+  formats:
+  - xlsx
+  access_method: ckan_api
+  automation: high
+  update_frequency: monthly
+  time_coverage: historical monthly series and current financial year
+  measure_types:
+  - actual_accrual_expense
+  - revised_estimate
+  accounting_basis:
+  - aasb
+  - gfs
+  - accrual
+  granularity:
+  - function
+  - month
+  - year-to-date
+  parser_strategy: Continue current CKAN discovery, but store month, YTD/full-year status and measure type explicitly instead
+    of treating latest YTD as a final annual actual.
+  caveats:
+  - The latest FY value is normally YTD, not final audited annual expenditure.
+  traceability_tier: 2
+  id: federal_monthly_financial_statements
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: Australian Government General Government Sector Monthly Financial Statements - tables and data
+  landing_url: https://data.gov.au/data/dataset/australian-government-general-government-sector-monthly-financial-statements-tables-and-data
+  source_family: monthly_actuals
+- priority: P1
+  resource_url: https://archive.budget.gov.au/2024-25/fbo/download/05_appendix_a.pdf
+  formats:
+  - pdf
+  access_method: direct_file
+  automation: medium
+  update_frequency: annual
+  time_coverage: 2024-25 actual with comparison estimates
+  measure_types:
+  - actual_accrual_expense
+  - budget_estimate
+  accounting_basis:
+  - accrual
+  granularity:
+  - function
+  - subfunction
+  parser_strategy: Extract final annual actual function/subfunction tables and reconcile against monthly YTD series.
+  caveats:
+  - Final actuals lag the budget year and are less detailed than PBS program tables.
+  traceability_tier: 2
+  id: federal_fbo_2024_25_function_subfunction
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of the Treasury
+  title: 'Final Budget Outcome 2024-25, Appendix A: Expenses by function and sub-function'
+  landing_url: https://budget.gov.au/content/fbo/index.htm
+  source_family: final_budget_outcome
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: 2024-25 audited actual
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  - assets
+  - liabilities
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of government
+  - sector
+  - financial statement line
+  - note
+  parser_strategy: Parse statement and note tables; use as audited control total, not primary program hierarchy.
+  caveats:
+  - Consolidated and elimination entries make direct mapping to programs non-trivial.
+  traceability_tier: 1
+  id: federal_cfs_2024_25
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: Commonwealth Consolidated Financial Statements 2024-25
+  landing_url: https://www.finance.gov.au/publications/commonwealth-consolidated-financial-statements/2024-2025-commonwealth-consolidated-financial-statements
+  source_family: whole_of_government_actuals
+- priority: P2
+  resource_url: null
+  formats:
+  - html
+  - csv
+  - xlsx
+  - pdf
+  access_method: web_portal
+  automation: medium
+  update_frequency: annual
+  time_coverage: multiple annual reporting years
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  - consultancy
+  - supplier
+  accounting_basis:
+  - aasb
+  - accrual
+  granularity:
+  - entity
+  - financial statement line
+  - annual report table
+  parser_strategy: Discover entity reports and downloadable tables; retain report section/table and entity identifier.
+  caveats:
+  - Coverage and downloadable formats differ by entity and year.
+  traceability_tier: 3
+  id: federal_transparency_portal
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: Transparency Portal - Commonwealth annual reports and data
+  landing_url: https://www.transparency.gov.au/
+  source_family: entity_annual_reports
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  access_method: ckan_api
+  automation: high
+  update_frequency: weekly
+  time_coverage: current and historical notices
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - contract notice
+  - agency
+  - supplier
+  - category
+  - date
+  parser_strategy: Fetch all current CSV resources through CKAN, deduplicate by contract notice ID and preserve amendments.
+  caveats:
+  - Contract value is not the same as annual cash paid and may cover multiple years.
+  traceability_tier: 4
+  id: federal_austender_weekly_export
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: AusTender Contract Notice Export
+  landing_url: https://data.gov.au/data/dataset/austender-contract-notice-export
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - json
+  access_method: ocds_api
+  automation: high
+  update_frequency: periodic
+  time_coverage: contract notices from 2013 onward
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - release
+  - contract
+  - supplier
+  - buyer
+  - classification
+  parser_strategy: Ingest OCDS releases and preserve release IDs, ocids, amendments, buyers, suppliers and classifications.
+  caveats:
+  - OCDS contract records are commitments, not proof of cash payment.
+  traceability_tier: 4
+  id: federal_austender_ocds_api
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: Historical Australian Government Contract Notice Data - OCDS API
+  landing_url: https://data.gov.au/data/dataset/historical-australian-government-contract-data/resource/a7f471ad-e085-49b5-bd6b-1b270ea46e99
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - html
+  - download
+  access_method: web_portal
+  automation: low
+  update_frequency: continuous
+  time_coverage: current and archived opportunities and awards
+  measure_types:
+  - grant_award
+  accounting_basis:
+  - commitment
+  granularity:
+  - grant opportunity
+  - grant award
+  - recipient
+  - program
+  - agency
+  parser_strategy: Use documented searches/exports where available; version award pages and link grant program IDs to PBS
+    program nodes.
+  caveats:
+  - No stable unrestricted bulk public API was identified; award amount is not necessarily cash paid in the reporting year.
+  traceability_tier: 4
+  id: federal_grantconnect
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Department of Finance
+  title: GrantConnect grant opportunities and awards
+  landing_url: https://www.grants.gov.au/
+  source_family: grant_awards
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  - xlsx
+  access_method: ckan_api
+  automation: high
+  update_frequency: monthly or quarterly
+  time_coverage: current and archive
+  measure_types:
+  - recipient_count
+  accounting_basis:
+  - count
+  granularity:
+  - payment type
+  - month
+  - recipient count
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Counts support context and unit-cost analysis; they are not expenditure.
+  traceability_tier: 3
+  id: dss_income_support_monthly
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: DSS Income Support Recipients - Monthly Time Series
+  landing_url: https://data.gov.au/data/dataset/dss-income-support-recipients-monthly-time-series
+  source_family: recipient_statistics
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  access_method: ckan_api
+  automation: high
+  update_frequency: monthly or quarterly
+  time_coverage: current and archive
+  measure_types:
+  - recipient_count
+  accounting_basis:
+  - count
+  granularity:
+  - payment type
+  - demographic
+  - geography
+  - quarter
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Privacy and confidentiality rules mean no person-level payment ledger.
+  traceability_tier: 3
+  id: dss_payment_demographics_quarterly
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: DSS Benefit and Payment Recipient Demographics - quarterly data
+  landing_url: https://data.gov.au/data/dataset/dss-payment-demographic-data
+  source_family: recipient_statistics
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  - xlsx
+  access_method: ckan_api
+  automation: high
+  update_frequency: annual or periodic
+  time_coverage: current and archive
+  measure_types:
+  - recipient_count
+  accounting_basis:
+  - count
+  granularity:
+  - payment type
+  - local government area
+  - period
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - The title refers to payment programs, but public files are generally recipient statistics rather than dollar payments.
+  traceability_tier: 3
+  id: dss_payments_by_lga
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: DSS Payments by Local Government Area
+  landing_url: https://www.data.gov.au/data/dataset/dss-payments-by-local-government-area
+  source_family: recipient_statistics
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  access_method: ckan_api
+  automation: high
+  update_frequency: monthly or quarterly
+  time_coverage: current and archive
+  measure_types:
+  - recipient_count
+  accounting_basis:
+  - count
+  granularity:
+  - payment type
+  - month
+  - demographic
+  - geography
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Use as a denominator/context source, not as a cash total.
+  traceability_tier: 3
+  id: dss_jobseeker_monthly_profile
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: DSS JobSeeker Payment and Youth Allowance recipients - monthly profile
+  landing_url: https://data.gov.au/data/dataset/jobseeker-payment-and-youth-allowance-recipients-monthly-profile
+  source_family: recipient_statistics
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - html
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual or periodic
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - accrual
+  granularity:
+  - entity
+  - program administration
+  - financial statement note
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Administered benefit expenses and departmental delivery costs must remain separate.
+  traceability_tier: 3
+  id: services_australia_annual_reports
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: Services Australia annual reports
+  landing_url: https://www.servicesaustralia.gov.au/annual-reports?context=22
+  source_family: entity_annual_reports
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual or periodic
+  time_coverage: current and archive
+  measure_types:
+  - participant_payment
+  accounting_basis:
+  - cash
+  granularity:
+  - support category
+  - participant cohort
+  - geography
+  - time
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - This is the strongest public payment-granularity source for NDIS, but it remains aggregated and privacy-protected.
+  traceability_tier: 4
+  id: ndis_payment_datasets
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: NDIS payments datasets
+  landing_url: https://dataresearch.ndis.gov.au/datasets/payments-datasets
+  source_family: payment_aggregates
+- priority: P2
+  resource_url: null
+  formats:
+  - csv
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual or periodic
+  time_coverage: current and archive
+  measure_types:
+  - recipient_count
+  accounting_basis:
+  - count
+  granularity:
+  - participant
+  - plan aggregate
+  - support category
+  - geography
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Use for counts and plan distributions; do not infer individual identities or private payments.
+  traceability_tier: 3
+  id: ndis_participant_datasets
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: NDIS participant datasets
+  landing_url: https://dataresearch.ndis.gov.au/datasets/participant-datasets
+  source_family: participant_statistics
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: monthly or quarterly
+  time_coverage: current and archive
+  measure_types:
+  - participant_payment
+  - actual_accrual_expense
+  - recipient_count
+  accounting_basis:
+  - cash
+  - accrual
+  - count
+  granularity:
+  - quarter
+  - jurisdiction
+  - participant
+  - plan
+  - payment category
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Definitions can change; version data dictionaries.
+  traceability_tier: 3
+  id: ndis_quarterly_reports
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: NDIS quarterly reports
+  landing_url: https://ndis.gov.au/publications/quarterly-reports
+  source_family: program_actuals
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual or periodic
+  time_coverage: current and archive
+  measure_types:
+  - forecast
+  - participant_payment
+  accounting_basis:
+  - actuarial
+  - cash
+  granularity:
+  - scheme
+  - cohort
+  - projection year
+  parser_strategy: Discover current downloadable resources, preserve data dictionaries and version each release.
+  caveats:
+  - Actuarial projections are not actual expenditure.
+  traceability_tier: 3
+  id: ndis_financial_sustainability_reports
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government
+  title: NDIS annual financial sustainability reports
+  landing_url: https://ndis.gov.au/publications/annual-financial-sustainability-reports
+  source_family: program_forecast
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - gfs
+  - aasb
+  - appropriation
+  granularity:
+  - sector
+  - agency
+  - service/performance theme
+  - infrastructure project
+  parser_strategy: Discover BP1-BP5 PDFs. Parse BP4 agency statements and BP3 project-level infrastructure tables.
+  caveats: []
+  traceability_tier: 2
+  id: nsw_budget_2026_27
+  jurisdiction: NSW
+  government_level: state
+  publisher: NSW Treasury
+  title: NSW Budget Papers 2026-27
+  landing_url: https://www.nsw.gov.au/business-and-economy/nsw-budget/2026-27-budget-papers
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - revised_estimate
+  accounting_basis:
+  - gfs
+  - aasb
+  granularity:
+  - sector financial statements
+  - fiscal indicator
+  - performance measure
+  parser_strategy: Download all linked XLSX files and parse stable sheet/table labels.
+  caveats: []
+  traceability_tier: 2
+  id: nsw_budget_open_data_2026_27
+  jurisdiction: NSW
+  government_level: state
+  publisher: NSW Treasury
+  title: NSW Budget 2026-27 Open Data
+  landing_url: https://www.nsw.gov.au/business-and-economy/nsw-budget/2026-27-budget-papers/open-data
+  source_family: state_budget_open_data
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - note
+  parser_strategy: Discover latest annual report and parse audited statements/notes as control totals.
+  caveats: []
+  traceability_tier: 2
+  id: nsw_report_on_state_finances
+  jurisdiction: NSW
+  government_level: state
+  publisher: NSW Treasury
+  title: NSW Report on State Finances
+  landing_url: https://www.nsw.gov.au/departments-and-agencies/nsw-treasury/documents-library/report-on-state-finances
+  source_family: state_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - service_indicator
+  accounting_basis:
+  - aasb
+  - local_return
+  granularity:
+  - council
+  - service/function
+  - financial year
+  parser_strategy: Discover annual Time-Series XLSX files; normalise council names and service categories across years.
+  caveats: []
+  traceability_tier: 3
+  id: nsw_local_olg_time_series
+  jurisdiction: NSW
+  government_level: local
+  publisher: NSW Office of Local Government
+  title: Your council data and reports - time series
+  landing_url: https://www.olg.nsw.gov.au/public/your-council-data-and-reports
+  source_family: local_financial_returns
+- priority: P4
+  resource_url: null
+  formats:
+  - html
+  - export
+  access_method: landing_page_discovery
+  automation: low
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - notice
+  - agency
+  - supplier
+  - contract
+  parser_strategy: Use official export/search functions where available and retain notice IDs and amendment history.
+  caveats:
+  - Not a payment ledger.
+  traceability_tier: 4
+  id: nsw_buy_register
+  jurisdiction: NSW
+  government_level: state
+  publisher: NSW Government
+  title: buy.nsw register of notices
+  landing_url: https://buy.nsw.gov.au/help/register-of-notices
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - portfolio
+  - department
+  - output
+  - initiative
+  - financial statement
+  parser_strategy: Discover Budget Papers 2-5 and Department Performance Statements; prefer any linked XLSX tables.
+  caveats: []
+  traceability_tier: 2
+  id: vic_budget_2026_27
+  jurisdiction: VIC
+  government_level: state
+  publisher: Victorian Department of Treasury and Finance
+  title: Victorian State Budget 2026-27
+  landing_url: https://www.dtf.vic.gov.au/2026-27-state-budget
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - department/note
+  parser_strategy: Parse annual financial report and spreadsheets; use as audited reconciliation source.
+  caveats: []
+  traceability_tier: 2
+  id: vic_financial_report_2024_25
+  jurisdiction: VIC
+  government_level: state
+  publisher: Victorian Department of Treasury and Finance
+  title: Victoria Financial Report 2024-25
+  landing_url: https://www.dtf.vic.gov.au/financial-report-inc-quarterly-financial-report-no-4
+  source_family: state_actuals
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  - output_performance
+  accounting_basis:
+  - aasb
+  granularity:
+  - department
+  - output
+  - portfolio outcome
+  parser_strategy: Prefer Budget Portfolio Outcomes XLSX; map output names to budget-year nodes.
+  caveats: []
+  traceability_tier: 2
+  id: vic_dtf_annual_report_bpo
+  jurisdiction: VIC
+  government_level: state
+  publisher: Victorian Department of Treasury and Finance
+  title: DTF Annual Report and Budget Portfolio Outcomes
+  landing_url: https://www.dtf.vic.gov.au/2024-25-annual-report
+  source_family: entity_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - capital_outlay
+  - assets
+  - liabilities
+  accounting_basis:
+  - local_return
+  - abs_collection
+  granularity:
+  - council
+  - expenditure/revenue category
+  - roads
+  - capital
+  - balance sheet
+  parser_strategy: Ingest VGC1/VGC2/VGC3 and ABS1/ABS2/ABS3 files by year; build a council-name alias table.
+  caveats: []
+  traceability_tier: 3
+  id: vic_local_vgc_abs_returns
+  jurisdiction: VIC
+  government_level: local
+  publisher: Local Government Victoria / Victoria Grants Commission
+  title: Council raw VGC and ABS data packs
+  landing_url: https://www.localgovernment.vic.gov.au/lgv-funding-programs/victoria-grants-commission/consultation-and-operations
+  source_family: local_financial_returns
+- priority: P3
+  resource_url: null
+  formats:
+  - xlsx
+  - docx
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - local_government_model
+  granularity:
+  - council
+  - service
+  - financial statement line
+  parser_strategy: Use model workbooks to standardise each council budget/annual report parser.
+  caveats: []
+  traceability_tier: 3
+  id: vic_local_budget_and_reporting_models
+  jurisdiction: VIC
+  government_level: local
+  publisher: Local Government Victoria
+  title: Council planning, budget and annual reporting guidance and models
+  landing_url: https://www.localgovernment.vic.gov.au/council-innovation-and-performance/sector-guidance-planning-and-reporting
+  source_family: local_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - sector
+  - portfolio
+  - department
+  - service area
+  - measure
+  parser_strategy: Discover Budget Strategy and Outlook and all Service Delivery Statements; parse service-area financial
+    tables.
+  caveats: []
+  traceability_tier: 2
+  id: qld_budget_2026_27
+  jurisdiction: QLD
+  government_level: state
+  publisher: Queensland Treasury
+  title: Queensland Budget Papers 2026-27
+  landing_url: https://budget.qld.gov.au/budget-papers/
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - note
+  parser_strategy: Discover latest audited report and parse statements/notes as control totals.
+  caveats: []
+  traceability_tier: 2
+  id: qld_report_on_state_finances
+  jurisdiction: QLD
+  government_level: state
+  publisher: Queensland Treasury
+  title: Queensland Report on State Finances
+  landing_url: https://www.treasury.qld.gov.au/budget/report-on-state-finances/
+  source_family: state_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - csv
+  access_method: ckan_api
+  automation: high
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - cash_payment
+  - grant_payment
+  accounting_basis:
+  - cash
+  granularity:
+  - agency
+  - recipient/provider
+  - program
+  - location
+  - amount paid
+  parser_strategy: Use data.qld.gov.au CKAN API to discover current CSV resources and preserve agency dataset IDs.
+  caveats:
+  - Scope is grants and procured frontline services, not all state expenditure.
+  traceability_tier: 4
+  id: qld_qgip_expenditure
+  jurisdiction: QLD
+  government_level: state
+  publisher: Queensland Government
+  title: Queensland Government Investment Portal expenditure data - consolidated view
+  landing_url: https://www.data.qld.gov.au/dataset/queensland-government-investment-portal-expenditure-data-consolidated-view
+  source_family: grant_and_service_payments
+- priority: P2
+  resource_url: null
+  formats:
+  - html
+  - dashboard
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - financial_ratio
+  accounting_basis:
+  - aasb
+  granularity:
+  - council
+  - financial sustainability indicator
+  - audit result
+  parser_strategy: Acquire dashboard export/underlying data where permitted; combine with ABS local workbook for statewide
+    totals.
+  caveats: []
+  traceability_tier: 3
+  id: qld_local_qao_2025
+  jurisdiction: QLD
+  government_level: local
+  publisher: Queensland Audit Office
+  title: Local government 2025 report and dashboard
+  landing_url: https://www.qao.qld.gov.au/reports-resources/reports-parliament/local-government-2025
+  source_family: local_audit_actuals
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - sector
+  - agency
+  - service
+  - asset investment program
+  parser_strategy: Discover budget paper PDFs and parse agency service and asset investment tables.
+  caveats: []
+  traceability_tier: 2
+  id: wa_budget_2026_27
+  jurisdiction: WA
+  government_level: state
+  publisher: Western Australian Treasury
+  title: Western Australia Budget Papers 2026-27
+  landing_url: https://www.ourstatebudget.wa.gov.au/budget-papers.html
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - agency appendix
+  parser_strategy: Download report and XLSX appendices; use appendices as primary machine-readable facts.
+  caveats: []
+  traceability_tier: 2
+  id: wa_annual_report_state_finances_2024_25
+  jurisdiction: WA
+  government_level: state
+  publisher: Western Australian Treasury
+  title: Western Australia Annual Report on State Finances 2024-25
+  landing_url: https://www.wa.gov.au/government/publications/2024-25-annual-report-state-finances
+  source_family: state_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - web
+  - download
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - service_indicator
+  accounting_basis:
+  - local_return
+  granularity:
+  - council
+  - program expenditure
+  - rates/revenue
+  - service
+  parser_strategy: Discover MyCouncil downloads or underlying endpoints; retain council/year/category dimensions.
+  caveats: []
+  traceability_tier: 3
+  id: wa_mycouncil
+  jurisdiction: WA
+  government_level: local
+  publisher: Western Australian Government
+  title: MyCouncil local government information and comparison
+  landing_url: https://www.wa.gov.au/service/building-utilities-and-essential-services/integrated-essential-services/local-government-information-and-comparison
+  source_family: local_financial_returns
+- priority: P4
+  resource_url: null
+  formats:
+  - web
+  - export
+  access_method: landing_page_discovery
+  automation: low
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - contract
+  - agency
+  - supplier
+  parser_strategy: Use official search/export; preserve award and amendment IDs.
+  caveats:
+  - Not a cash payment ledger.
+  traceability_tier: 4
+  id: wa_tenders
+  jurisdiction: WA
+  government_level: state
+  publisher: Western Australian Government
+  title: Tenders WA awarded contracts
+  landing_url: https://www.tenders.wa.gov.au/
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - gaap
+  - gfs
+  - appropriation
+  granularity:
+  - sector
+  - agency
+  - program/output
+  - budget measure
+  parser_strategy: Discover BP3, BP4 volumes and BP5. Parse agency revenue/expense and performance tables.
+  caveats: []
+  traceability_tier: 2
+  id: sa_budget_2026_27
+  jurisdiction: SA
+  government_level: state
+  publisher: South Australian Department of Treasury and Finance
+  title: South Australia Budget 2026-27
+  landing_url: https://treasury.sa.gov.au/budget/current-budget
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - agency/note
+  parser_strategy: Discover latest FBO and Consolidated Financial Report from current/previous budget pages.
+  caveats: []
+  traceability_tier: 2
+  id: sa_final_budget_outcome_and_cfr
+  jurisdiction: SA
+  government_level: state
+  publisher: South Australian Department of Treasury and Finance
+  title: South Australia Final Budget Outcome and Consolidated Financial Report
+  landing_url: https://treasury.sa.gov.au/budget/current-budget/budget-papers
+  source_family: state_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - dashboard
+  - download
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - grant_revenue
+  - financial_position
+  accounting_basis:
+  - local_return
+  granularity:
+  - council
+  - service/function
+  - five-year comparison
+  parser_strategy: Acquire official downloadable data or dashboard export; version metric definitions.
+  caveats: []
+  traceability_tier: 3
+  id: sa_councils_in_focus
+  jurisdiction: SA
+  government_level: local
+  publisher: South Australian Department for Infrastructure and Transport
+  title: Councils in Focus
+  landing_url: https://dit.sa.gov.au/local-government/councils-in-focus
+  source_family: local_financial_returns
+- priority: P4
+  resource_url: null
+  formats:
+  - web
+  - export
+  access_method: landing_page_discovery
+  automation: low
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - contract
+  - agency
+  - supplier
+  parser_strategy: Use official search/export and preserve notice identifiers.
+  caveats:
+  - Not a cash payment ledger.
+  traceability_tier: 4
+  id: sa_tenders_contracts
+  jurisdiction: SA
+  government_level: state
+  publisher: South Australian Government
+  title: SA Tenders and Contracts
+  landing_url: https://www.tenders.sa.gov.au/
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - sector
+  - agency
+  - output
+  - capital program
+  parser_strategy: Discover Budget Papers 1-4 and any spreadsheets; parse agency output and infrastructure tables.
+  caveats: []
+  traceability_tier: 2
+  id: tas_budget_2026_27
+  jurisdiction: TAS
+  government_level: state
+  publisher: Tasmanian Department of Treasury and Finance
+  title: Tasmanian Budget 2026-27
+  landing_url: https://www.treasury.tas.gov.au/budget-and-financial-management/2026-27-tasmanian-budget
+  source_family: state_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of state
+  - sector
+  - note
+  parser_strategy: Discover current and archive reports; parse statements and notes as reconciliation controls.
+  caveats: []
+  traceability_tier: 2
+  id: tas_treasurers_annual_financial_reports
+  jurisdiction: TAS
+  government_level: state
+  publisher: Tasmanian Department of Treasury and Finance
+  title: Treasurer's Annual Financial Reports
+  landing_url: https://www.treasury.tas.gov.au/budget-and-financial-management/financial-reports/treasurers-annual-financial-reports
+  source_family: state_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - xlsx
+  - dashboard
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  - service_indicator
+  accounting_basis:
+  - local_return
+  granularity:
+  - 29 councils
+  - service/function
+  - financial statement line
+  - year
+  parser_strategy: Download annual raw Excel data from official links/LIST and normalise council/category changes back to
+    2000.
+  caveats: []
+  traceability_tier: 3
+  id: tas_local_cdc
+  jurisdiction: TAS
+  government_level: local
+  publisher: Tasmanian Department of Premier and Cabinet
+  title: Council performance and Consolidated Data Collection
+  landing_url: https://www.dpac.tas.gov.au/government-information/local-government/council-performance
+  source_family: local_financial_returns
+- priority: P4
+  resource_url: null
+  formats:
+  - web
+  access_method: landing_page_discovery
+  automation: low
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - contract
+  - agency
+  - supplier
+  parser_strategy: Use official eTendering search/export; preserve contract identifiers.
+  caveats:
+  - Not a cash payment ledger.
+  traceability_tier: 4
+  id: tas_procurement
+  jurisdiction: TAS
+  government_level: state
+  publisher: Tasmanian Department of Treasury and Finance
+  title: Tasmanian purchasing and eTendering
+  landing_url: https://www.treasury.tas.gov.au/purchasing-and-property/purchasing-whole-of-government-common-use-contracts-and-etendering
+  source_family: procurement_contracts
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: high
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - whole of territory
+  - directorate
+  - output
+  - budget initiative
+  parser_strategy: Prefer XLS budget tables; parse agency statements and appropriation tables.
+  caveats: []
+  traceability_tier: 2
+  id: act_budget_2026_27
+  jurisdiction: ACT
+  government_level: territory
+  publisher: ACT Treasury
+  title: ACT Budget Papers and Statements 2026-27
+  landing_url: https://www.treasury.act.gov.au/budget/budget-2026-27/budget-papers-and-statements
+  source_family: territory_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  - xlsx
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of territory
+  - directorate
+  - note
+  parser_strategy: Discover annual financial statements and budget reviews by title/year.
+  caveats: []
+  traceability_tier: 2
+  id: act_actual_financial_publications
+  jurisdiction: ACT
+  government_level: territory
+  publisher: ACT Treasury
+  title: ACT Treasury financial publications
+  landing_url: https://www.treasury.act.gov.au/publications
+  source_family: territory_actuals
+- priority: P1
+  resource_url: null
+  formats:
+  - json
+  - csv
+  access_method: socrata_api
+  automation: high
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - invoice_paid
+  accounting_basis:
+  - cash
+  granularity:
+  - invoice
+  - entity
+  - supplier
+  - ABN
+  - description
+  - paid date
+  - amount
+  parser_strategy: Use Socrata SODA endpoint https://www.data.act.gov.au/resource/kzmf-7uhp.json with pagination and app token
+    if available.
+  caveats:
+  - Register threshold is AUD 25,000; it is not every ACT invoice.
+  traceability_tier: 5
+  id: act_notifiable_invoices
+  jurisdiction: ACT
+  government_level: territory
+  publisher: ACT Government
+  title: Notifiable Invoices Register
+  landing_url: https://www.data.act.gov.au/Government-and-Transparency/Notifiable-Invoices-Register/kzmf-7uhp
+  source_family: invoice_payments
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - budget_estimate
+  - appropriation_authority
+  accounting_basis:
+  - aasb
+  - gfs
+  - appropriation
+  granularity:
+  - whole of territory
+  - agency
+  - output
+  - infrastructure
+  parser_strategy: Discover BP1-BP4 resources and parse agency/output tables.
+  caveats: []
+  traceability_tier: 2
+  id: nt_budget_2026_27
+  jurisdiction: NT
+  government_level: territory
+  publisher: Northern Territory Treasury
+  title: Northern Territory Budget Papers 2026-27
+  landing_url: https://budget.nt.gov.au/papers
+  source_family: territory_budget
+- priority: P2
+  resource_url: null
+  formats:
+  - pdf
+  access_method: landing_page_discovery
+  automation: medium
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - audited_actual
+  - actual_accrual_expense
+  accounting_basis:
+  - aasb
+  - gfs
+  granularity:
+  - whole of territory
+  - agency
+  - note
+  parser_strategy: Discover annual reports and parse financial statements/notes.
+  caveats: []
+  traceability_tier: 2
+  id: nt_treasury_annual_reports
+  jurisdiction: NT
+  government_level: territory
+  publisher: Northern Territory Department of Treasury and Finance
+  title: Northern Territory Treasury annual reports
+  landing_url: https://treasury.nt.gov.au/publications/annual-reports
+  source_family: territory_actuals
+- priority: P4
+  resource_url: null
+  formats:
+  - web
+  access_method: landing_page_discovery
+  automation: manual
+  update_frequency: annual
+  time_coverage: current and archive
+  measure_types:
+  - actual_accrual_expense
+  - revenue
+  accounting_basis:
+  - local_return
+  granularity:
+  - council
+  - standard chart of accounts
+  parser_strategy: No public bulk download found. Use ABS NT local workbook plus council annual reports unless the Commission
+    supplies an export.
+  caveats:
+  - Login-gated collection; requires a data-sharing request or manual official export.
+  traceability_tier: 3
+  id: nt_local_grants_commission_return
+  jurisdiction: NT
+  government_level: local
+  publisher: Northern Territory Grants Commission
+  title: Northern Territory Grants Commission Annual Return
+  landing_url: https://gcannualreturn.nt.gov.au/
+  source_family: local_financial_returns
+- priority: P1
+  resource_url: null
+  formats:
+  - xlsx
+  access_method: ckan_api
+  automation: high
+  update_frequency: continuous or periodic
+  time_coverage: current and archive
+  measure_types:
+  - contract_value
+  accounting_basis:
+  - commitment
+  granularity:
+  - contract
+  - agency
+  - supplier
+  - award date
+  parser_strategy: Use NT CKAN API to discover current XLSX resource and preserve contract/amendment identifiers.
+  caveats:
+  - Published scope is awarded contracts above the reporting threshold; not cash paid.
+  traceability_tier: 4
+  id: nt_awarded_government_contracts
+  jurisdiction: NT
+  government_level: territory
+  publisher: Northern Territory Government
+  title: Awarded government contracts
+  landing_url: https://data.nt.gov.au/dataset/awarded-government-contracts
+  source_family: procurement_contracts

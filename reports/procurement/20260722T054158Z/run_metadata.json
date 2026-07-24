@@ -1,0 +1,18 @@
+{
+  "run_id": "20260722T054158Z",
+  "generated_at": "2026-07-22T05:41:58.334291+00:00",
+  "git_commit": "f559af99fbee3c040e1703b7c7a17c55727886e8",
+  "git_dirty": true,
+  "registry_manifest_version": 1,
+  "total_sources": 76,
+  "status_counts": {
+    "unchanged": 37,
+    "downloaded": 30,
+    "manual_required": 3,
+    "no_public_bulk_export": 4,
+    "flaky_unreliable": 1,
+    "discovered_only": 1
+  },
+  "total_bytes_this_reconciliation": 6133950543,
+  "data_raw_disk_usage_bytes": 6876777343
+}

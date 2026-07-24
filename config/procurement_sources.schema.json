@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibefactory.app/ausgov-budget-tracker/procurement_sources.schema.json",
+  "title": "AusGov Budget Tracker procurement registry",
+  "type": "object",
+  "required": ["manifest_version", "sources"],
+  "properties": {
+    "manifest_version": {"type": "integer", "minimum": 1},
+    "researched_at": {"type": ["string", "null"]},
+    "purpose": {"type": ["string", "null"]},
+    "not_drop_in_note": {"type": ["string", "null"]},
+    "measure_separation_rule": {"type": ["string", "null"]},
+    "traceability_tiers": {"type": "object"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source"}
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "stringArray": {"type": "array", "items": {"type": "string"}},
+    "source": {
+      "type": "object",
+      "required": [
+        "id", "priority", "publisher", "jurisdiction", "government_level",
+        "source_family", "title", "landing_url", "access_method",
+        "automation", "formats"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$"},
+        "enabled": {"type": "boolean", "default": true},
+        "priority": {"enum": ["P0", "P1", "P2", "P3", "P4"]},
+        "publisher": {"type": "string", "minLength": 1},
+        "jurisdiction": {"type": "string", "minLength": 1},
+        "government_level": {
+          "enum": ["federal", "state", "territory", "local", "cross_level"]
+        },
+        "source_family": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "landing_url": {"type": "string", "format": "uri"},
+        "resource_url": {"$ref": "#/$defs/nullableString"},
+        "access_method": {
+          "enum": [
+            "direct_file", "ckan", "ckan_api", "socrata_api", "ocds_api",
+            "landing_page_discovery", "web_portal", "manual"
+          ]
+        },
+        "automation": {"enum": ["high", "medium", "low", "manual"]},
+        "formats": {"$ref": "#/$defs/stringArray"},
+        "access": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "direct_file", "ckan", "ckan_api", "socrata_api", "ocds_api",
+                "landing_page_discovery", "web_portal", "manual"
+              ]
+            },
+            "allowed_domains": {"$ref": "#/$defs/stringArray"},
+            "package_id": {"$ref": "#/$defs/nullableString"},
+            "resource_id": {"$ref": "#/$defs/nullableString"},
+            "resource_name_regex": {"$ref": "#/$defs/nullableString"},
+            "dataset_id": {"$ref": "#/$defs/nullableString"},
+            "endpoint": {"$ref": "#/$defs/nullableString"},
+            "query": {"type": ["object", "null"]},
+            "pagination": {"type": ["object", "null"]},
+            "discovery": {
+              "type": "object",
+              "properties": {
+                "max_depth": {"type": "integer", "minimum": 0, "maximum": 2},
+                "include_regex": {"$ref": "#/$defs/stringArray"},
+                "exclude_regex": {"$ref": "#/$defs/stringArray"},
+                "allowed_extensions": {"$ref": "#/$defs/stringArray"},
+                "financial_year_start": {"$ref": "#/$defs/nullableString"},
+                "financial_year_end": {"$ref": "#/$defs/nullableString"},
+                "latest_only": {"type": "boolean"}
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "canonical_filename": {"$ref": "#/$defs/nullableString"},
+            "multi_file": {"type": "boolean"},
+            "unpack_zip": {"type": "boolean"}
+          },
+          "additionalProperties": true
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "expected_mime_types": {"$ref": "#/$defs/stringArray"},
+            "min_bytes": {"type": "integer", "minimum": 1},
+            "max_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "signatures": {"$ref": "#/$defs/stringArray"}
+          },
+          "additionalProperties": true
+        },
+        "manual": {
+          "type": "object",
+          "properties": {
+            "likely_required": {"type": "boolean"},
+            "notes": {"$ref": "#/$defs/nullableString"}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -216,8 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-data/raw/*
-data/processed/*
+# Large / regenerated local datasets (do not push to GitHub)
+data/raw/
+data/processed/
+data/quarantine/
+data/.procurement/
+data/manual_inbox/
+data/staging/
+data/fastembed-cache/
+data/facts.db
+data/search.db
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
 .env
 venv/
 

@@ -1,0 +1,29 @@
+source_id: federal_budget_statement_11_historical
+title: 'Statement 11: Historical Australian Government Data (expenses + cash payments)'
+publisher: Australian Government Treasury
+jurisdiction: Commonwealth
+government_level: federal
+source_family: budget_historical_aggregates
+measure_type: actual_accrual_expense
+accounting_basis: accrual
+estimate_status: audited_actual
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/federal_budget_statement_11_historical.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_budget_statement_11_historical/snapshots/20260723T024822Z/files/bp1_bs-11.pdf
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}|{locator}'
+notes: >
+  Tier A extract of Table 11.6 accrual expenses (and Table 11.1 cash payments rows
+  filtered in CSV via series). Whole-of-government aggregates only — not COFOG.

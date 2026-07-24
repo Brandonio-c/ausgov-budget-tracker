@@ -12,8 +12,11 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from unified_registry import phase1_sources
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SOURCES_FILE = Path(__file__).resolve().parent / "sources.yaml"
+SOURCES_FILE = Path(__file__).resolve().parent / "sources.yaml.retired"  # retired M11
 RAW_DIR = BASE_DIR / "data" / "raw"
 DB_FILE = BASE_DIR / "data" / "processed" / "spending.db"
 
@@ -36,7 +39,7 @@ CREATE TABLE IF NOT EXISTS spending (
 
 
 def main() -> int:
-    sources = yaml.safe_load(SOURCES_FILE.read_text())["sources"]
+    sources = phase1_sources()
 
     DB_FILE.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILE)

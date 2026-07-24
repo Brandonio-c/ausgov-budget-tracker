@@ -1,0 +1,14 @@
+id: pbs_programs_dss
+title: Social Services PBS programs (via Statement 6 Top-20 SSW bridge + DSS PBS)
+source_key: federal_dss_pbs_programs
+compatibility_group: budget_expense
+edge_kind: same_group
+extractor: scripts/ingest/extractors/pbs_programs_dss.py
+cached_copy_path: data/raw/federal/federal_dss_pbs_2026_27/snapshots/manual-20260722T043829Z/files/portfolio-budget-statements-2026-27-social-services.pdf
+landing_url: https://www.dss.gov.au/budget-and-additional-estimates-statements/budget-2026-27
+resource_url: https://www.dss.gov.au/system/files/documents/2026-05/portfolio-budget-statements-2026-27-social-services.pdf
+# Bridge program amounts from Statement 6 Table 6.1.3 (same PDF family) until
+# full PBS table OCR is productionised; locators cite Table 6.1.3.
+bridge_pdf: data/raw/federal/federal_budget_statement_6_2026_27/snapshots/20260720T215815Z/files/bp1_bs-6.pdf
+staging_csv: data/staging/breakdowns/pbs_programs_dss.csv
+mapping: config/mappings/federal_dss_pbs_programs.yaml

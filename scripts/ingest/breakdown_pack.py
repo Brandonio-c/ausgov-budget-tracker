@@ -1,0 +1,490 @@
+#!/usr/bin/env python3
+"""Run a breakdown pack: extract → publish → emit related/same_group edges."""
+
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import sqlite3
+import sys
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from run import run_mapping  # noqa: E402
+from schema_migrate import migrate  # noqa: E402
+
+PACKS_DIR = REPO_ROOT / "config" / "breakdowns"
+CROSSWALKS_DIR = PACKS_DIR / "crosswalks"
+DEFAULT_DB = REPO_ROOT / "data" / "facts.db"
+
+
+def load_yaml(path: Path) -> dict[str, Any]:
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def run_extractor(extractor_rel: str) -> dict[str, Any]:
+    path = REPO_ROOT / extractor_rel
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    if hasattr(mod, "main"):
+        mod.main()
+    return {"extractor": extractor_rel}
+
+
+def ensure_node(conn: sqlite3.Connection, source_key: str, name: str, mapping_meta: dict) -> int:
+    canonical = f"{source_key}|node|{name}"
+    row = conn.execute(
+        "SELECT id FROM nodes WHERE canonical_key = ?", (canonical,)
+    ).fetchone()
+    if row:
+        return int(row[0])
+    # Find source_document for this source_key
+    doc = conn.execute(
+        "SELECT id, jurisdiction, government_level FROM source_documents WHERE source_key = ?",
+        (source_key,),
+    ).fetchone()
+    if not doc:
+        raise RuntimeError(f"source_documents missing for {source_key}")
+    cur = conn.execute(
+        """
+        INSERT INTO nodes (
+            canonical_key, node_type, name, jurisdiction, government_level,
+            source_document_id, source_locator_json
+        ) VALUES (?, 'category', ?, ?, ?, ?, '{}')
+        """,
+        (
+            canonical,
+            name,
+            doc[1] or mapping_meta.get("jurisdiction", "Commonwealth"),
+            doc[2] or mapping_meta.get("government_level", "federal"),
+            doc[0],
+        ),
+    )
+    return int(cur.lastrowid)
+
+
+def link_same_group_from_paths(
+    conn: sqlite3.Connection,
+    source_key: str,
+    mapping_meta: dict,
+) -> int:
+    """Create same_group edges Parent←Child for hierarchical node names."""
+    nodes = conn.execute(
+        """
+        SELECT n.id, n.name
+        FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key = ?
+        """,
+        (source_key,),
+    ).fetchall()
+    by_name = {r[1]: r[0] for r in nodes}
+    inserted = 0
+    doc_id = conn.execute(
+        "SELECT id FROM source_documents WHERE source_key = ?", (source_key,)
+    ).fetchone()
+    doc_id = doc_id[0] if doc_id else None
+    for name, child_id in list(by_name.items()):
+        if " / " not in name:
+            continue
+        parent_name = name.rsplit(" / ", 1)[0]
+        parent_id = by_name.get(parent_name)
+        if parent_id is None:
+            parent_id = ensure_node(conn, source_key, parent_name, mapping_meta)
+            by_name[parent_name] = parent_id
+        try:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO breakdown_edges (
+                    parent_node_id, child_node_id, edge_kind, crosswalk_id,
+                    financial_year, priority, source_document_id, notes
+                ) VALUES (?, ?, 'same_group', NULL, NULL, 100, ?, ?)
+                """,
+                (parent_id, child_id, doc_id, f"path:{parent_name}"),
+            )
+            inserted += conn.execute("SELECT changes()").fetchone()[0]
+        except sqlite3.Error:
+            continue
+    return inserted
+
+
+def link_related_crosswalk(
+    conn: sqlite3.Connection,
+    crosswalk_id: str,
+    child_source_key: str,
+) -> int:
+    """ABS COFOG leaf → Statement 6 function children via crosswalk."""
+    cw = load_yaml(CROSSWALKS_DIR / f"{crosswalk_id}.yaml")
+    mappings = cw.get("mappings") or []
+    inserted = 0
+
+    for m in mappings:
+        abs_name = m["abs"]
+        budget_fn = m["budget"]
+        quality = m.get("quality", cw.get("match_quality_default", "approx"))
+
+        abs_nodes = conn.execute(
+            """
+            SELECT n.id FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key LIKE 'abs_gfs_%'
+              AND (
+                n.name = ?
+                OR lower(n.name) = lower(?)
+                OR lower(n.name) = lower(?)
+              )
+            """,
+            (abs_name, abs_name, f"Total {abs_name}"),
+        ).fetchall()
+        # Also match "Total health" style (lowercase purpose word)
+        if abs_name:
+            total_lc = f"Total {abs_name[0].lower() + abs_name[1:]}"
+            extra = conn.execute(
+                """
+                SELECT n.id FROM nodes n
+                JOIN source_documents d ON d.id = n.source_document_id
+                WHERE d.source_key LIKE 'abs_gfs_%' AND n.name = ?
+                """,
+                (total_lc,),
+            ).fetchall()
+            abs_nodes = list({(r[0],) for r in list(abs_nodes) + list(extra)})
+        if not abs_nodes:
+            continue
+
+        # Prefer A.6.1 immediate sub-functions; else component leaves; else function total.
+        child_nodes = conn.execute(
+            """
+            SELECT n.id, n.name FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key = ?
+              AND (
+                n.name = ?
+                OR n.name LIKE ?
+              )
+            """,
+            (child_source_key, budget_fn, f"{budget_fn} / %"),
+        ).fetchall()
+        immediate = [
+            (nid, name)
+            for nid, name in child_nodes
+            if name == budget_fn or name.count(" / ") == 1
+        ]
+        subfunctions = [(nid, name) for nid, name in immediate if name.count(" / ") == 1]
+
+        if not subfunctions:
+            # Fall back to component pack leaves under this function
+            comp_nodes = conn.execute(
+                """
+                SELECT n.id, n.name FROM nodes n
+                JOIN source_documents d ON d.id = n.source_document_id
+                WHERE d.source_key = 'federal_budget_statement_6_components'
+                  AND n.name LIKE ?
+                  AND n.name NOT LIKE ? || ' / % / % / %'
+                """,
+                (f"{budget_fn} / %", budget_fn),
+            ).fetchall()
+            # Prefer depth-2 (function / sub / component) as related children of ABS
+            depth2 = [(nid, name) for nid, name in comp_nodes if name.count(" / ") == 2]
+            depth1 = [(nid, name) for nid, name in comp_nodes if name.count(" / ") == 1]
+            subfunctions = depth1 or depth2
+
+        if not subfunctions:
+            # Last resort: function total (documents coverage; single related child)
+            totals = [(nid, name) for nid, name in immediate if name == budget_fn]
+            subfunctions = totals
+
+        if not subfunctions:
+            continue
+
+        for (parent_id,) in abs_nodes:
+            for child_id, child_name in subfunctions:
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO breakdown_edges (
+                        parent_node_id, child_node_id, edge_kind, crosswalk_id,
+                        financial_year, priority, source_document_id, notes
+                    ) VALUES (?, ?, 'related_breakdown', ?, NULL, 50, NULL, ?)
+                    """,
+                    (
+                        parent_id,
+                        child_id,
+                        crosswalk_id,
+                        f"{abs_name}→{child_name}|{quality}",
+                    ),
+                )
+                inserted += conn.execute("SELECT changes()").fetchone()[0]
+    return inserted
+
+
+def _norm_path(name: str) -> str:
+    return " / ".join(p.strip().lower() for p in (name or "").split(" / ") if p.strip())
+
+
+def _insert_same_group(
+    conn: sqlite3.Connection,
+    parent_id: int,
+    child_id: int,
+    crosswalk_id: str,
+    priority: int,
+    notes: str,
+) -> int:
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO breakdown_edges (
+            parent_node_id, child_node_id, edge_kind, crosswalk_id,
+            financial_year, priority, source_document_id, notes
+        ) VALUES (?, ?, 'same_group', ?, NULL, ?, NULL, ?)
+        """,
+        (parent_id, child_id, crosswalk_id, priority, notes),
+    )
+    return int(conn.execute("SELECT changes()").fetchone()[0])
+
+
+def link_a61_to_components(conn: sqlite3.Connection) -> int:
+    """A.6.1 Function/Sub → component Function/Sub/Component by path."""
+    inserted = 0
+    comps = conn.execute(
+        """
+        SELECT n.id, n.name FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key = 'federal_budget_statement_6_components'
+          AND n.name LIKE '% / % / %'
+        """
+    ).fetchall()
+    for child_id, child_name in comps:
+        parent_path = child_name.rsplit(" / ", 1)[0]
+        parents = conn.execute(
+            """
+            SELECT n.id FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key = 'federal_budget_statement_6_a61'
+              AND lower(n.name) = lower(?)
+            """,
+            (parent_path,),
+        ).fetchall()
+        for (parent_id,) in parents:
+            inserted += _insert_same_group(
+                conn,
+                parent_id,
+                child_id,
+                "a61_to_components",
+                90,
+                f"a61→comp:{child_name}",
+            )
+    return inserted
+
+
+def link_pbs_to_components(conn: sqlite3.Connection) -> int:
+    """Prefer component parent; else A.6.1 sub-function for PBS program nodes."""
+    inserted = 0
+    pbs_keys = (
+        "federal_dss_pbs_programs",
+        "federal_health_pbs_programs",
+    )
+    placeholders = ", ".join("?" for _ in pbs_keys)
+    pbs = conn.execute(
+        f"""
+        SELECT n.id, n.name, d.source_key FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key IN ({placeholders})
+          AND n.name LIKE '% / % / %'
+        """,
+        pbs_keys,
+    ).fetchall()
+    for pbs_id, pbs_name, pbs_source in pbs:
+        parent_path = pbs_name.rsplit(" / ", 1)[0]
+        # Prefer exact component leaf match (program under same path as component name)
+        # First: parent is component node whose name equals Function/Sub/Component
+        # matching PBS path when PBS program name ≈ component leaf.
+        program_leaf = pbs_name.rsplit(" / ", 1)[-1]
+        component_parents = conn.execute(
+            """
+            SELECT n.id, n.name FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key = 'federal_budget_statement_6_components'
+              AND (
+                lower(n.name) = lower(?)
+                OR (
+                  lower(n.name) LIKE lower(?) || ' / %'
+                  AND lower(n.name) NOT LIKE lower(?) || ' / % / %'
+                )
+              )
+            """,
+            (parent_path + " / " + program_leaf, parent_path, parent_path),
+        ).fetchall()
+        # Prefer: PBS hangs under matching component leaf when names align;
+        # else under Function/Sub parent (component intermediate or A.6.1).
+        matched_component_leaf = [
+            (nid, name)
+            for nid, name in component_parents
+            if _norm_path(name) == _norm_path(parent_path + " / " + program_leaf)
+            or _norm_path(name.rsplit(" / ", 1)[-1]) == _norm_path(program_leaf)
+        ]
+        if matched_component_leaf:
+            for parent_id, _ in matched_component_leaf:
+                inserted += _insert_same_group(
+                    conn,
+                    parent_id,
+                    pbs_id,
+                    "pbs_under_component",
+                    70,
+                    f"pbs:{pbs_source}:{pbs_name}",
+                )
+            continue
+
+        # Function/Sub parents: components intermediate nodes, then A.6.1
+        parents = conn.execute(
+            """
+            SELECT n.id, d.source_key FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key IN (
+                'federal_budget_statement_6_components',
+                'federal_budget_statement_6_a61'
+            )
+              AND lower(n.name) = lower(?)
+            ORDER BY CASE d.source_key
+                WHEN 'federal_budget_statement_6_components' THEN 0
+                ELSE 1
+            END
+            """,
+            (parent_path,),
+        ).fetchall()
+        # Prefer component parent only; if none, use A.6.1
+        comp_parents = [p for p in parents if p[1] == "federal_budget_statement_6_components"]
+        a61_parents = [p for p in parents if p[1] == "federal_budget_statement_6_a61"]
+        chosen = comp_parents or a61_parents
+        for parent_id, _sk in chosen:
+            inserted += _insert_same_group(
+                conn,
+                parent_id,
+                pbs_id,
+                "pbs_dss_bridge",
+                80 if comp_parents else 75,
+                f"pbs:{pbs_source}:{pbs_name}",
+            )
+    return inserted
+
+
+def link_ordered_cascade(conn: sqlite3.Connection) -> dict[str, int]:
+    """Emit a61→components and components/a61→PBS same_group edges."""
+    result = {
+        "a61_to_components": link_a61_to_components(conn),
+        "pbs_links": link_pbs_to_components(conn),
+    }
+    # Drop a61→PBS edges when the same PBS child already hangs under a component.
+    conn.execute(
+        """
+        DELETE FROM breakdown_edges
+        WHERE id IN (
+            SELECT e.id
+            FROM breakdown_edges e
+            JOIN nodes pn ON pn.id = e.parent_node_id
+            JOIN source_documents pd ON pd.id = pn.source_document_id
+            JOIN nodes ch ON ch.id = e.child_node_id
+            JOIN source_documents chd ON chd.id = ch.source_document_id
+            WHERE e.edge_kind = 'same_group'
+              AND pd.source_key = 'federal_budget_statement_6_a61'
+              AND chd.source_key IN (
+                  'federal_dss_pbs_programs',
+                  'federal_health_pbs_programs'
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM breakdown_edges e2
+                JOIN nodes cn ON cn.id = e2.parent_node_id
+                JOIN source_documents cd ON cd.id = cn.source_document_id
+                WHERE e2.child_node_id = e.child_node_id
+                  AND e2.edge_kind = 'same_group'
+                  AND cd.source_key = 'federal_budget_statement_6_components'
+              )
+        )
+        """
+    )
+    result["pruned_a61_pbs_dupes"] = int(conn.execute("SELECT changes()").fetchone()[0])
+    return result
+
+
+def run_pack(pack_id: str, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
+    pack_path = PACKS_DIR / f"{pack_id}.yaml"
+    if not pack_path.is_file():
+        # allow abs pack without extractor
+        if pack_id == "abs_gfs_table4":
+            migrate(db_path)
+            return {"pack": pack_id, "status": "config_only"}
+        raise FileNotFoundError(pack_path)
+    pack = load_yaml(pack_path)
+    migrate(db_path)
+    summary: dict[str, Any] = {"pack": pack_id}
+
+    if pack.get("extractor"):
+        summary["extract"] = run_extractor(pack["extractor"])
+
+    mapping_rel = pack.get("mapping")
+    if mapping_rel:
+        mapping_path = REPO_ROOT / mapping_rel
+        summary["publish"] = run_mapping(mapping_path, db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        source_key = pack.get("source_key")
+        if source_key and pack.get("edge_kind") == "same_group":
+            mapping_meta = load_yaml(REPO_ROOT / mapping_rel) if mapping_rel else {}
+            summary["same_group_edges"] = link_same_group_from_paths(
+                conn, source_key, mapping_meta
+            )
+        if pack.get("related_crosswalk_id") and source_key:
+            summary["related_edges"] = link_related_crosswalk(
+                conn, pack["related_crosswalk_id"], source_key
+            )
+        if pack_id in ("bp1_s6_components", "pbs_programs_dss", "pbs_programs_health"):
+            summary["cascade_edges"] = link_ordered_cascade(conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return summary
+
+
+ALL_PACKS = [
+    "abs_gfs_table4",
+    "bp1_s6_a61",
+    "bp1_s6_components",
+    "pbs_programs_dss",
+    "pbs_programs_health",
+]
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run breakdown pack")
+    parser.add_argument("--pack", help="Pack id under config/breakdowns/")
+    parser.add_argument("--db", type=Path, default=DEFAULT_DB)
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run abs + a61 + components + PBS packs in order",
+    )
+    args = parser.parse_args(argv)
+    if args.all:
+        results = []
+        for pid in ALL_PACKS:
+            pack_file = PACKS_DIR / f"{pid}.yaml"
+            if pid != "abs_gfs_table4" and not pack_file.is_file():
+                results.append({"pack": pid, "status": "skipped_missing_config"})
+                continue
+            results.append(run_pack(pid, args.db))
+        print(results)
+        return 0
+    if not args.pack:
+        parser.error("--pack is required unless --all is set")
+    print(run_pack(args.pack, args.db))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

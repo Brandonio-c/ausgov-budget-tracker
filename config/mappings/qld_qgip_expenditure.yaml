@@ -1,0 +1,25 @@
+source_id: qld_qgip_expenditure
+title: QLD QGIP expenditure consolidated
+publisher: Queensland Government
+jurisdiction: QLD
+government_level: state
+source_family: state_actuals
+measure_type: actual_accrual_expense
+accounting_basis: accrual
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/m7/qld_qgip_expenditure.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/qld_qgip_expenditure/snapshots/manual-20260722T052657Z/files/qld_qgip_expenditure__18-19-expenditure-data-consolidated.csv
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

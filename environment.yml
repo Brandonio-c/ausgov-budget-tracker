@@ -9,8 +9,14 @@ dependencies:
   - beautifulsoup4
   - openpyxl
   - pyyaml
+  - jsonschema
   - jupyter
+  - cryptography
   - pip
   - pip:
     - fastapi
     - "uvicorn[standard]"
+    - pypdf
+    - playwright
+    - "fastembed>=0.4"
+    - numpy

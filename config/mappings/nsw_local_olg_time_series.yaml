@@ -1,0 +1,25 @@
+source_id: nsw_local_olg_time_series
+title: NSW OLG Your Council time series
+publisher: NSW Office of Local Government
+jurisdiction: NSW
+government_level: local
+source_family: local_actuals
+measure_type: actual_accrual_expense
+accounting_basis: accrual
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/m5/nsw_local_olg_time_series.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/local/nsw_local_olg_time_series/snapshots/20260721T004953Z/files/time-series-data-2024-2025.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

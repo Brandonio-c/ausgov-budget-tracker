@@ -1,0 +1,11 @@
+id: bp1_s6_components
+title: BP1 Statement 6 component tables (SSW/Health/Education/Defence)
+source_key: federal_budget_statement_6_components
+compatibility_group: budget_expense
+edge_kind: same_group
+extractor: scripts/ingest/extractors/bp1_s6_components.py
+cached_copy_path: data/raw/federal/federal_budget_statement_6_2026_27/snapshots/20260720T215815Z/files/bp1_bs-6.pdf
+landing_url: https://budget.gov.au/
+resource_url: https://budget.gov.au/2026-27/content/bp1/download/bp1_bs-6.pdf
+staging_csv: data/staging/breakdowns/bp1_s6_components.csv
+mapping: config/mappings/federal_budget_statement_6_components.yaml

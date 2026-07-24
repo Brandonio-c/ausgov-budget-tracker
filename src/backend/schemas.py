@@ -3,11 +3,23 @@ from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 
+class BreakdownMeta(BaseModel):
+    """Provenance for related_breakdown children (not additive with parent)."""
+
+    kind: Literal["same_group", "related_breakdown"]
+    source_key: Optional[str] = None
+    compatibility_group: Optional[str] = None
+    match_quality: Optional[str] = None
+    banner: Optional[str] = None
+    fact_financial_year: Optional[str] = None
+
+
 class TreeNode(BaseModel):
     name: str
     value: float
-    id: Optional[int] = None  # present only on leaves — backs the source-trace click
+    id: Optional[int] = None  # present on leaves; also on related parents for citation
     children: Optional[list["TreeNode"]] = None
+    breakdown: Optional[BreakdownMeta] = None
 
 
 TreeNode.model_rebuild()

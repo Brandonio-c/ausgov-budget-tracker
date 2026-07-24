@@ -1,0 +1,30 @@
+source_id: abs_gfs_previous_releases
+title: ABS GFS Expenses by Purpose — previous-release Commonwealth Table_4 (pre-2015-16 extension)
+publisher: Australian Bureau of Statistics
+jurisdiction: Commonwealth
+government_level: federal
+source_family: abs_gfs
+measure_type: gfs_expense
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/abs_gfs_previous_releases.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/staging/abs_gfs_previous/55120DO002_201920.xls
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+notes: >
+  Extends Commonwealth GFS purpose series using Table_4 from previous-release
+  All-workbooks zips (2017-18 release onward). Deduplicated by fy+category
+  preferring the latest release; staged only for FYs before 2015-16 to avoid
+  overlapping abs_gfs_commonwealth_130.

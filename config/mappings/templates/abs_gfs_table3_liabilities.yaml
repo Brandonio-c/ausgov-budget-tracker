@@ -1,0 +1,5 @@
+# Shared ABS GFS Table_3 liability melt (see adapters/abs_gfs.py).
+measure_type: gfs_liability
+accounting_basis: gfs
+estimate_status: actual
+compatibility_group: gfs_liability

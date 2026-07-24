@@ -1,0 +1,25 @@
+source_id: abs_gfs_state_sa_234
+title: "ABS GFS Expenses by Purpose \u2014 abs_gfs_state_sa_234"
+publisher: Australian Bureau of Statistics
+jurisdiction: SA
+government_level: state
+source_family: abs_gfs
+measure_type: gfs_expense
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/m4/abs_gfs_state_sa_234.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/abs_gfs_state_sa_234/snapshots/20260720T215815Z/files/55120DO006_202425.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
