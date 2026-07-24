@@ -115,21 +115,24 @@ def extract(
             if tm:
                 total_fn = _match_function(tm.group(1)) or tm.group(1)
 
+            # Function total / bare function header with amounts (e.g. "Defence 45,103 …")
+            # must start a new function path — never nest under the previous function.
+            bare = _match_function(label)
             if total_fn:
                 category = f"Total {total_fn}" if not str(total_fn).startswith("Total") else str(total_fn)
                 if not category.lower().startswith("total"):
                     category = f"Total {category}"
                 path = category
+                matched = _match_function(str(total_fn))
+                if matched:
+                    current_fn = matched
+            elif bare:
+                path = bare
+                current_fn = bare
             elif current_fn:
                 path = f"{current_fn} / {label}"
             else:
-                # Bare function total line like "Defence 45,103 ..."
-                bare = _match_function(label)
-                if bare:
-                    path = bare
-                    current_fn = bare
-                else:
-                    path = label
+                path = label
 
             rows.append(
                 {

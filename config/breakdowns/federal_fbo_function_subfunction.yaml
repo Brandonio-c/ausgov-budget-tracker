@@ -1,0 +1,10 @@
+id: federal_fbo_function_subfunction
+title: FBO Appendix A expenses by function/sub-function (audited actuals)
+source_key: federal_fbo_2024_25_function_subfunction
+compatibility_group: actual_expense
+edge_kind: same_group
+related_crosswalk_id: cofog_to_budget_function
+extractor: scripts/ingest/extractors/fbo_appendix_a.py
+staging_csv: data/staging/breakdowns/federal_fbo_2024_25_function_subfunction.csv
+mapping: config/mappings/federal_fbo_2024_25_function_subfunction.yaml
+landing_url: https://budget.gov.au/content/fbo/index.htm

@@ -323,6 +323,7 @@ def build_related_subtree(
     parent_name: str | None = None,
     depth: int = 0,
     max_depth: int = 6,
+    source_key_prefixes: tuple[str, ...] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """
     Load related_breakdown children for a leaf; nest same_group under each.
@@ -331,6 +332,15 @@ def build_related_subtree(
     if depth > max_depth:
         return [], None
     related = child_edges(conn, parent_node_id, "related_breakdown", financial_year)
+    if source_key_prefixes:
+        related = [
+            e
+            for e in related
+            if any(
+                str(e.get("child_source_key") or "").startswith(p)
+                for p in source_key_prefixes
+            )
+        ]
     if not related:
         return [], None
 
@@ -402,10 +412,15 @@ def build_related_subtree(
         return [], None
 
     mismatch_year = sorted(mismatch_years)[0] if mismatch_years else None
+    compat = (
+        "actual_expense"
+        if meta_source and str(meta_source).startswith("federal_fbo_")
+        else "budget_expense"
+    )
     breakdown = {
         "kind": "related_breakdown",
         "source_key": meta_source,
-        "compatibility_group": "budget_expense",
+        "compatibility_group": compat,
         "match_quality": quality,
         "fact_financial_year": mismatch_year,
         "banner": banner_for_related(
@@ -477,6 +492,23 @@ def resolve_related_parent_node_id(
     return None
 
 
+def _related_folder(
+    *,
+    related_list: list[dict[str, Any]],
+    breakdown: dict[str, Any],
+    parent_amount: float,
+    parent_fact_id: int | None,
+) -> dict[str, Any]:
+    """Navigable related folder preserving parent amount (non-additive)."""
+    return {
+        "children": {item["name"]: item["node"] for item in related_list},
+        "amount": float(parent_amount or 0),
+        "fact_id": parent_fact_id,
+        "breakdown": breakdown,
+        "preserve_amount": True,
+    }
+
+
 def attach_related_to_tree(
     conn,
     tree: dict[str, Any],
@@ -484,47 +516,64 @@ def attach_related_to_tree(
 ) -> None:
     """
     Mutate tree-dict: attach related_breakdown on leaves, and on ABS purpose
-    parents (Health/Education/…) so Statement 6 cascade is reachable.
+    parents so Statement 6 / FBO cascades are reachable without double-counting.
     """
+
+    def _attach(node: dict[str, Any], nid: int, *, as_folders: bool) -> None:
+        kids = node.setdefault("children", {})
+        parent_amount = float(node.get("amount") or 0)
+        parent_fact = node.get("fact_id")
+        s6_list, s6_bd = build_related_subtree(
+            conn,
+            nid,
+            financial_year,
+            parent_name=None,
+            source_key_prefixes=("federal_budget_statement_6",),
+        )
+        fbo_list, fbo_bd = build_related_subtree(
+            conn,
+            nid,
+            financial_year,
+            parent_name=None,
+            source_key_prefixes=("federal_fbo_",),
+        )
+        if as_folders:
+            if s6_list and s6_bd and "Statement 6 (budget estimates)" not in kids:
+                kids["Statement 6 (budget estimates)"] = _related_folder(
+                    related_list=s6_list,
+                    breakdown=s6_bd,
+                    parent_amount=parent_amount,
+                    parent_fact_id=parent_fact,
+                )
+            if fbo_list and fbo_bd and "FBO Appendix A (audited)" not in kids:
+                kids["FBO Appendix A (audited)"] = _related_folder(
+                    related_list=fbo_list,
+                    breakdown=fbo_bd,
+                    parent_amount=parent_amount,
+                    parent_fact_id=parent_fact,
+                )
+            node["children"] = kids
+            return
+        # Leaf purpose: S6 children as primary related drill; FBO as folder.
+        if s6_list and s6_bd:
+            node["children"] = {item["name"]: item["node"] for item in s6_list}
+            node["breakdown"] = s6_bd
+            if fbo_list and fbo_bd:
+                node["children"]["FBO Appendix A (audited)"] = _related_folder(
+                    related_list=fbo_list,
+                    breakdown=fbo_bd,
+                    parent_amount=parent_amount,
+                    parent_fact_id=parent_fact,
+                )
+        elif fbo_list and fbo_bd:
+            node["children"] = {item["name"]: item["node"] for item in fbo_list}
+            node["breakdown"] = fbo_bd
 
     def walk(node: dict[str, Any], path_name: str | None = None) -> None:
         kids = node.get("children") or {}
         for child_name, child in list(kids.items()):
             walk(child, child_name)
 
-        # Purpose parents with ABS same_group children: also attach related S6
-        # under a synthetic branch only when they have related edges and no
-        # existing related breakdown yet. Prefer replacing empty deeper path
-        # by adding S6 children alongside? Plan: attach related ON the purpose
-        # node by converting ABS children to stay, and ALSO expose related via
-        # replacing only when purpose is a leaf OR when purpose is in targets
-        # and we merge related as additional drill under "Budget Statement 6".
-        #
-        # Chosen: for purpose targets with ABS kids, keep ABS kids for same_group
-        # pie; attach related children as nested under the purpose ONLY if there
-        # are NO abs kids (leaf). For Health/Education WITH abs kids, attach
-        # related onto each ABS leaf that has no further children AND also
-        # attach related onto the purpose node by storing related kids in
-        # node["_related_children"] — actually plan says attach under Health
-        # node. So: if purpose in targets and has related edges, SET children
-        # to related S6 tree (with banner), but KEEP amount/fact from ABS
-        # aggregate if present. That would HIDE ABS section kids.
-        #
-        # Better UX from plan: "map Total health / purpose aggregate to related
-        # children under the nested Health/Education node". So Health keeps ABS
-        # section children for same_group pie; user drills Hospital services
-        # (ABS leaf). To get S6 depth for Health overall, attach related as
-        # ADDITIONAL children labelled from S6 that don't roll into parent —
-        # but then pie would mix. So related must not be in the pie children.
-        #
-        # Practical approach matching plan + transparency:
-        # - Leaves: attach related (as now).
-        # - Purpose parents in ABS_PURPOSE_RELATED_TARGETS: if they have a
-        #   related subtree, ADD a single child folder
-        #   "Statement 6 (budget estimates)" whose children are related and
-        #   whose breakdown marks related — parent pie still sums only ABS
-        #   same_group kids; the Statement 6 folder is excluded from rollup
-        #   via related_breakdown on that folder node.
         if kids:
             purpose = path_name or ""
             if purpose in ABS_PURPOSE_RELATED_TARGETS:
@@ -532,23 +581,7 @@ def attach_related_to_tree(
                     conn, purpose, node.get("fact_id")
                 )
                 if nid is not None:
-                    related_list, breakdown = build_related_subtree(
-                        conn, nid, financial_year, parent_name=None
-                    )
-                    if related_list and breakdown:
-                        # Folder excluded from parent rollup via related kind
-                        folder = {
-                            "children": {
-                                item["name"]: item["node"] for item in related_list
-                            },
-                            "amount": 0.0,
-                            "fact_id": node.get("fact_id"),
-                            "breakdown": breakdown,
-                        }
-                        # Only add if not already present
-                        if "Statement 6 (budget estimates)" not in kids:
-                            kids["Statement 6 (budget estimates)"] = folder
-                            node["children"] = kids
+                    _attach(node, nid, as_folders=True)
             return
 
         fact_id = node.get("fact_id")
@@ -557,13 +590,7 @@ def attach_related_to_tree(
         nid = resolve_related_parent_node_id(conn, path_name or "", fact_id)
         if nid is None:
             return
-        related_list, breakdown = build_related_subtree(
-            conn, nid, financial_year
-        )
-        if not related_list or not breakdown:
-            return
-        node["children"] = {item["name"]: item["node"] for item in related_list}
-        node["breakdown"] = breakdown
+        _attach(node, nid, as_folders=False)
 
     walk(tree)
 

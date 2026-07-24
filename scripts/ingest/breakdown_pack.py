@@ -248,17 +248,56 @@ def _insert_same_group(
 
 
 def link_a61_to_components(conn: sqlite3.Connection) -> int:
-    """A.6.1 Function/Sub → component Function/Sub/Component by path."""
+    """A.6.1 Function/Sub → component nodes by path prefix or exact name.
+
+    Three-level components (Function / Sub / Component) hang under the
+    matching A.6.1 Function/Sub. Function- or subfunction-level lumps that
+    share an exact name with A.6.1 (e.g. Defence, Education / Higher
+    education) also hang under that A.6.1 node so PBS programs attached to
+    the component lump remain reachable from related_breakdown.
+    """
     inserted = 0
     comps = conn.execute(
         """
         SELECT n.id, n.name FROM nodes n
         JOIN source_documents d ON d.id = n.source_document_id
         WHERE d.source_key = 'federal_budget_statement_6_components'
-          AND n.name LIKE '% / % / %'
+          AND (
+            n.name LIKE '% / % / %'
+            OR EXISTS (
+              SELECT 1 FROM nodes a
+              JOIN source_documents ad ON ad.id = a.source_document_id
+              WHERE ad.source_key = 'federal_budget_statement_6_a61'
+                AND lower(a.name) = lower(n.name)
+            )
+          )
         """
     ).fetchall()
     for child_id, child_name in comps:
+        # Exact A.6.1 match first (Defence, Education / Higher education, …)
+        exact = conn.execute(
+            """
+            SELECT n.id FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key = 'federal_budget_statement_6_a61'
+              AND lower(n.name) = lower(?)
+            """,
+            (child_name,),
+        ).fetchall()
+        if exact:
+            for (parent_id,) in exact:
+                inserted += _insert_same_group(
+                    conn,
+                    parent_id,
+                    child_id,
+                    "a61_to_components",
+                    90,
+                    f"a61→comp-exact:{child_name}",
+                )
+            continue
+        # Else 3-level: parent is Function / Sub
+        if child_name.count(" / ") < 2:
+            continue
         parent_path = child_name.rsplit(" / ", 1)[0]
         parents = conn.execute(
             """
@@ -287,6 +326,7 @@ def link_pbs_to_components(conn: sqlite3.Connection) -> int:
     pbs_keys = (
         "federal_dss_pbs_programs",
         "federal_health_pbs_programs",
+        "federal_pbs_programs_s6_bridge",
     )
     placeholders = ", ".join("?" for _ in pbs_keys)
     pbs = conn.execute(
@@ -294,16 +334,21 @@ def link_pbs_to_components(conn: sqlite3.Connection) -> int:
         SELECT n.id, n.name, d.source_key FROM nodes n
         JOIN source_documents d ON d.id = n.source_document_id
         WHERE d.source_key IN ({placeholders})
-          AND n.name LIKE '% / % / %'
+          AND (n.name LIKE '% / % / %' OR n.name LIKE 'Defence / %')
         """,
         pbs_keys,
     ).fetchall()
     for pbs_id, pbs_name, pbs_source in pbs:
-        parent_path = pbs_name.rsplit(" / ", 1)[0]
+        # 3-level PBS paths: Function / Sub / Program → parent Function / Sub
+        # 2-level (Defence): Function / Program → parent Function
+        parts = [p.strip() for p in pbs_name.split(" / ") if p.strip()]
+        if len(parts) < 2:
+            continue
+        parent_path = " / ".join(parts[:-1])
+        program_leaf = parts[-1]
         # Prefer exact component leaf match (program under same path as component name)
         # First: parent is component node whose name equals Function/Sub/Component
         # matching PBS path when PBS program name ≈ component leaf.
-        program_leaf = pbs_name.rsplit(" / ", 1)[-1]
         component_parents = conn.execute(
             """
             SELECT n.id, n.name FROM nodes n
@@ -393,7 +438,8 @@ def link_ordered_cascade(conn: sqlite3.Connection) -> dict[str, int]:
               AND pd.source_key = 'federal_budget_statement_6_a61'
               AND chd.source_key IN (
                   'federal_dss_pbs_programs',
-                  'federal_health_pbs_programs'
+                  'federal_health_pbs_programs',
+                  'federal_pbs_programs_s6_bridge'
               )
               AND EXISTS (
                 SELECT 1
@@ -443,7 +489,12 @@ def run_pack(pack_id: str, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
             summary["related_edges"] = link_related_crosswalk(
                 conn, pack["related_crosswalk_id"], source_key
             )
-        if pack_id in ("bp1_s6_components", "pbs_programs_dss", "pbs_programs_health"):
+        if pack_id in (
+            "bp1_s6_components",
+            "pbs_programs_dss",
+            "pbs_programs_health",
+            "pbs_programs_s6_bridge",
+        ):
             summary["cascade_edges"] = link_ordered_cascade(conn)
         conn.commit()
     finally:
@@ -457,6 +508,8 @@ ALL_PACKS = [
     "bp1_s6_components",
     "pbs_programs_dss",
     "pbs_programs_health",
+    "pbs_programs_s6_bridge",
+    "federal_fbo_function_subfunction",
 ]
 
 

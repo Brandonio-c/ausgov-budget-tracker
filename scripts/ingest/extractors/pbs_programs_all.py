@@ -82,6 +82,98 @@ def _portfolio_from_source(source_id: str, stem: str) -> str:
     return _norm(portfolio)[:80] or stem[:80]
 
 
+START_MARKERS = re.compile(
+    r"Table\s+2\.1|"
+    r"Program expenses|"
+    r"Expenses for Outcome|"
+    r"Budgeted expenses for Outcome|"
+    r"Budget Expenses and Performance|"
+    r"Budgeted Expenses and Performance|"
+    r"Cost Summary for Program|"
+    r"Planned Expenditure by Key Cost Category",
+    re.I,
+)
+
+# Tables that are part of Outcome expense sections — do not abort capture.
+KEEP_TABLE = re.compile(
+    r"Table\s+\d+.*(?:Cost Summary|Budgeted Resources|Program|Outcome|Key Cost)",
+    re.I,
+)
+
+PROGRAM_TOTAL = re.compile(
+    r"Program\s+\d+(?:\.\d+)?\b.*?Total funded expenditure",
+    re.I,
+)
+NUMS_ONLY = re.compile(
+    r"^(?:-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?)(?:\s+(?:-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?)){2,6}\s*$"
+)
+KEY_COST_ROW = re.compile(
+    r"^(?:\d+\s+)?(?P<label>[A-Za-z][A-Za-z0-9 ,\-&/]+?)\s+"
+    r"(?P<nums>(?:-?\d{1,3}(?:,\d{3})*(?:\.\d+)?(?:\s+|$)){3,6})\s*$"
+)
+
+
+def _is_start_page(text: str) -> bool:
+    return bool(START_MARKERS.search(text))
+
+
+def _should_stop_table(line: str) -> bool:
+    if not re.match(r"^Table\s+\d", line):
+        return False
+    if "2.1" in line or KEEP_TABLE.search(line):
+        return False
+    # Abort only on unrelated major tables / section financial statements
+    if re.search(r"Budgeted Financial Statements|Explanatory Tables|Section\s+3", line, re.I):
+        return True
+    return False
+
+
+def _append_year_rows(
+    rows: list[dict],
+    *,
+    label: str,
+    nums: list[str],
+    portfolio: str,
+    source_id: str,
+    source_url: str,
+    pdf: Path,
+    page_no: int,
+    unit: str,
+    prefer: bool = False,
+) -> None:
+    if len(nums) < 3:
+        return
+    years = YEARS_DEFAULT[-len(nums) :]
+    for fy, tok in zip(years, nums):
+        if unit == "$m":
+            try:
+                amount = int(float(tok.replace(",", "")) * 1_000_000)
+            except ValueError:
+                continue
+        else:
+            amount = _parse_thousands(tok)
+            if amount is None:
+                continue
+        rows.append(
+            {
+                "fy": fy,
+                "amount": amount,
+                "category": f"{portfolio} / {label}",
+                "portfolio": portfolio,
+                "program_label": label,
+                "estimate_status": STATUS_BY_FY.get(fy, "budget"),
+                "source_id_origin": source_id,
+                "prefer_program_total": prefer,
+                "locator": (
+                    f"source_id:{source_id} | pdf:{pdf.name} | page:{page_no} | "
+                    f"program:{label} | fy:{fy} | unit:{unit}"
+                ),
+                "landing_url": source_url or LANDING,
+                "resource_url": source_url or LANDING,
+            }
+        )
+
+
 def extract_pdf(
     pdf: Path,
     *,
@@ -93,12 +185,7 @@ def extract_pdf(
     capturing = False
     pending: list[str] = []
     for page_no, text in iter_pdf_pages(pdf):
-        if (
-            re.search(r"Table\s+2\.1", text)
-            or "Program expenses" in text
-            or "Expenses for Outcome" in text
-            or "Budgeted expenses for Outcome" in text
-        ):
+        if _is_start_page(text):
             capturing = True
         if not capturing:
             continue
@@ -106,61 +193,162 @@ def extract_pdf(
             line = raw.strip()
             if not line:
                 continue
-            if capturing and re.match(r"^Table\s+\d", line) and "2.1" not in line:
+            if capturing and _should_stop_table(line):
                 capturing = False
+                pending = []
                 break
             if SKIP_LINE.match(line):
                 continue
+
+            # Defence-style: label line then numeric-only follow-on
+            if pending and NUMS_ONLY.match(line):
+                label = _norm(" ".join(pending))
+                pending = []
+                nums = re.findall(
+                    r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?", line
+                )
+                prefer = bool(PROGRAM_TOTAL.search(label))
+                if prefer or re.search(r"Program\s+\d+", label, re.I):
+                    _append_year_rows(
+                        rows,
+                        label=label,
+                        nums=nums,
+                        portfolio=portfolio,
+                        source_id=source_id,
+                        source_url=source_url,
+                        pdf=pdf,
+                        page_no=page_no,
+                        unit="$000",
+                        prefer=prefer,
+                    )
+                continue
+
             m = FIVE_TAIL.match(line)
             if not m:
+                # Key cost category rows in $m (Defence Table 4b style)
+                if portfolio == "Defence":
+                    km = KEY_COST_ROW.match(line)
+                    if km and not line.lower().startswith("total"):
+                        label = _norm(km.group("label"))
+                        if label and not re.match(r"^(?:Serial|Note)\b", label, re.I):
+                            nums = re.findall(
+                                r"-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?",
+                                km.group("nums"),
+                            )
+                            if len(nums) >= 3 and any("." in n or "," in n for n in nums):
+                                _append_year_rows(
+                                    rows,
+                                    label=f"Key cost category / {label}",
+                                    nums=nums,
+                                    portfolio=portfolio,
+                                    source_id=source_id,
+                                    source_url=source_url,
+                                    pdf=pdf,
+                                    page_no=page_no,
+                                    unit="$m",
+                                    prefer=True,
+                                )
+                                continue
                 pending.append(_norm(line))
                 if len(pending) > 4:
                     pending = pending[-4:]
                 continue
+
             label = _norm(m.group("label"))
             if pending:
                 label = _norm(" ".join(pending + [label]))
                 pending = []
-            if len(label) < 4 or label.lower().startswith("total"):
+            if len(label) < 4:
                 continue
-            if re.match(r"^(?:Outcome|Program|Departmental|Administered)\b", label, re.I) and len(label) < 20:
+            # Skip bare "Total …" unless it is a Program total funded expenditure line
+            prefer = bool(PROGRAM_TOTAL.search(label))
+            if label.lower().startswith("total") and not prefer:
                 continue
-            nums = re.findall(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?", m.group("nums"))
-            if len(nums) < 3:
+            if (
+                re.match(r"^(?:Outcome|Program|Departmental|Administered)\b", label, re.I)
+                and len(label) < 20
+                and not prefer
+            ):
                 continue
-            years = YEARS_DEFAULT[-len(nums) :]
-            for fy, tok in zip(years, nums):
-                amount = _parse_thousands(tok)
-                if amount is None:
-                    continue
-                rows.append(
-                    {
-                        "fy": fy,
-                        "amount": amount,
-                        "category": f"{portfolio} / {label}",
-                        "portfolio": portfolio,
-                        "program_label": label,
-                        "estimate_status": STATUS_BY_FY.get(fy, "budget"),
-                        "source_id_origin": source_id,
-                        "locator": (
-                            f"source_id:{source_id} | pdf:{pdf.name} | page:{page_no} | "
-                            f"program:{label} | fy:{fy} | unit:$000"
-                        ),
-                        "landing_url": source_url or LANDING,
-                        "resource_url": source_url or LANDING,
-                    }
-                )
-    # Prefer longer / more specific labels when same FY+amount collide across copies.
-    best: dict[tuple[str, str, int], dict] = {}
+            # Prefer program totals; skip Employees/Suppliers noise when we have totals
+            if re.match(r"^(?:Employees|Suppliers|Other expenses)\b", label, re.I):
+                continue
+            nums = re.findall(
+                r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?", m.group("nums")
+            )
+            _append_year_rows(
+                rows,
+                label=label,
+                nums=nums,
+                portfolio=portfolio,
+                source_id=source_id,
+                source_url=source_url,
+                pdf=pdf,
+                page_no=page_no,
+                unit="$000",
+                prefer=prefer,
+            )
+
+    # Prefer program-total / key-cost rows over duplicate generic lines
+    best: dict[tuple, dict] = {}
     for r in rows:
-        key = (r["fy"], r["estimate_status"], int(r["amount"]))
-        # Also key by normalized program tail to avoid collapsing different programs
-        # with identical amounts — use category without portfolio prefix noise.
-        key2 = (r["fy"], r["estimate_status"], _norm(r["program_label"]).lower(), int(r["amount"]))
+        key2 = (
+            r["fy"],
+            r["estimate_status"],
+            _norm(r["program_label"]).lower(),
+            int(r["amount"]),
+        )
         prev = best.get(key2)
-        if prev is None or len(r["category"]) > len(prev["category"]):
+        if prev is None:
             best[key2] = r
-    return list(best.values())
+            continue
+        if r.get("prefer_program_total") and not prev.get("prefer_program_total"):
+            best[key2] = r
+        elif len(r["category"]) > len(prev["category"]):
+            best[key2] = r
+    cleaned = []
+    for r in best.values():
+        label = r.get("program_label") or ""
+        if portfolio == "Defence":
+            cleaned_label = _clean_defence_program_label(label)
+            if not cleaned_label:
+                continue
+            r["program_label"] = cleaned_label
+            r["category"] = f"{portfolio} / {cleaned_label}"
+            r.pop("prefer_program_total", None)
+            cleaned.append(r)
+            continue
+        if re.search(r"\$'?000|Forward Estimate|E stimate|Resourcing", label, re.I):
+            if not r.get("prefer_program_total"):
+                continue
+        r.pop("prefer_program_total", None)
+        cleaned.append(r)
+    return cleaned
+
+
+def _clean_defence_program_label(label: str) -> str | None:
+    """Keep only Program totals and key cost categories from Defence PBS noise."""
+    label = _norm(label)
+    m = re.search(
+        r"(Program\s+\d+(?:\.\d+)?\b.{0,120}?)\s+Total funded expenditure",
+        label,
+        re.I,
+    )
+    if m:
+        prog = re.sub(r"\s+", " ", m.group(1)).strip(" -")
+        if len(prog) >= 8:
+            return f"{prog} Total funded expenditure"
+    m = re.search(
+        r"\b(Workforce|Operations|Capability Acquisition Program|"
+        r"Capability Sustainment Program|Operating)\b",
+        label,
+        re.I,
+    )
+    if m and "Total" not in label:
+        return f"Key cost category / {m.group(1)}"
+    if re.match(r"^Key cost category\s*/", label, re.I):
+        return label
+    return None
 
 
 def discover_pbs_pdfs() -> list[tuple[str, str, Path, str]]:

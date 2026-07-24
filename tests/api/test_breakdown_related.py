@@ -179,3 +179,63 @@ def test_commonwealth_pie_excludes_related_from_top_total(client: TestClient) ->
     related_sum = sum(c["value"] for c in (sp.get("children") or []))
     assert abs(cw["value"] - sum(c["value"] for c in cw["children"])) < 1.0
     assert abs(sp["value"] - related_sum) > 1_000_000
+
+
+def test_thin_purposes_have_related_depth(client: TestClient) -> None:
+    tree = client.get(
+        "/v2/dashboard/tree",
+        params={"mode": "actuals", "level": "federal", "year": "2024-25"},
+    ).json()
+    cw = _find_named(tree, "Commonwealth")
+    assert cw is not None
+    assert abs(cw["value"] - 745.03e9) < 0.5e9
+
+    for purpose in ("Defence", "Economic affairs", "Transport"):
+        node = _find_named(tree, purpose)
+        assert node is not None, purpose
+        assert _max_depth(node) > 1, f"{purpose} should expose related depth"
+
+    defence = _find_named(tree, "Defence")
+    assert any(
+        "Program" in c["name"] or "Total funded" in c["name"]
+        for c in _walk(defence)
+    ), "Defence related cascade should reach PBS program totals"
+
+
+def test_health_education_s6_folder_preserves_parent_amount(client: TestClient) -> None:
+    tree = client.get(
+        "/v2/dashboard/tree",
+        params={"mode": "actuals", "level": "federal", "year": "2024-25"},
+    ).json()
+    for purpose in ("Health", "Education"):
+        node = _find_named(tree, purpose)
+        assert node is not None
+        folders = [
+            c
+            for c in (node.get("children") or [])
+            if c["name"].startswith("Statement 6") or c["name"].startswith("FBO")
+        ]
+        assert folders, f"{purpose} needs Statement 6 or FBO folder"
+        for folder in folders:
+            assert folder.get("breakdown", {}).get("kind") == "related_breakdown"
+            assert abs(folder["value"] - node["value"]) < 1.0
+        # Related folders must not inflate the GFS parent pie
+        additive = [
+            c
+            for c in (node.get("children") or [])
+            if not (
+                (c.get("breakdown") or {}).get("kind") == "related_breakdown"
+                and (
+                    c["name"].startswith("Statement 6")
+                    or c["name"].startswith("FBO")
+                )
+            )
+        ]
+        if additive:
+            assert abs(node["value"] - sum(c["value"] for c in additive)) < 1.0
+
+
+def _walk(node: dict):
+    for child in node.get("children") or []:
+        yield child
+        yield from _walk(child)

@@ -342,6 +342,9 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
         # Exclude synthetic related folders (Statement 6 …) from same_group rollup.
         # Purpose nodes that themselves carry related_breakdown keep their GFS value
         # and must still count in the parent pie.
+        # Exclude related navigation folders (Statement 6 / FBO) from GFS pie rollup.
+        # Purpose nodes that themselves carry related_breakdown (e.g. Social protection
+        # leaf replace) still contribute their preserved ABS amount to the parent pie.
         additive = [
             c
             for c in children
@@ -351,6 +354,7 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
                 and (
                     c.value == 0
                     or c.name.startswith("Statement 6")
+                    or c.name.startswith("FBO Appendix A")
                 )
             )
         ]

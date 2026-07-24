@@ -1,0 +1,9 @@
+id: pbs_programs_s6_bridge
+title: PBS programs remapped onto Statement 6 function paths (Defence/Education/Infrastructure/Home Affairs/Industry)
+source_key: federal_pbs_programs_s6_bridge
+compatibility_group: budget_expense
+edge_kind: same_group
+extractor: scripts/ingest/extractors/pbs_programs_s6_bridge.py
+staging_csv: data/staging/breakdowns/pbs_programs_s6_bridge.csv
+mapping: config/mappings/federal_pbs_programs_s6_bridge.yaml
+landing_url: https://budget.gov.au/content/pbs/index.htm
