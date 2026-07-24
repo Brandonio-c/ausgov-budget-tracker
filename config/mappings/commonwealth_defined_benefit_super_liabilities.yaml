@@ -1,0 +1,30 @@
+source_id: commonwealth_defined_benefit_super_liabilities
+title: Commonwealth defined-benefit superannuation liabilities
+publisher: Department of Finance / CSC
+jurisdiction: Commonwealth
+government_level: federal
+source_family: superannuation
+measure_type: superannuation_liability
+accounting_basis: aasb
+estimate_status: audited_actual
+period_granularity: financial_year
+valuation_basis: actuarial
+amount_granularity: scheme_aggregate
+input:
+  path: data/staging/super/commonwealth_defined_benefit_super_liabilities.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+  observation_date: observation_date
+  valuation_basis: valuation_basis
+  amount_granularity: amount_granularity
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_cfs_2024_25/snapshots/manual-20260722T043850Z/files/2024-25-consolidated-financial-statements.pdf
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

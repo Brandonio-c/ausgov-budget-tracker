@@ -139,29 +139,66 @@ def upsert_fact(
 ) -> str:
     row = decision.row
     fact_key = build_fact_key(mapping, row)
-    locator_json = json.dumps(
-        {
-            "locator": row.get("locator"),
-            "landing_url": row.get("landing_url"),
-            "original_resource_url": row.get("original_resource_url"),
-            "cached_copy_path": row.get("_cached_copy_path"),
-        },
-        sort_keys=True,
-    )
+    locator_payload = {
+        "locator": row.get("locator"),
+        "landing_url": row.get("landing_url"),
+        "original_resource_url": row.get("original_resource_url"),
+        "cached_copy_path": row.get("_cached_copy_path"),
+    }
+    def _jsonable(value: Any) -> Any:
+        if value is None or value == "":
+            return None
+        if hasattr(value, "isoformat"):
+            try:
+                return value.isoformat()
+            except Exception:
+                return str(value)
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        return str(value)
+
+    for key in (
+        "observation_date",
+        "publication_date",
+        "valuation_basis",
+        "amount_granularity",
+        "isin",
+        "maturity_date",
+        "coupon",
+        "authority",
+        "numerator_fact_key",
+        "denominator_fact_key",
+    ):
+        if row.get(key) not in (None, ""):
+            locator_payload[key] = _jsonable(row[key])
+    locator_json = json.dumps(locator_payload, sort_keys=True)
     amount = float(row["amount_aud"])
+    observation_date = _jsonable(
+        row.get("observation_date") or row.get("_observation_date")
+    )
+    publication_date = _jsonable(
+        row.get("publication_date") or row.get("_publication_date")
+    )
+    valuation_basis = row.get("valuation_basis") or mapping.get("valuation_basis")
+    amount_granularity = row.get("amount_granularity") or mapping.get("amount_granularity")
     conn.execute(
         """
         INSERT INTO facts (
             fact_key, financial_year, period_granularity, measure_type,
             accounting_basis, estimate_status, amount_aud, unit, currency,
             source_document_id, source_retrieval_id, source_locator_json,
-            retrieved_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, ?)
+            retrieved_at, observation_date, publication_date,
+            valuation_basis, amount_granularity
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(fact_key) DO UPDATE SET
             amount_aud = excluded.amount_aud,
             source_retrieval_id = excluded.source_retrieval_id,
             source_locator_json = excluded.source_locator_json,
-            retrieved_at = excluded.retrieved_at
+            retrieved_at = excluded.retrieved_at,
+            observation_date = COALESCE(excluded.observation_date, facts.observation_date),
+            publication_date = COALESCE(excluded.publication_date, facts.publication_date),
+            valuation_basis = COALESCE(excluded.valuation_basis, facts.valuation_basis),
+            amount_granularity = COALESCE(excluded.amount_granularity, facts.amount_granularity)
         """,
         (
             fact_key,
@@ -175,6 +212,10 @@ def upsert_fact(
             retrieval_id,
             locator_json,
             row["_retrieved_at"],
+            observation_date,
+            publication_date,
+            valuation_basis,
+            amount_granularity,
         ),
     )
     fact_id = conn.execute(

@@ -1,0 +1,25 @@
+source_id: nsw_gg_expenses_budget_2026_27
+title: NSW GG expenses budget 2026-27
+publisher: NSW Treasury
+jurisdiction: NSW
+government_level: state
+source_family: state_budget
+measure_type: budget_estimate
+accounting_basis: accrual
+estimate_status: budget
+period_granularity: financial_year
+input:
+  path: data/staging/state/nsw_gg_expenses_budget_2026_27.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/nsw_budgeted_financial_statements_2026_27/snapshots/20260724T190604Z/files/2026-27-budget-budgeted-financial-statements.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

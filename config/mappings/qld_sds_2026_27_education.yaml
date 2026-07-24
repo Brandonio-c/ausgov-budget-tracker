@@ -1,0 +1,25 @@
+source_id: qld_sds_2026_27_education
+title: QLD SDS 2026-27 Department of Education budgeted expenses (fixture)
+publisher: Queensland Treasury
+jurisdiction: QLD
+government_level: state
+source_family: state_budget
+measure_type: budget_estimate
+accounting_basis: accrual
+estimate_status: budget
+period_granularity: financial_year
+input:
+  path: data/staging/state/qld_sds_2026_27_education.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/qld_sds_2026_27_education/snapshots/20260724T190604Z/files/2026-27-budget-sds-department-of-education.pdf
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

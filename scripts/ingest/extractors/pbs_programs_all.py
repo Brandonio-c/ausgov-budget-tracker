@@ -2,6 +2,7 @@
 """Generalized PBS program-expense extractor for Commonwealth PBS PDFs.
 
 Looks for Table 2.1-style program expense rows with trailing year columns ($'000).
+Tracks per-source_id provenance and dedupes across Transparency Portal / agency copies.
 """
 
 from __future__ import annotations
@@ -34,6 +35,28 @@ STATUS_BY_FY = {
     "2029-30": "forward_estimate",
 }
 
+PORTFOLIO_ALIASES = {
+    "defence": "Defence",
+    "education": "Education",
+    "industry": "Industry Science and Resources",
+    "science": "Industry Science and Resources",
+    "resources": "Industry Science and Resources",
+    "infrastructure": "Infrastructure Transport Regional Development Communications Sport and the Arts",
+    "home affairs": "Home Affairs",
+    "attorney": "Attorney-General's",
+    "health": "Health Disability and Ageing",
+    "social services": "Social Services",
+    "treasury": "Treasury",
+    "finance": "Finance",
+    "foreign affairs": "Foreign Affairs and Trade",
+    "climate": "Climate Change Energy the Environment and Water",
+    "agriculture": "Agriculture Fisheries and Forestry",
+    "employment": "Employment and Workplace Relations",
+    "prime minister": "Prime Minister and Cabinet",
+    "veterans": "Veterans' Affairs",
+    "pmc": "Prime Minister and Cabinet",
+}
+
 
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
@@ -46,7 +69,26 @@ def _parse_thousands(tok: str) -> int | None:
         return None
 
 
-def extract_pdf(pdf: Path, *, portfolio: str) -> list[dict]:
+def _portfolio_from_source(source_id: str, stem: str) -> str:
+    blob = f"{source_id} {stem}".lower().replace("_", " ").replace("-", " ")
+    for key, label in PORTFOLIO_ALIASES.items():
+        if key in blob:
+            return label
+    portfolio = re.sub(r"(?i)^\d{4}-\d{2}-?", "", stem)
+    portfolio = portfolio.replace("-PBS", "").replace("_PBS", "").replace("-pbs", "")
+    portfolio = portfolio.replace("federal_pbs_", "").replace("federal_", "")
+    portfolio = re.sub(r"\d{4}_\d{2}", "", portfolio)
+    portfolio = portfolio.replace("_", " ").replace("-", " ").strip()
+    return _norm(portfolio)[:80] or stem[:80]
+
+
+def extract_pdf(
+    pdf: Path,
+    *,
+    portfolio: str,
+    source_id: str,
+    source_url: str = LANDING,
+) -> list[dict]:
     rows: list[dict] = []
     capturing = False
     pending: list[str] = []
@@ -96,56 +138,121 @@ def extract_pdf(pdf: Path, *, portfolio: str) -> list[dict]:
                         "fy": fy,
                         "amount": amount,
                         "category": f"{portfolio} / {label}",
+                        "portfolio": portfolio,
+                        "program_label": label,
                         "estimate_status": STATUS_BY_FY.get(fy, "budget"),
-                        "locator": f"pdf:{pdf.name} | page:{page_no} | program:{label} | fy:{fy} | unit:$000",
-                        "landing_url": LANDING,
-                        "resource_url": LANDING,
+                        "source_id_origin": source_id,
+                        "locator": (
+                            f"source_id:{source_id} | pdf:{pdf.name} | page:{page_no} | "
+                            f"program:{label} | fy:{fy} | unit:$000"
+                        ),
+                        "landing_url": source_url or LANDING,
+                        "resource_url": source_url or LANDING,
                     }
                 )
-    seen: set[tuple[str, str]] = set()
-    out: list[dict] = []
+    # Prefer longer / more specific labels when same FY+amount collide across copies.
+    best: dict[tuple[str, str, int], dict] = {}
     for r in rows:
-        key = (r["fy"], r["category"])
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(r)
-    return out
+        key = (r["fy"], r["estimate_status"], int(r["amount"]))
+        # Also key by normalized program tail to avoid collapsing different programs
+        # with identical amounts — use category without portfolio prefix noise.
+        key2 = (r["fy"], r["estimate_status"], _norm(r["program_label"]).lower(), int(r["amount"]))
+        prev = best.get(key2)
+        if prev is None or len(r["category"]) > len(prev["category"]):
+            best[key2] = r
+    return list(best.values())
 
 
-def discover_pbs_pdfs() -> list[tuple[str, Path]]:
-    found: list[tuple[str, Path]] = []
-    for pdf in (REPO_ROOT / "data/raw").rglob("*.pdf"):
-        name = pdf.name.lower()
-        if "pbs" not in name and "portfolio-budget" not in name and "budget_statements" not in name:
+def discover_pbs_pdfs() -> list[tuple[str, str, Path, str]]:
+    """Return (portfolio, source_id, pdf_path, source_url)."""
+    found: list[tuple[str, str, Path, str]] = []
+    raw = REPO_ROOT / "data/raw"
+    for latest in raw.rglob("latest.json"):
+        source_id = latest.parent.name
+        if "pbs" not in source_id.lower() and "portfolio_budget" not in source_id.lower():
             continue
-        stem = pdf.stem
-        # Prefer readable portfolio from transparency portal naming
-        portfolio = re.sub(r"(?i)^\d{4}-\d{2}-?", "", stem)
-        portfolio = portfolio.replace("-PBS", "").replace("_PBS", "").replace("-pbs", "")
-        portfolio = portfolio.replace("_", " ").replace("-", " ").strip()[:80] or stem[:80]
-        found.append((portfolio, pdf))
+        try:
+            data = json.loads(latest.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for asset in data.get("assets") or []:
+            stored = asset.get("stored_path") or ""
+            if not stored.lower().endswith(".pdf"):
+                continue
+            pdf = REPO_ROOT / "data" / stored
+            if not pdf.exists():
+                pdf = REPO_ROOT / stored
+            if not pdf.exists():
+                continue
+            portfolio = _portfolio_from_source(source_id, pdf.stem)
+            url = asset.get("requested_url") or LANDING
+            found.append((portfolio, source_id, pdf, url))
+    # Fallback glob for PDFs not linked via latest.json naming
+    if not found:
+        for pdf in raw.rglob("*.pdf"):
+            name = pdf.name.lower()
+            if "pbs" not in name and "portfolio-budget" not in name:
+                continue
+            sid = pdf.parent.parent.parent.name if "snapshots" in pdf.parts else pdf.stem
+            found.append((_portfolio_from_source(sid, pdf.stem), sid, pdf, LANDING))
     return found
 
 
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     all_rows: list[dict] = []
-    for portfolio, pdf in discover_pbs_pdfs():
+    by_source: dict[str, int] = {}
+    for portfolio, source_id, pdf, url in discover_pbs_pdfs():
         try:
-            rows = extract_pdf(pdf, portfolio=portfolio)
+            rows = extract_pdf(pdf, portfolio=portfolio, source_id=source_id, source_url=url)
         except Exception as exc:  # noqa: BLE001
-            print(json.dumps({"pdf": str(pdf), "error": str(exc)}))
+            print(json.dumps({"pdf": str(pdf), "source_id": source_id, "error": str(exc)}))
             continue
-        print(json.dumps({"pdf": pdf.name, "portfolio": portfolio, "rows": len(rows)}))
+        print(
+            json.dumps(
+                {
+                    "pdf": pdf.name,
+                    "source_id": source_id,
+                    "portfolio": portfolio,
+                    "rows": len(rows),
+                }
+            )
+        )
+        by_source[source_id] = by_source.get(source_id, 0) + len(rows)
         all_rows.extend(rows)
+
+    # Cross-document dedupe: same portfolio/program/fy/status/amount → keep first with richest locator
+    deduped: dict[tuple, dict] = {}
+    for r in all_rows:
+        key = (
+            r["portfolio"],
+            _norm(r["program_label"]).lower(),
+            r["fy"],
+            r["estimate_status"],
+            int(r["amount"]),
+        )
+        prev = deduped.get(key)
+        if prev is None or len(r["locator"]) > len(prev["locator"]):
+            deduped[key] = r
+    final_rows = list(deduped.values())
+
     out = OUT_DIR / "pbs_programs_all.csv"
-    if all_rows:
+    if final_rows:
         with out.open("w", encoding="utf-8", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(all_rows[0].keys()))
+            writer = csv.DictWriter(handle, fieldnames=list(final_rows[0].keys()))
             writer.writeheader()
-            writer.writerows(all_rows)
-    print(json.dumps({"total_rows": len(all_rows), "out": str(out)}))
+            writer.writerows(final_rows)
+    print(
+        json.dumps(
+            {
+                "total_rows": len(final_rows),
+                "raw_rows": len(all_rows),
+                "sources": len(by_source),
+                "by_source_top": dict(sorted(by_source.items(), key=lambda x: -x[1])[:15]),
+                "out": str(out),
+            }
+        )
+    )
     return 0
 
 

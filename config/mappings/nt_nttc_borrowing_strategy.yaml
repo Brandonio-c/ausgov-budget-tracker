@@ -4,10 +4,12 @@ publisher: NTTC
 jurisdiction: NT
 government_level: territory
 source_family: state_borrowing
-measure_type: gross_debt_face_value
+measure_type: borrowing_authority_debt_outstanding
 accounting_basis: gfs
 estimate_status: actual
 period_granularity: financial_year
+valuation_basis: face_value
+amount_granularity: individual_security
 input:
   path: data/staging/borrowing/nt_nttc_borrowing_strategy.csv
   format: csv
@@ -18,6 +20,9 @@ columns:
   locator: locator
   landing_url: landing_url
   original_resource_url: resource_url
+  observation_date: observation_date
+  valuation_basis: valuation_basis
+  amount_granularity: amount_granularity
 attribution:
   landing_url_column: landing_url
   original_resource_url_column: resource_url

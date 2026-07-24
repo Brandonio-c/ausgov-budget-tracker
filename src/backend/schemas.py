@@ -20,6 +20,13 @@ class TreeNode(BaseModel):
     id: Optional[int] = None  # present on leaves; also on related parents for citation
     children: Optional[list["TreeNode"]] = None
     breakdown: Optional[BreakdownMeta] = None
+    # Dashboard warnings / debt semantics (optional; set on roots or debt leaves)
+    mixed_observation_dates: Optional[bool] = None
+    observation_dates: Optional[list[str]] = None
+    valuation_basis: Optional[str] = None
+    amount_granularity: Optional[str] = None
+    warning: Optional[str] = None
+    is_aggregate: Optional[bool] = None
 
 
 TreeNode.model_rebuild()

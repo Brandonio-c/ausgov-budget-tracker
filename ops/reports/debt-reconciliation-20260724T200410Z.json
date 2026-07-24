@@ -1,0 +1,96 @@
+{
+  "generated_at": "20260724T200410Z",
+  "results": [
+    {
+      "source_id": "nsw_tcorp_bonds_on_issue",
+      "authority": "TCorp",
+      "valuation_basis": "face_value",
+      "observation_date": "2026-07-17",
+      "published_control_aud": 213752000000.0,
+      "sum_of_parsed_leaves_aud": 427504000000.0,
+      "absolute_difference_aud": 213752000000.0,
+      "percentage_difference": 100.0,
+      "leaf_count": 68,
+      "status": "failure",
+      "note": "Weekly bonds outstanding total"
+    },
+    {
+      "source_id": "vic_tcv_amount_on_issue",
+      "authority": "TCV",
+      "valuation_basis": "face_value",
+      "observation_date": "2026-07-17",
+      "published_control_aud": 214333000000.0,
+      "sum_of_parsed_leaves_aud": 428665820000.0,
+      "absolute_difference_aud": 214332820000.0,
+      "percentage_difference": 99.9999,
+      "leaf_count": 58,
+      "status": "failure",
+      "note": "Amount on issue CSV total"
+    },
+    {
+      "source_id": "qld_qtc_aud_bond_outstandings",
+      "authority": "QTC",
+      "valuation_basis": "face_value",
+      "observation_date": "2026-07-17",
+      "published_control_aud": 175929000000.0,
+      "sum_of_parsed_leaves_aud": 351858000000.0,
+      "absolute_difference_aud": 175929000000.0,
+      "percentage_difference": 100.0,
+      "leaf_count": 70,
+      "status": "failure",
+      "note": "Weekly AUD bond outstandings"
+    },
+    {
+      "source_id": "sa_safa_weekly_funding_update",
+      "authority": "SAFA",
+      "valuation_basis": "face_value",
+      "observation_date": "2026-07-17",
+      "published_control_aud": 45629000000.0,
+      "sum_of_parsed_leaves_aud": 91258000000.0,
+      "absolute_difference_aud": 45629000000.0,
+      "percentage_difference": 100.0,
+      "leaf_count": 32,
+      "status": "failure",
+      "note": "Weekly funding update"
+    },
+    {
+      "source_id": "wa_watc_funding_sources",
+      "authority": "WATC",
+      "valuation_basis": "face_value",
+      "observation_date": "2026-07-24",
+      "published_control_aud": 50440000000.0,
+      "sum_of_parsed_leaves_aud": 100880794000.0,
+      "absolute_difference_aud": 50440794000.0,
+      "percentage_difference": 100.0016,
+      "leaf_count": 38,
+      "status": "failure",
+      "note": "Funding sources 41,330+9,110"
+    },
+    {
+      "source_id": "nt_nttc_borrowing_strategy",
+      "authority": "NTTC",
+      "valuation_basis": "face_value",
+      "observation_date": "2024-06-30",
+      "published_control_aud": 13900000000.0,
+      "sum_of_parsed_leaves_aud": 27800000000.0,
+      "absolute_difference_aud": 13900000000.0,
+      "percentage_difference": 100.0,
+      "leaf_count": 32,
+      "status": "failure",
+      "note": "Borrowing strategy ISIN schedule"
+    },
+    {
+      "source_id": "tas_tascorp_annual_report_2024_25",
+      "authority": "TASCORP",
+      "valuation_basis": "fair_value",
+      "observation_date": "2025-06-30",
+      "published_control_aud": 15038000000.0,
+      "sum_of_parsed_leaves_aud": 30076000000.0,
+      "absolute_difference_aud": 15038000000.0,
+      "percentage_difference": 100.0,
+      "leaf_count": 8,
+      "status": "failure",
+      "note": "Annual report instrument-type fair values"
+    }
+  ]
+}

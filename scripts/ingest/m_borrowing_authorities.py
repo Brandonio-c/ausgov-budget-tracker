@@ -29,7 +29,9 @@ def main() -> int:
     conn = sqlite3.connect(str(FACTS_DB))
     conn.execute(
         "UPDATE measure_definitions SET compatibility_group='gfs_liability' "
-        "WHERE measure_type IN ('aofm_cgs_outstanding','gross_debt_face_value','net_debt')"
+        "WHERE measure_type IN ("
+        "'aofm_cgs_outstanding','gross_debt_face_value','net_debt',"
+        "'borrowing_authority_debt_outstanding','superannuation_liability')"
     )
     conn.commit()
     conn.close()
@@ -46,6 +48,26 @@ def main() -> int:
         if not instruments:
             out.append({"source_id": sid, "status": "no_instrument_rows", "path": str(path)})
             continue
+        # Drop prior facts for this source so path/valuation upgrades do not double-count.
+        conn = sqlite3.connect(str(FACTS_DB))
+        doc_ids = [
+            r[0]
+            for r in conn.execute(
+                "SELECT id FROM source_documents WHERE source_key = ?", (sid,)
+            ).fetchall()
+        ]
+        for doc_id in doc_ids:
+            fact_ids = [
+                r[0]
+                for r in conn.execute(
+                    "SELECT id FROM facts WHERE source_document_id = ?", (doc_id,)
+                ).fetchall()
+            ]
+            for fid in fact_ids:
+                conn.execute("DELETE FROM fact_nodes WHERE fact_id = ?", (fid,))
+            conn.execute("DELETE FROM facts WHERE source_document_id = ?", (doc_id,))
+        conn.commit()
+        conn.close()
         fact_rows = [r.to_fact_dict() for r in instruments]
         # roll-up totals by instrument type
         by_type: dict[str, float] = {}
@@ -57,19 +79,29 @@ def main() -> int:
                 0,
                 {
                     "fy": instruments[0].financial_year(),
-                    "category": f"Debt securities / {inst_type}",
+                    "category": f"Debt securities / {authority} / {inst_type}",
                     "amount": total,
                     "locator": (
                         f"authority:{authority} | instrument_type:{inst_type} | "
-                        f"roll_up:sum_instruments | as_at_date:{as_at} | source_url:{source_url}"
+                        f"roll_up:sum_instruments | as_at_date:{as_at} | "
+                        f"amount_granularity:instrument_type_aggregate | source_url:{source_url}"
                     ),
                     "landing_url": source_url,
                     "resource_url": source_url,
                     "as_at_date": as_at,
+                    "observation_date": as_at,
+                    "valuation_basis": instruments[0].to_fact_dict().get("valuation_basis", "face_value"),
+                    "amount_granularity": "instrument_type_aggregate",
+                    "authority": authority,
+                    "isin": "",
+                    "maturity_date": "",
+                    "coupon": "",
                 },
             )
         csv_path = STAGING / f"{sid}.csv"
         pd.DataFrame(fact_rows).to_csv(csv_path, index=False)
+        # Prefer dedicated measure; keep gfs_liability compatibility via measure_definitions.
+        measure = "borrowing_authority_debt_outstanding"
         doc = {
             "source_id": sid,
             "title": f"{authority} debt instruments",
@@ -77,10 +109,12 @@ def main() -> int:
             "jurisdiction": juris,
             "government_level": level,
             "source_family": "state_borrowing",
-            "measure_type": "gross_debt_face_value",
+            "measure_type": measure,
             "accounting_basis": "gfs",
             "estimate_status": "actual",
             "period_granularity": "financial_year",
+            "valuation_basis": fact_rows[0].get("valuation_basis") if fact_rows else "face_value",
+            "amount_granularity": "individual_security",
             "input": {"path": str(csv_path.relative_to(REPO_ROOT)), "format": "csv"},
             "columns": {
                 "financial_year": "fy",
@@ -89,6 +123,9 @@ def main() -> int:
                 "locator": "locator",
                 "landing_url": "landing_url",
                 "original_resource_url": "resource_url",
+                "observation_date": "observation_date",
+                "valuation_basis": "valuation_basis",
+                "amount_granularity": "amount_granularity",
             },
             "attribution": {
                 "landing_url_column": "landing_url",

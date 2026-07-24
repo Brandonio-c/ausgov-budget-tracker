@@ -44,4 +44,16 @@ def abs_gfs_revenue_path(category: str) -> list[str] | None:
     name = (category or "").strip()
     if not name or name in frozenset(_pack().get("skip") or []):
         return None
-    return [name]
+    child_to_parent = _pack().get("child_to_parent") or {}
+    path = [name]
+    seen = {name}
+    cur = name
+    # Walk parent map up to root (cap depth)
+    for _ in range(6):
+        parent = child_to_parent.get(cur)
+        if not parent or parent in seen:
+            break
+        path.insert(0, parent)
+        seen.add(parent)
+        cur = parent
+    return path

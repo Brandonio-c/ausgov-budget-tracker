@@ -21,6 +21,7 @@ from ...abs_gfs_revenue_hierarchy import (
     abs_gfs_revenue_path,
     is_abs_gfs_revenue_source,
 )
+from ...gdp_hierarchy import gdp_hierarchy_path
 from ...breakdown_graph import (
     apply_edge_cascade_to_budget_tree,
     attach_related_to_tree,
@@ -153,7 +154,12 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
             d.jurisdiction,
             n.name AS node_name,
             f.accounting_basis,
-            d.source_key
+            d.source_key,
+            f.observation_date,
+            f.valuation_basis,
+            f.amount_granularity,
+            f.source_locator_json,
+            f.measure_type
         FROM facts f
         JOIN source_documents d ON d.id = f.source_document_id
         JOIN measure_definitions m ON m.measure_type = f.measure_type
@@ -171,6 +177,12 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
     sql += " ORDER BY d.jurisdiction, n.name"
     rows = []
     for r in conn.execute(sql, params).fetchall():
+        locator = r["source_locator_json"] or ""
+        # Leaf-only rollup: skip synthetic parent sums when children exist in the feed.
+        if "roll_up:sum_instruments" in locator:
+            continue
+        if (r["amount_granularity"] or "") == "instrument_type_aggregate" and "roll_up:" in locator:
+            continue
         rows.append(
             {
                 "fact_id": int(r["fact_id"]),
@@ -179,12 +191,16 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
                 "node_name": (r["node_name"] or "Uncategorized").strip(),
                 "accounting_basis": r["accounting_basis"],
                 "source_key": r["source_key"],
+                "observation_date": r["observation_date"],
+                "valuation_basis": r["valuation_basis"],
+                "amount_granularity": r["amount_granularity"],
+                "measure_type": r["measure_type"],
             }
         )
     return rows
 
 
-def _path_parts(node_name: str, source_key: str | None = None) -> list[str] | None:
+def _path_parts(node_name: str, source_key: str | None = None, mode: Mode | None = None) -> list[str] | None:
     """Split a node into tree path parts. None means omit the fact from the tree."""
     name = (node_name or "Uncategorized").strip()
     if source_key and source_key.startswith("aofm_"):
@@ -195,12 +211,17 @@ def _path_parts(node_name: str, source_key: str | None = None) -> list[str] | No
         if bits[0].startswith("Debt securities"):
             return bits
         return ["Debt securities", *bits]
+    if name.startswith("Provisions for defined-benefit superannuation"):
+        bits = [p.strip() for p in name.split(" / ") if p.strip()]
+        return bits or [name]
     if is_abs_gfs_liability_source(source_key):
         return abs_gfs_liability_path(name)
     if is_abs_gfs_revenue_source(source_key):
         return abs_gfs_revenue_path(name)
     if is_abs_gfs_source(source_key):
         return abs_gfs_hierarchy_path(name)
+    if mode == "gdp":
+        return gdp_hierarchy_path(name)
     parts = [p.strip() for p in name.split(" / ") if p.strip()]
     return parts or [name or "Uncategorized"]
 
@@ -223,10 +244,16 @@ def _prune_totals(node: dict[str, Any]) -> None:
         _prune_totals(child)
 
 
-def _build_tree_dict(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    root: dict[str, Any] = {"children": {}, "amount": 0.0, "fact_id": None}
+def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> dict[str, Any]:
+    root: dict[str, Any] = {
+        "children": {},
+        "amount": 0.0,
+        "fact_id": None,
+        "observation_dates": set(),
+        "valuation_bases": set(),
+    }
     for row in rows:
-        nested = _path_parts(row["node_name"], row.get("source_key"))
+        nested = _path_parts(row["node_name"], row.get("source_key"), mode=mode)
         if nested is None:
             continue
         parts = [row["jurisdiction"], *nested]
@@ -234,10 +261,33 @@ def _build_tree_dict(rows: list[dict[str, Any]]) -> dict[str, Any]:
         for part in parts:
             kids = cursor.setdefault("children", {})
             if part not in kids:
-                kids[part] = {"children": {}, "amount": 0.0, "fact_id": None}
+                kids[part] = {
+                    "children": {},
+                    "amount": 0.0,
+                    "fact_id": None,
+                    "observation_dates": set(),
+                    "valuation_bases": set(),
+                }
             cursor = kids[part]
+        # Leaf-only: accumulate amount only on the leaf node; parents roll up from children.
         cursor["amount"] = float(cursor.get("amount") or 0) + row["amount_aud"]
         cursor["fact_id"] = row["fact_id"]
+        if row.get("observation_date"):
+            cursor.setdefault("observation_dates", set()).add(str(row["observation_date"]))
+            root.setdefault("observation_dates", set()).add(str(row["observation_date"]))
+        if row.get("valuation_basis"):
+            cursor["valuation_basis"] = row["valuation_basis"]
+            cursor.setdefault("valuation_bases", set()).add(str(row["valuation_basis"]))
+        if row.get("amount_granularity"):
+            cursor["amount_granularity"] = row["amount_granularity"]
+            cursor["is_aggregate"] = row["amount_granularity"] in {
+                "instrument_type_aggregate",
+                "scheme_aggregate",
+                "council_aggregate",
+            }
+        # Published GDP totals should keep their amount when children are attached
+        if mode == "gdp" and re.search(r"gdp \(current|gsp \(current|gdp \(chain", parts[-1], re.I):
+            cursor["preserve_amount"] = True
     _prune_totals(root)
     return root
 
@@ -252,6 +302,20 @@ def _breakdown_meta(node: dict[str, Any]) -> BreakdownMeta | None:
 def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
     children_map = node.get("children") or {}
     breakdown = _breakdown_meta(node)
+    obs_dates = sorted(node.get("observation_dates") or [])
+    mixed = len(obs_dates) > 1
+    extra = {
+        "valuation_basis": node.get("valuation_basis"),
+        "amount_granularity": node.get("amount_granularity"),
+        "is_aggregate": node.get("is_aggregate"),
+        "observation_dates": obs_dates or None,
+        "mixed_observation_dates": mixed if obs_dates else None,
+        "warning": (
+            "Mixed observation dates across nested liabilities — do not treat as a single as-at stock."
+            if mixed
+            else None
+        ),
+    }
     if children_map:
         children = [_to_tree_node(k, v) for k, v in children_map.items()]
         # Related children must not re-total the parent pie slice.
@@ -262,6 +326,7 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
                 id=node.get("fact_id"),
                 children=children,
                 breakdown=breakdown,
+                **extra,
             )
         # Keep published fact amount when cascading deeper packs under a slice
         # (e.g. A.6.1 sub-function → components → PBS).
@@ -272,6 +337,7 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
                 id=node.get("fact_id"),
                 children=children,
                 breakdown=breakdown,
+                **extra,
             )
         # Exclude synthetic related folders (Statement 6 …) from same_group rollup.
         # Purpose nodes that themselves carry related_breakdown keep their GFS value
@@ -298,6 +364,7 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
             id=None if additive else node.get("fact_id"),
             children=children,
             breakdown=breakdown,
+            **extra,
         )
     return TreeNode(
         name=name,
@@ -305,6 +372,7 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
         id=node.get("fact_id"),
         children=None,
         breakdown=breakdown,
+        **extra,
     )
 
 
@@ -387,7 +455,7 @@ def dashboard_tree(
                 status_code=404,
                 detail=f"No {mode} data for level={level!r} year={year!r}",
             )
-        tree_dict = _build_tree_dict(rows)
+        tree_dict = _build_tree_dict(rows, mode=mode)
         # Prefer same_group (already nested). Else attach related_breakdown.
         # Debt/liability stocks have no Statement 6 / PBS related packs.
         if mode == "actuals":
@@ -401,7 +469,21 @@ def dashboard_tree(
         for name, child in (tree_dict.get("children") or {}).items()
     ]
     total = sum(c.value for c in children)
-    return TreeNode(name=f"{level} — {year}", value=total, id=None, children=children)
+    obs_dates = sorted(tree_dict.get("observation_dates") or [])
+    mixed = len(obs_dates) > 1
+    return TreeNode(
+        name=f"{level} — {year}",
+        value=total,
+        id=None,
+        children=children,
+        mixed_observation_dates=mixed if mode == "debt" and obs_dates else None,
+        observation_dates=obs_dates if mode == "debt" and obs_dates else None,
+        warning=(
+            "Mixed observation dates across authorities — figures are not a single as-at stock."
+            if mixed and mode == "debt"
+            else None
+        ),
+    )
 
 
 def _parse_levels_param(levels: str) -> list[str]:
@@ -479,7 +561,7 @@ def _level_point(
     rows = _fact_rows(conn, mode, level, year)
     if not rows:
         return None
-    tree_dict = _build_tree_dict(rows)
+    tree_dict = _build_tree_dict(rows, mode=mode)
     children = [
         _to_tree_node(name, child)
         for name, child in (tree_dict.get("children") or {}).items()
@@ -540,6 +622,12 @@ def dashboard_series(
         "years": sorted(year_set),
         "series": series_out,
         "note": "Per-level series; not a consolidated Australia total.",
+        "warning": (
+            "Debt timeline may mix face-value and fair-value stocks across years/authorities; "
+            "do not treat as continuous same-definition series."
+            if mode == "debt"
+            else None
+        ),
     }
 
 

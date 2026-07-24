@@ -175,6 +175,15 @@ export default function DebtViewer() {
         <DebtNav />
       </header>
 
+      {tree?.warning ? (
+        <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          {tree.warning}
+          {tree.observation_dates?.length
+            ? ` Dates: ${tree.observation_dates.join(", ")}.`
+            : null}
+        </p>
+      ) : null}
+
       {error && (
         <p className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
           {error}
@@ -266,6 +275,17 @@ export default function DebtViewer() {
       {atLeaf && (
         <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
           No deeper published liability breakdown for this line.
+        </p>
+      )}
+
+      {(currentNode?.is_aggregate || currentNode?.valuation_basis === "fair_value") && (
+        <p className="mb-3 inline-flex items-center rounded border border-sky-300 bg-sky-50 px-2 py-1 text-xs text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200">
+          {currentNode?.valuation_basis === "fair_value"
+            ? "Fair-value aggregate (e.g. TASCORP instrument-type totals) — not individual securities."
+            : "Aggregate stock — not an individual security leaf."}
+          {currentNode?.amount_granularity
+            ? ` Granularity: ${currentNode.amount_granularity}.`
+            : null}
         </p>
       )}
 

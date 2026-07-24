@@ -66,6 +66,10 @@ NO_BULK = {
     # no single public bulk dump (same class as wa_tenders / austender weekly).
     "sa_councils_in_focus",  # dashboard + council login; LGGC underlying returns not published as bulk files here
     "sa_tenders_contracts",  # awarded contracts listed per agency; no statewide export
+    # Confirmed 2026-07-24: no single public bulk file for these registry rows.
+    "federal_transparency_pbs_set_16",  # TP has no bulk PBS zip; individual 2025-26 PBS already acquired
+    "qld_sds_machine_readable_2025_26",  # QLD open-data SDS machine pack not published for 2025-26
+    "vic_local_govt_financial",  # VAGO local-gov financials are portal/browse, not one bulk export
 }
 
 # Historical candidate note — source is now direct_file; kept only if registry

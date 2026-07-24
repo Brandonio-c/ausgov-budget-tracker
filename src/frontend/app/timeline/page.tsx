@@ -265,6 +265,12 @@ function TimelinePageInner() {
 
       <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
 
+      {series?.warning ? (
+        <p className="mb-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          {series.warning}
+        </p>
+      ) : null}
+
       <ResizableSplitPane
         left={
           <section

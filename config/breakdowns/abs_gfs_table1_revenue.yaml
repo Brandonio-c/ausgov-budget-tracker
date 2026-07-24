@@ -5,4 +5,14 @@ source_key_suffix: _revenue
 skip:
   - Total GFS revenue
   - Total gfs revenue
-child_to_parent: {}
+child_to_parent:
+  "Taxes on income, profits and capital gains": "Taxation revenue"
+  "Taxes on property": "Taxation revenue"
+  "Taxes on goods and services": "Taxation revenue"
+  "Taxes on international trade and transactions": "Taxation revenue"
+  "Other taxes": "Taxation revenue"
+  "Income taxes levied on enterprises": "Taxes on income, profits and capital gains"
+  "Income taxes levied on individuals": "Taxes on income, profits and capital gains"
+  "Goods and services tax": "Taxes on goods and services"
+  "Excises and levies": "Taxes on goods and services"
+  "Customs duties": "Taxes on international trade and transactions"

@@ -1,0 +1,288 @@
+{
+  "generated_at": "20260724T200621Z",
+  "baseline_note": "Baseline at plan start was ~270,937 facts / 92 source docs",
+  "facts_total": 279543,
+  "source_documents": 123,
+  "modes": {
+    "actual_expense": {
+      "facts": 195433,
+      "max_segments": 5,
+      "avg_segments": 1.98
+    },
+    "budget_expense": {
+      "facts": 15634,
+      "max_segments": 3,
+      "avg_segments": 2.02
+    },
+    "gfs_liability": {
+      "facts": 1677,
+      "max_segments": 4,
+      "avg_segments": 1.58
+    },
+    "gfs_revenue": {
+      "facts": 3757,
+      "max_segments": 3,
+      "avg_segments": 1.49
+    },
+    "gdp": {
+      "facts": 47,
+      "max_segments": 2,
+      "avg_segments": 1.45
+    }
+  },
+  "specials": {
+    "pbs_programs_all": 14631,
+    "borrowing_authority": 170,
+    "superannuation_liability": 3,
+    "gsp_current": 8,
+    "gdp_chain_volume": 10,
+    "with_observation_date": 387,
+    "with_valuation_basis": 387
+  },
+  "top_measures": [
+    {
+      "measure_type": "actual_accrual_expense",
+      "n": 189816
+    },
+    {
+      "measure_type": "invoice_paid",
+      "n": 46714
+    },
+    {
+      "measure_type": "contract_value",
+      "n": 16255
+    },
+    {
+      "measure_type": "budget_estimate",
+      "n": 15634
+    },
+    {
+      "measure_type": "gfs_expense",
+      "n": 5329
+    },
+    {
+      "measure_type": "tax_revenue",
+      "n": 2530
+    },
+    {
+      "measure_type": "gfs_liability",
+      "n": 1334
+    },
+    {
+      "measure_type": "gfs_revenue",
+      "n": 1227
+    },
+    {
+      "measure_type": "monthly_actuals",
+      "n": 288
+    },
+    {
+      "measure_type": "borrowing_authority_debt_outstanding",
+      "n": 170
+    },
+    {
+      "measure_type": "net_debt",
+      "n": 60
+    },
+    {
+      "measure_type": "gross_debt_face_value",
+      "n": 60
+    },
+    {
+      "measure_type": "aofm_cgs_outstanding",
+      "n": 50
+    },
+    {
+      "measure_type": "gdp_current",
+      "n": 28
+    },
+    {
+      "measure_type": "cash_payment",
+      "n": 26
+    },
+    {
+      "measure_type": "gdp_chain_volume",
+      "n": 10
+    },
+    {
+      "measure_type": "gsp_current",
+      "n": 8
+    },
+    {
+      "measure_type": "superannuation_liability",
+      "n": 3
+    },
+    {
+      "measure_type": "tax_to_gdp_ratio",
+      "n": 1
+    }
+  ],
+  "top_sources": [
+    {
+      "source_key": "qld_qgip_expenditure",
+      "n": 180918
+    },
+    {
+      "source_key": "act_notifiable_invoices",
+      "n": 46714
+    },
+    {
+      "source_key": "federal_pbs_programs_all",
+      "n": 14631
+    },
+    {
+      "source_key": "nsw_procurement_ocds_registry",
+      "n": 7853
+    },
+    {
+      "source_key": "qld_contract_disclosure_agency_datasets",
+      "n": 6908
+    },
+    {
+      "source_key": "nsw_local_olg_time_series",
+      "n": 2794
+    },
+    {
+      "source_key": "tas_local_cdc",
+      "n": 2600
+    },
+    {
+      "source_key": "sa_gfs_by_function",
+      "n": 1893
+    },
+    {
+      "source_key": "vic_local_govt_financial",
+      "n": 1700
+    },
+    {
+      "source_key": "abs_taxation_revenue_key_tables_2024_25_state",
+      "n": 1610
+    },
+    {
+      "source_key": "nt_awarded_government_contracts",
+      "n": 1494
+    },
+    {
+      "source_key": "vic_local_vgc_abs_returns",
+      "n": 889
+    },
+    {
+      "source_key": "abs_taxation_revenue_key_tables_2024_25_territory",
+      "n": 690
+    },
+    {
+      "source_key": "federal_budget_statement_6_a61",
+      "n": 432
+    },
+    {
+      "source_key": "federal_budget_archive_function_series",
+      "n": 415
+    },
+    {
+      "source_key": "federal_expense_by_function",
+      "n": 381
+    },
+    {
+      "source_key": "federal_monthly_financial_statements",
+      "n": 288
+    },
+    {
+      "source_key": "abs_gfs_state_act_238",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_nsw_231",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_nt_237",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_qld_233",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_sa_234",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_tas_236",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_vic_232",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_state_wa_235",
+      "n": 280
+    },
+    {
+      "source_key": "abs_gfs_commonwealth_130",
+      "n": 230
+    },
+    {
+      "source_key": "abs_taxation_revenue_key_tables_2024_25_federal",
+      "n": 230
+    },
+    {
+      "source_key": "federal_budget_statement_6_components",
+      "n": 225
+    },
+    {
+      "source_key": "vic_local_abs2_3_balance_finance_2024_25",
+      "n": 214
+    },
+    {
+      "source_key": "abs_gfs_previous_releases",
+      "n": 161
+    },
+    {
+      "source_key": "abs_gfs_local_nsw_331",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_nt_337",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_qld_333",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_sa_334",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_tas_336",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_vic_332",
+      "n": 110
+    },
+    {
+      "source_key": "abs_gfs_local_wa_335",
+      "n": 110
+    },
+    {
+      "source_key": "act_budget_tables_2026_27",
+      "n": 101
+    },
+    {
+      "source_key": "abs_gfs_state_act_238_revenue",
+      "n": 90
+    },
+    {
+      "source_key": "abs_gfs_state_nsw_231_revenue",
+      "n": 90
+    }
+  ],
+  "remaining_gaps": [
+    "Defence PBS PDFs still yield 0 program rows (layout/OCR).",
+    "Most QLD SDS PDFs marked extraction_unreliable pending stable table patterns.",
+    "QAO local PDFs: no_useful_fiscal_data \u2014 use structured VLGGC/OLG/CDC returns.",
+    "Do not commit facts.db or raw downloads."
+  ]
+}

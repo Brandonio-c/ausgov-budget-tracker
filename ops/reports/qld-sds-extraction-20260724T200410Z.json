@@ -1,0 +1,138 @@
+{
+  "targets": [
+    {
+      "source_id": "qld_sds_2026_27_health",
+      "rows": 40,
+      "ingest": {
+        "source_id": "qld_sds_2026_27_health",
+        "input_rows": 40,
+        "published": 40,
+        "quarantined": 0,
+        "gate6_quarantine": 0
+      }
+    },
+    {
+      "source_id": "qld_sds_2026_27_education",
+      "rows": 34,
+      "ingest": {
+        "source_id": "qld_sds_2026_27_education",
+        "input_rows": 34,
+        "published": 34,
+        "quarantined": 0,
+        "gate6_quarantine": 0
+      }
+    },
+    {
+      "source_id": "qld_sds_2026_27_transport_main_roads",
+      "rows": 29,
+      "ingest": {
+        "source_id": "qld_sds_2026_27_transport_main_roads",
+        "input_rows": 29,
+        "published": 29,
+        "quarantined": 0,
+        "gate6_quarantine": 0
+      }
+    }
+  ],
+  "extraction_unreliable": [
+    {
+      "source_id": "qld_sds_2026_27_environment_tourism_science_innovation",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_sport_racing_games",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_treasury",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_youth_justice_victim_support",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_state_development_infrastructure_planning",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_fire",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_women_atsi_multicultural",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_customer_open_data_small_business",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_police_emergency_inspector",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_primary_industries",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_families_seniors_disability_child_safety",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_premier_cabinet",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_natural_resources_mines_manufacturing_regions",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_legislative_assembly",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_local_government_water_volunteers",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_justice",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_housing_public_works",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_corrective_services",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    },
+    {
+      "source_id": "qld_sds_2026_27_trade_employment_training",
+      "status": "extraction_unreliable",
+      "reason": "QLD SDS PDF table layouts vary; only Health/Education/Transport fixtures extracted this sprint"
+    }
+  ],
+  "notes": [
+    "Mass OCR of remaining QLD SDS PDFs is an explicit non-goal this sprint.",
+    "Fixtures limited to Health, Education, Transport and Main Roads."
+  ]
+}

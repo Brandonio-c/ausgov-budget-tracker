@@ -46,7 +46,8 @@ class InstrumentRow:
 
     def category(self) -> str:
         detail = self.security_name
-        return f"Debt securities / {self.instrument_type} / {detail}"
+        authority = (self.authority or "Authority").strip()
+        return f"Debt securities / {authority} / {self.instrument_type} / {detail}"
 
     def financial_year(self) -> str:
         y = self.as_at.year
@@ -55,6 +56,19 @@ class InstrumentRow:
         return f"{y - 1}-{str(y)[2:]}"
 
     def to_fact_dict(self) -> dict:
+        vb = self.valuation_basis
+        if vb in {"face_value_outstanding", "face"}:
+            vb_norm = "face_value"
+        elif "fair" in vb:
+            vb_norm = "fair_value"
+        else:
+            vb_norm = vb or "unspecified"
+        is_type_aggregate = (
+            self.security_name.lower() in {self.instrument_type.lower(), "total"}
+            or "aggregate" in (self.locator or "").lower()
+            or (vb_norm == "fair_value" and not self.isin)
+        )
+        granularity = "instrument_type_aggregate" if is_type_aggregate else "individual_security"
         bits = [
             f"authority:{self.authority}" if self.authority else None,
             f"instrument_type:{self.instrument_type}",
@@ -64,7 +78,8 @@ class InstrumentRow:
             f"maturity_date:{self.maturity_date}" if self.maturity_date else None,
             f"face_value_outstanding:{self.face_value_aud:.2f}",
             f"currency:{self.currency}",
-            f"valuation_basis:{self.valuation_basis}",
+            f"valuation_basis:{vb_norm}",
+            f"amount_granularity:{granularity}",
             f"as_at_date:{self.as_at.isoformat()}",
             f"source_url:{self.source_url}" if self.source_url else None,
             self.locator or None,
@@ -77,6 +92,13 @@ class InstrumentRow:
             "landing_url": self.source_url or "",
             "resource_url": self.source_url or "",
             "as_at_date": self.as_at.isoformat(),
+            "observation_date": self.as_at.isoformat(),
+            "valuation_basis": vb_norm,
+            "amount_granularity": granularity,
+            "authority": self.authority,
+            "isin": self.isin or "",
+            "maturity_date": self.maturity_date or "",
+            "coupon": self.coupon or "",
         }
 
 

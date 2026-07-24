@@ -1,0 +1,28 @@
+source_id: vic_local_abs2_3_balance_finance_2024_25
+title: VIC VLGGC ABS2-3 balance sheets borrowings 2024-25
+publisher: Victorian Local Government Grants Commission
+jurisdiction: VIC
+government_level: local
+source_family: local_government
+measure_type: gfs_liability
+accounting_basis: accrual
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/local/vic_local_abs2_3_balance_finance_2024_25.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+  observation_date: observation_date
+  valuation_basis: valuation_basis
+  amount_granularity: amount_granularity
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/local/vic_local_abs2_3_balance_finance_2024_25/snapshots/manual-20260724T192056Z/files/vic_local_abs2_3_balance_finance_2024_25.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

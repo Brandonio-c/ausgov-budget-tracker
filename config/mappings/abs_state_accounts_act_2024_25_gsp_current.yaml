@@ -1,0 +1,25 @@
+source_id: abs_state_accounts_act_2024_25_gsp_current
+title: "ABS State Accounts GSP \u2014 ACT (gsp_current)"
+publisher: Australian Bureau of Statistics
+jurisdiction: ACT
+government_level: territory
+source_family: abs_gdp_tax
+measure_type: gsp_current
+accounting_basis: not_applicable
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/gdp_tax/abs_state_accounts_act_2024_25_gsp_current.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/abs_state_accounts_act_2024_25/snapshots/20260724T164144Z/files/5220009_Annual_ACT.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
