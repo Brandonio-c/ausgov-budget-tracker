@@ -237,6 +237,8 @@ export default function SearchPageClient() {
                 <option value="actuals">Actuals</option>
                 <option value="budget">Budget</option>
                 <option value="debt">Debt</option>
+                <option value="revenue">Revenue</option>
+                <option value="gdp">GDP</option>
                 <option value="">Any mode</option>
               </select>
             </label>

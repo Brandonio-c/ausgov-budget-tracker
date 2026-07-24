@@ -229,6 +229,7 @@ data/search.db
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/new/
 
 .env
 venv/

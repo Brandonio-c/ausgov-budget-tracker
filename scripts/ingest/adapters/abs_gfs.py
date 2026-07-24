@@ -25,6 +25,21 @@ LIABILITY_KEEP = frozenset(
     }
 )
 
+# Revenue lines kept from Table_1 operating statement (before expense block).
+REVENUE_KEEP = frozenset(
+    {
+        "Taxation revenue",
+        "Current grants and subsidies",
+        "Sales of goods and services",
+        "Interest income",
+        "Dividend income",
+        "Royalty income",
+        "Other revenue",
+        "Capital grants",
+        "Total GFS revenue",
+    }
+)
+
 JURISDICTION_MAP = {
     "abs_gfs_commonwealth_130": ("Commonwealth", "federal", "national"),
     "abs_gfs_state_nsw_231": ("NSW", "state", "state"),
@@ -160,6 +175,54 @@ def melt_table3_liabilities(path: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def melt_table1_revenue(path: Path) -> pd.DataFrame:
+    """Melt ABS GFS Table_1 operating-statement revenue lines."""
+    df = pd.read_excel(path, sheet_name="Table_1", header=None)
+    header_idx, years, year_cols = _find_fy_header(df, "Table_1", path)
+
+    rows = []
+    in_revenue = False
+    for i in range(header_idx + 1, len(df)):
+        label = df.iloc[i, 0]
+        if pd.isna(label):
+            continue
+        label = str(label).strip()
+        if not label or label.lower().startswith("released"):
+            continue
+        low = label.lower()
+        if low in {"gfs revenue", "revenue"}:
+            in_revenue = True
+            continue
+        if low in {"less", "gfs expenses", "expenses"} or low.startswith("equals"):
+            in_revenue = False
+            continue
+        if not in_revenue:
+            continue
+        label = re.sub(r"\s+", " ", label).strip()
+        if label not in REVENUE_KEEP:
+            continue
+        amounts = [df.iloc[i, j] for j in year_cols]
+        if all(pd.isna(a) for a in amounts):
+            continue
+        for fy, j in zip(years, year_cols):
+            val = df.iloc[i, j]
+            if pd.isna(val):
+                continue
+            try:
+                amount_m = float(val)
+            except (TypeError, ValueError):
+                continue
+            rows.append(
+                {
+                    "fy": fy,
+                    "category": label,
+                    "amount": amount_m * 1_000_000,
+                    "locator": f"sheet:Table_1 | revenue:{label} | fy:{fy} | unit:$m",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def _export_melted(
     source_id: str,
     staging_dir: Path,
@@ -221,5 +284,24 @@ def export_liabilities(source_id: str, staging_dir: Path) -> dict[str, Any]:
         out_name=f"{liab_id}.csv",
     )
     meta["source_id"] = liab_id
+    meta["base_source_id"] = source_id
+    return meta
+
+
+def export_revenue(source_id: str, staging_dir: Path) -> dict[str, Any]:
+    """Export Table_1 revenue lines; staging/mapping use a distinct source_id."""
+    matches = list((REPO_ROOT / "data" / "raw").rglob(source_id))
+    matches = [m for m in matches if m.is_dir() and (m / "latest.json").exists()]
+    if not matches:
+        raise FileNotFoundError(source_id)
+    fp, _ = resolve_stored_path(matches[0])
+    rev_id = f"{source_id}_revenue"
+    meta = _export_melted(
+        source_id,
+        staging_dir,
+        melt_table1_revenue(fp),
+        out_name=f"{rev_id}.csv",
+    )
+    meta["source_id"] = rev_id
     meta["base_source_id"] = source_id
     return meta

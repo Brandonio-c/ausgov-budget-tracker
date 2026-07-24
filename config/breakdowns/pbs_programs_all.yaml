@@ -1,0 +1,9 @@
+id: pbs_programs_all
+title: Commonwealth PBS program expenses across portfolios
+source_key: federal_pbs_programs_all
+compatibility_group: budget_expense
+edge_kind: related_breakdown
+extractor: scripts/ingest/extractors/pbs_programs_all.py
+staging_csv: data/staging/breakdowns/pbs_programs_all.csv
+mapping: config/mappings/federal_pbs_programs_all.yaml
+landing_url: https://budget.gov.au/content/pbs/index.htm

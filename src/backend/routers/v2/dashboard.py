@@ -17,6 +17,10 @@ from ...abs_gfs_liability_hierarchy import (
     abs_gfs_liability_path,
     is_abs_gfs_liability_source,
 )
+from ...abs_gfs_revenue_hierarchy import (
+    abs_gfs_revenue_path,
+    is_abs_gfs_revenue_source,
+)
 from ...breakdown_graph import (
     apply_edge_cascade_to_budget_tree,
     attach_related_to_tree,
@@ -37,7 +41,7 @@ from .citation import build_citation
 
 router = APIRouter(prefix="/dashboard", tags=["v2-dashboard"])
 
-Mode = Literal["actuals", "budget", "debt"]
+Mode = Literal["actuals", "budget", "debt", "revenue", "gdp"]
 TOTAL_RE = re.compile(r"^total\b", re.IGNORECASE)
 
 LEVEL_ORDER = ("federal", "state", "territory", "local")
@@ -77,8 +81,19 @@ def _mode_filters(mode: Mode) -> dict[str, Any]:
             "compatibility_group": "gfs_liability",
             "estimate_statuses": ("actual", "audited_actual"),
         }
+    if mode == "revenue":
+        return {
+            "compatibility_group": "gfs_revenue",
+            "estimate_statuses": ("actual", "audited_actual"),
+        }
+    if mode == "gdp":
+        return {
+            "compatibility_group": "gdp",
+            "estimate_statuses": ("actual", "audited_actual"),
+        }
     raise HTTPException(
-        status_code=400, detail="mode must be 'actuals', 'budget', or 'debt'"
+        status_code=400,
+        detail="mode must be 'actuals', 'budget', 'debt', 'revenue', or 'gdp'",
     )
 
 
@@ -172,8 +187,18 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
 def _path_parts(node_name: str, source_key: str | None = None) -> list[str] | None:
     """Split a node into tree path parts. None means omit the fact from the tree."""
     name = (node_name or "Uncategorized").strip()
+    if source_key and source_key.startswith("aofm_"):
+        # "Treasury Bonds / 21 Nov 2035" → Debt securities → Treasury Bonds → detail
+        bits = [p.strip() for p in name.split(" / ") if p.strip()]
+        if not bits:
+            return ["Debt securities"]
+        if bits[0].startswith("Debt securities"):
+            return bits
+        return ["Debt securities", *bits]
     if is_abs_gfs_liability_source(source_key):
         return abs_gfs_liability_path(name)
+    if is_abs_gfs_revenue_source(source_key):
+        return abs_gfs_revenue_path(name)
     if is_abs_gfs_source(source_key):
         return abs_gfs_hierarchy_path(name)
     parts = [p.strip() for p in name.split(" / ") if p.strip()]

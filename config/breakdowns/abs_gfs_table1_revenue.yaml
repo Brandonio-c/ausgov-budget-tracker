@@ -1,0 +1,8 @@
+id: abs_gfs_table1_revenue
+compatibility_group: gfs_revenue
+source_key_prefix: abs_gfs_
+source_key_suffix: _revenue
+skip:
+  - Total GFS revenue
+  - Total gfs revenue
+child_to_parent: {}

@@ -1,0 +1,25 @@
+source_id: abs_taxation_revenue_key_tables_2024_25_territory
+title: ABS Taxation Revenue key tables (territory)
+publisher: Australian Bureau of Statistics
+jurisdiction: States and Territories
+government_level: territory
+source_family: abs_gdp_tax
+measure_type: tax_revenue
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/gdp_tax/abs_taxation_revenue_key_tables_2024_25_territory.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/cross_level/abs_taxation_revenue_key_tables_2024_25/snapshots/20260724T164144Z/files/55060DO001_202425.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

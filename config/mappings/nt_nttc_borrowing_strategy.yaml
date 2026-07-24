@@ -1,0 +1,25 @@
+source_id: nt_nttc_borrowing_strategy
+title: NTTC debt instruments
+publisher: NTTC
+jurisdiction: NT
+government_level: territory
+source_family: state_borrowing
+measure_type: gross_debt_face_value
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/borrowing/nt_nttc_borrowing_strategy.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/state/nt_nttc_borrowing_strategy/snapshots/manual-20260724T181531Z/files/nt_nttc_borrowing_strategy.csv
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}|{locator}'

@@ -1,0 +1,26 @@
+source_id: federal_statement_11_cgs_face_value
+title: Statement 11 Table 11.5 CGS face value
+publisher: Australian Government Treasury
+jurisdiction: Commonwealth
+government_level: federal
+source_family: budget_historical_aggregates
+measure_type: gross_debt_face_value
+accounting_basis: gfs
+estimate_status: audited_actual
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/federal_statement_11_cgs_face_value.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_budget_statement_11_historical/snapshots/20260723T024822Z/files/bp1_bs-11.pdf
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

@@ -1,0 +1,25 @@
+source_id: aofm_treasury_indexed_bonds_dealt_facts
+title: AOFM Treasury Indexed Bonds
+publisher: Australian Office of Financial Management
+jurisdiction: Commonwealth
+government_level: federal
+source_family: aofm_cgs
+measure_type: aofm_cgs_outstanding
+accounting_basis: gfs
+estimate_status: actual
+period_granularity: financial_year
+input:
+  path: data/staging/aofm/aofm_treasury_indexed_bonds_dealt_facts.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/aofm_treasury_indexed_bonds_dealt/snapshots/manual-20260724T165550Z/files/aofm_treasury_indexed_bonds_dealt__portfolio_aggregate_-_treasury_indexed_bonds_-_dealt.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}|{locator}'

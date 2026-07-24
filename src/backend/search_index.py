@@ -169,6 +169,10 @@ def _mode_for_group(group: str | None) -> str | None:
         return "budget"
     if group == "gfs_liability":
         return "debt"
+    if group in {"gfs_revenue", "tax_revenue"}:
+        return "revenue"
+    if group == "gdp":
+        return "gdp"
     return None
 
 
