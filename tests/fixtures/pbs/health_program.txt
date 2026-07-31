@@ -1,0 +1,7 @@
+Budgeted expenses for Outcome 2
+2024-25 Actual 2025-26 Estimated actual 2026-27 Budget 2027-28 Forward estimate 2028-29 Forward estimate
+Program 2.1 Sample Medical Benefits
+Administered expenses
+  Sample Medicare Benefits 28,000,000 29,500,000 30,800,000 32,100,000 33,400,000
+Program 2.1 Sample Medical Benefits Total funded expenditure
+28,300,000 29,800,000 31,100,000 32,400,000 33,700,000

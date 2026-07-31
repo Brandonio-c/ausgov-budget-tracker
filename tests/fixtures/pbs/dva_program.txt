@@ -1,0 +1,7 @@
+Budgeted expenses for Outcome 1
+2024-25 Actual 2025-26 Estimated actual 2026-27 Budget 2027-28 Forward estimate 2028-29 Forward estimate
+Program 1.1 Sample Veteran Support Payments
+Administered expenses
+  Sample Disability Compensation 12,100,000 12,600,000 13,000,000 13,400,000 13,800,000
+Program 1.1 Sample Veteran Support Payments Total funded expenditure
+12,300,000 12,800,000 13,200,000 13,600,000 14,000,000

@@ -19,8 +19,13 @@ columns:
   locator: locator
   landing_url: landing_url
   original_resource_url: resource_url
+  cached_copy_path: cached_copy_path
 attribution:
   landing_url_column: landing_url
   original_resource_url_column: resource_url
+  # Per-row: each fact's own source PBS PDF, not a single fixed document - see
+  # duckdb_etl.py's per_row_path_column handling. The literal path below is
+  # only a fallback for any row missing this column (should not happen).
   cached_copy_path: data/raw/federal/federal_transparency_portal/snapshots/20260722T043324Z/files/2025-26-Treasury-PBS.pdf
+  cached_copy_path_column: cached_copy_path
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

@@ -96,6 +96,17 @@ def extract_rows(mapping: dict[str, Any], repo_root: Path = REPO_ROOT) -> list[d
     sha = file_sha256(cached_path)
     retrieved_at = _utc_now()
 
+    # A source_family covering many distinct source documents (e.g. one row per
+    # portfolio PBS PDF) needs a per-row cached copy + hash, not one fixed value
+    # for every row - confirmed as a real citation bug on pbs_programs_all,
+    # which was stamping every one of 63 different portfolios' facts with the
+    # same single Treasury PDF's path and hash. Opt in via
+    # attribution.cached_copy_path_column (mirrors landing_url_column /
+    # original_resource_url_column below); every other mapping keeps the
+    # existing single-file behaviour unchanged.
+    per_row_path_column = mapping.get("attribution", {}).get("cached_copy_path_column")
+    sha_cache: dict[str, str] = {}
+
     rows: list[dict[str, Any]] = []
     for _, series in rel.iterrows():
         row = {k: (None if (isinstance(v, float) and v != v) else v) for k, v in series.items()}
@@ -111,9 +122,20 @@ def extract_rows(mapping: dict[str, Any], repo_root: Path = REPO_ROOT) -> list[d
         else:
             row["_estimate_status"] = mapping["estimate_status"]
         row["_period_granularity"] = mapping["period_granularity"]
-        row["_sha256"] = sha
+
+        row_cached_path = cached_path
+        row_sha = sha
+        if per_row_path_column:
+            raw_path = row.get(per_row_path_column)
+            if isinstance(raw_path, str) and raw_path.strip():
+                resolved = resolve_input_path({"input": {"path": raw_path.strip()}}, repo_root)
+                if resolved.is_file():
+                    row_cached_path = resolved
+                    row_sha = sha_cache.setdefault(str(resolved), file_sha256(resolved))
+
+        row["_sha256"] = row_sha
         row["_retrieved_at"] = retrieved_at
-        row["_cached_copy_path"] = str(cached_path)
+        row["_cached_copy_path"] = str(row_cached_path)
         row["_local_path"] = str(src)
 
         attr = mapping.get("attribution", {})

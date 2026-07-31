@@ -68,6 +68,16 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def _relative_or_str(path: Path) -> str:
+    """repo-relative path when possible, else str(path) - unit tests exercise
+    extract_pdf() with fake paths not under REPO_ROOT (e.g. Path("fake.pdf")),
+    which must not raise from an unconditional relative_to()."""
+    try:
+        return str(path.resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _parse_thousands(tok: str) -> int | None:
     try:
         return int(float(tok.replace(",", "")) * 1000)
@@ -117,6 +127,23 @@ KEY_COST_ROW = re.compile(
     r"^(?:\d+\s+)?(?P<label>[A-Za-z][A-Za-z0-9 ,\-&/]+?)\s+"
     r"(?P<nums>(?:-?\d{1,3}(?:,\d{3})*(?:\.\d+)?(?:\s+|$)){3,6})\s*$"
 )
+# Some PBS documents wrap a table's year/status header across many short lines
+# instead of one ("2025-26 2026-27 ..." then "Estimated" / "Actual" / "Budget"
+# / " Estimate" / "Forward" each on its own line, then "$'000 $'000 ..." on
+# another). None of these carry label information, but without this check they
+# fall through to the generic `pending.append()` path and get spliced onto the
+# next real row's label - confirmed on federal_pbs_2026_27_defence, where this
+# corrupted nearly every row on pages using this multi-line header layout.
+HEADER_FRAGMENT_ONLY = re.compile(
+    r"^(?:Estimated|Actual|Budget|Estimate|Forward|Revised|Outcome|"
+    r"(?:\$'?000|\$m)(?:\s+(?:\$'?000|\$m))*)\s*$",
+    re.I,
+)
+# A label followed entirely by dash/nil placeholders (no digits at all) - a
+# real zero-value row, not garbage, but its dashes don't match any numeric
+# regex so it would otherwise be swallowed into `pending` and glued onto the
+# next row's label instead of being recognised as its own (zero) row.
+NIL_ROW = re.compile(r"^(?P<label>[A-Za-z][A-Za-z0-9 ,\-&/()\[\]]*?)\s+(?:-\s+){2,}-\s*$")
 
 
 def _is_start_page(text: str) -> bool:
@@ -215,6 +242,7 @@ def _append_year_rows(
                 "table_caption": table_caption,
                 "page_number": page_no,
                 "quality_status": "ok",
+                "cached_copy_path": _relative_or_str(pdf),
                 "locator": (
                     f"source_id:{source_id} | pdf:{pdf.name} | page:{page_no} | "
                     f"program:{label} | fy:{col.financial_year} | unit:{unit} | "
@@ -255,14 +283,31 @@ def extract_pdf(
                 pending = []
                 header_cols = None
                 break
-            if SKIP_LINE.match(line):
-                continue
-
-            # Capture / refresh year headers (including continuation pages)
+            # Capture / refresh year headers (including continuation pages) -
+            # must run before SKIP_LINE: a genuine multi-year header line often
+            # starts with a bare "20XX-XX" token, which SKIP_LINE's generic
+            # "\d{4}-\d{2}" rule would otherwise eat, silently losing the
+            # header and forcing every row on the table onto the (sometimes
+            # mismatched) budget-year template fallback instead of the real,
+            # page-specific header.
             parsed_header = parse_year_header_line(line)
             if parsed_header and len(parsed_header) >= 3:
                 header_cols = parsed_header
                 table_caption = line[:200]
+                continue
+
+            if SKIP_LINE.match(line):
+                continue
+
+            # Bare status/unit fragment from a multi-line-wrapped header - carries
+            # no label, must not be treated as one (see HEADER_FRAGMENT_ONLY above).
+            if HEADER_FRAGMENT_ONLY.match(line):
+                continue
+
+            # A real (zero-value) row whose dashes don't match any numeric regex -
+            # drop cleanly rather than let it corrupt the next row's label.
+            if NIL_ROW.match(line):
+                pending = []
                 continue
 
             common = dict(
