@@ -79,8 +79,14 @@ NO_BULK = {
     "sa_councils_in_focus",
     "sa_tenders_contracts",
     "federal_transparency_pbs_set_16",
-    "qld_sds_machine_readable_2025_26",
-    "vic_local_govt_financial",
+    # qld_sds_machine_readable_2025_26 removed 2026-07-31: official CKAN CSV
+    # resources are confirmed real and live (verified directly), just gated by
+    # QLD's known WAF challenge on direct download - that's an acquisition
+    # blocker (browser session pending), not an absence of a bulk export.
+    # vic_local_govt_financial removed 2026-07-31: raw file, its meta.json, and
+    # all 1,700 facts' citations fully reconcile on disk (verified directly) -
+    # this source was only misclassified because the disk-detection check
+    # below requires latest.json, which this source predates.
 }
 
 REFERENCE_ONLY = {

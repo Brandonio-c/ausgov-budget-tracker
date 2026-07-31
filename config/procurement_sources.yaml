@@ -7548,6 +7548,102 @@ sources:
   caveats:
   - As at research date, a comparable 2026-27 open-data package was not found; monitor
     the portal.
+- id: qld_budget_bp2_machine_readable_2025_26
+  priority: P1
+  publisher: Queensland Treasury
+  jurisdiction: QLD
+  government_level: state
+  source_family: handoff_actuals_state
+  title: 2025-26 Budget Paper 2 - Budget Strategy and Outlook machine-readable tables
+    8.1-8.9
+  landing_url: https://www.data.qld.gov.au/dataset/2025-26-state-budget-budget-paper-2-budget-strategy-and-outlook
+  access_method: landing_page_discovery
+  automation: medium
+  formats:
+  - csv
+  enabled: true
+  access:
+    type: landing_page_discovery
+    allowed_domains:
+    - www.data.qld.gov.au
+    discovery:
+      max_depth: 1
+      allowed_extensions:
+      - .csv
+      latest_only: true
+  resource_url: null
+  handoff_action_bucket: DOWNLOAD_NOW
+  handoff_data_domain: actuals
+  handoff_fills_gap: state_budget_sector_totals
+  handoff_already_on_disk: false
+  handoff_repo_source_key: null
+  handoff_verification_status: VERIFIED_LANDING
+  parser_strategy: Resolve all nine resources from CKAN API; GGS/PNFC/NFPS sectors
+    remain distinct view families, never summed together.
+  caveats:
+  - Not a COFOG/program decomposition - sector totals and flows must stay separate
+    compatible view families. 2025-26 is the latest confirmed machine-readable cycle;
+    no 2026-27 equivalent confirmed.
+  - Same www.data.qld.gov.au host as qld_sds_machine_readable_2025_26 and
+    qld_qgip_expenditure - confirmed subject to the same AWS WAF empty-challenge
+    (HTTP 202, empty body) response on direct request; acquisition needs a real
+    browser session (scripts/procure_browser_session.py), not a bulk-export
+    absence.
+  - 'Nine known resource URLs (verified live 2026-07-31), pass to procure_browser_session.py
+    via --url: .../e680b776-6468-46ae-8216-5186325879c1/resource/f9943c54-9c1e-4941-9fa5-a4b454c028ef/download/2025-26-budget-table-8.1-general-government-sector-operating-statement.csv,
+    .../resource/2f37fc97-c646-4ed0-a3e6-32e4fab95fcb/download/2025-26-budget-table-8.2-public-non-financial-corporations-sector-operating-statement.csv,
+    .../resource/3a870db8-5bee-475e-a828-e8aea77eee43/download/2025-26-budget-table-8.3-non-financial-public-sector-operating-statement.csv,
+    .../resource/076ef6f5-3bc0-42e4-82d0-ff5fdab21635/download/2025-26-budget-table-8.4-general-government-sector-balance-sheet.csv,
+    .../resource/664fac5f-3769-4efb-88c3-15ab21ab00e3/download/2025-26-budget-table-8.5-public-non-financial-corporations-sector-balance-sheet.csv,
+    .../resource/c4d5f6e5-891b-4958-a081-f0c4d449e46d/download/2025-26-budget-table-8.6-non-financial-public-sector-balance-sheet.csv,
+    .../resource/334e0de0-ea55-4300-91ee-8aa871b02dd0/download/2025-26-budget-table-8.7-general-government-sector-cash-flow-statement.csv,
+    .../resource/5eb12deb-4729-40dc-9cde-a83cd1008aa3/download/2025-26-budget-table-8.8-public-non-financial-corporations-sector-cash-flow-statement.csv,
+    .../resource/9f57eceb-9ff6-4c67-acfe-46187d35b093/download/2025-26-budget-table-8.9-non-financial-public-sector-cash-flow-statement.csv
+    (dataset e680b776-6468-46ae-8216-5186325879c1).'
+- id: qld_budget_measures_bp4_machine_readable_2025_26
+  priority: P2
+  publisher: Queensland Treasury
+  jurisdiction: QLD
+  government_level: state
+  source_family: handoff_actuals_state
+  title: 2025-26 Budget Paper 4 - Budget Measures machine-readable pack
+  landing_url: https://www.data.qld.gov.au/dataset/2025-26-state-budget-budget-paper-4-budget-measures
+  access_method: landing_page_discovery
+  automation: medium
+  formats:
+  - csv
+  enabled: true
+  access:
+    type: landing_page_discovery
+    allowed_domains:
+    - www.data.qld.gov.au
+    discovery:
+      max_depth: 1
+      allowed_extensions:
+      - .csv
+      latest_only: true
+  resource_url: null
+  handoff_action_bucket: DOWNLOAD_NOW
+  handoff_data_domain: budget_measure
+  handoff_fills_gap: state_policy_measure_depth
+  handoff_already_on_disk: false
+  handoff_repo_source_key: null
+  handoff_verification_status: VERIFIED_LANDING
+  parser_strategy: Resolve all three resources from CKAN API; expose as a separate
+    budget_measure/related family, never summed as children of total expenses.
+  caveats:
+  - Policy-measure deltas by department, 2024-25 to 2028-29 - never additive to
+    total expenses. No 2026-27 pack confirmed.
+  - Same www.data.qld.gov.au host as qld_sds_machine_readable_2025_26 and
+    qld_qgip_expenditure - confirmed subject to the same AWS WAF empty-challenge
+    (HTTP 202, empty body) response on direct request; acquisition needs a real
+    browser session (scripts/procure_browser_session.py), not a bulk-export
+    absence.
+  - 'Three known resource URLs (verified live 2026-07-31), pass to
+    procure_browser_session.py via --url: .../30cce1c9-e032-4788-b795-e5173ebd9def/resource/67f5dfed-5b4c-4692-b1c1-f2afca72f21e/download/budget-measures-bp4-2025-26-budget.csv,
+    .../resource/426cb7aa-42d0-4d52-97fe-95ef7d9cf0bf/download/data-dictionary-budget-measures-budget-paper-4-2025-26.csv,
+    .../resource/a22169c8-7c1b-40ff-a50d-66d3b15d6ed9/download/explanatory-notes-budget-measures-budget-paper-4-2025-26.csv
+    (dataset 30cce1c9-e032-4788-b795-e5173ebd9def).'
 - id: federal_bp1_statement10_history_2025_26
   priority: P1
   publisher: Australian Government Treasury

@@ -1,0 +1,62 @@
+# Ingestion coverage audit (20260731T153150Z)
+
+- Registry sources: **365**
+- Audit rows (registry + orphans): **365**
+- facts.db total facts: **324,984**
+- Mapping YAML files: **127**
+
+## Status counts
+
+- `fully_ingested`: **46**
+- `adapter_missing`: **247**
+- `adapter_broken`: **27**
+- `reference_only`: **4**
+- `duplicate_source`: **23**
+- `officially_unavailable`: **9**
+- `not_acquired`: **9**
+- `not_acquired`: **9**
+
+## Priority backlog (top 40)
+
+| rank | status | source_id | viz_bucket | facts | next |
+|---:|---|---|---|---:|---|
+| 10 | `adapter_missing` | `federal_defence_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_dss_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_dva_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_education_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_health_disability_ageing_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_ndia_pbs_2026_27` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_agriculture_fisheries_and_forestry` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_attorney_general_s_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_climate_change_energy_the_environment_and_water` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_defence_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_department_of_parliamentary_services` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_department_of_the_house_of_representatives` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_department_of_the_senate_pbs` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_education_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_employment_and_workplace_relations` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_finance_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_foreign_affairs_and_trade` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_health_disability_and_ageing` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_home_affairs_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_industry_science_and_resources` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_infrastructure_transport_regional_development_communications_sport_and_the_arts` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_parliamentary_budget_office` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_prime_minister_and_cabinet` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_social_services_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_treasury_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2024_25_veterans_affairs` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_agriculture_fisheries_and_forestry` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_attorney_general_s_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_climate_change_energy_the_environment_and_water` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_defence_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_department_of_parliamentary_services` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_department_of_the_house_of_representatives` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_department_of_the_senate_pbs` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_education_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_employment_and_workplace_relations` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_finance_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_foreign_affairs_and_trade` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_health_disability_and_ageing` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_home_affairs_portfolio` | commonwealth_pbs_program_depth | 0 | build_adapter |
+| 10 | `adapter_missing` | `federal_pbs_2025_26_industry_science_and_resources` | commonwealth_pbs_program_depth | 0 | build_adapter |
