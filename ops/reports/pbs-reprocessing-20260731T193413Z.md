@@ -8,6 +8,68 @@ Total quarantined rows: 8682
 
 Sources with zero rows and zero quarantine: 0
 
+## facts.db load (Task 3.5) — added 2026-07-31T19:50Z
+
+Ran `scripts/ingest/breakdown_pack.py --pack pbs_programs_all` after this
+extraction (extractor + mapping both re-run; `data/staging/breakdowns/
+pbs_programs_all.csv` regenerated fresh from the fixed extractor):
+
+- `source_documents.source_key = 'federal_pbs_programs_all'` already existed
+  from three prior runs on 2026-07-24 (before every fix documented above:
+  header-fragment/nil-row contamination, per-row citation integrity, the
+  Act-citation-year fabrication bug, the soft-hyphen year-header bug). That
+  pre-existing batch held 56,117 facts, a portion of them provably corrupted
+  (fabricated amounts from the Act-year bug; ~44% still citing a single
+  hardcoded Treasury PDF regardless of which of the 63 portfolio PDFs the
+  fact actually came from).
+- Because `fact_key` embeds derived label text, a fact produced by the fixed
+  extractor gets a different key than its pre-fix predecessor and would
+  never overwrite it — the two would sit side by side forever, double
+  counting. Added opt-in `replace_on_reload: true` support to
+  `load_facts.py`'s `load_decisions()` (deletes all existing facts for this
+  source's `source_document_id`, cascade-cleaning `fact_nodes`/
+  `lineage_edges`, before inserting the fresh batch). Every other mapping's
+  behaviour (upsert against existing fact_key) is unchanged.
+- After adding that flag and rerunning: 93,265 stale/duplicate facts deleted
+  (56,117 pre-existing + 37,148 added by an earlier run this session before
+  the flag existed), 103,945 rows re-published, collapsing via `fact_key`
+  (portfolio + label + fy + estimate_status + measure_type, not amount) to
+  **53,083 distinct facts** now under this source.
+- **Idempotency verified**: ran the identical load a second time.
+  `replaced_existing: 53083`, `published: 103945` — byte-identical to the
+  first post-fix run. Fact count under this source stayed at exactly 53,083
+  across both runs. Total `facts.db` row count also unchanged between the
+  two runs (321,950).
+- **Net effect on facts.db**: 324,984 → 321,950 (-3,034), entirely
+  attributable to this one source (56,117 → 53,083, -3,034). This is a
+  decrease, not an increase, because the fixes remove fabricated rows
+  (Act-year bug) and because fact_key collisions between overlapping budget
+  editions (e.g. the same program/fy/status reported as a slightly
+  different "actual" in both the 2024-25 and 2025-26 PBS editions) collapse
+  to one stored value, chosen by processing order rather than an explicit
+  "prefer newest edition" rule. This is a known, documented limitation, not
+  data corruption — every stored value is a genuine figure from a real PBS
+  document, just not always the most-recently-restated one when editions
+  disagree. Flagged as a follow-up (see Task 4/5 backlog).
+- **Citations verified**: 0 of 53,083 facts still reference the placeholder
+  fallback path; every fact's `source_locator_json.cached_copy_path` now
+  points at its own real portfolio PDF, confirmed by exact-path check (not
+  substring, which produces false positives since several real filenames
+  legitimately contain "Treasury-PBS").
+- **Hierarchy/S6-bridge linking**: NOT done as part of this load. The pack
+  config (`config/breakdowns/pbs_programs_all.yaml`) declares
+  `edge_kind: related_breakdown` and sets no `related_crosswalk_id`, so this
+  load creates facts and category nodes but zero `node_edges` — the data is
+  loaded, correct, and independently queryable/citable, but not yet wired
+  into the existing Statement 6 / portfolio hierarchy tree, so it will not
+  yet appear as added drill-down depth in the dashboard. The existing,
+  narrower `pbs_programs_s6_bridge` pack (Defence/Education/Infrastructure/
+  Home Affairs/Industry only) already does real S6 linking for the
+  portfolios it covers; building a full program-to-S6-function crosswalk
+  across all 26 portfolios in `pbs_programs_all` is a substantial separate
+  engineering task, not attempted here given the remaining scope of this
+  directive. Recommended as a high-impact next step.
+
 ## Per-source detail
 
 | source_id | portfolio | before_fact_count | after_raw_rows | after_quarantine_rows | outcome |

@@ -29,3 +29,9 @@ attribution:
   cached_copy_path: data/raw/federal/federal_transparency_portal/snapshots/20260722T043324Z/files/2025-26-Treasury-PBS.pdf
   cached_copy_path_column: cached_copy_path
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+# fact_key embeds derived label text (node_name), which changes whenever the
+# generalized extractor's parsing logic improves - without replace_on_reload,
+# facts from an earlier, less-correct extraction run would never get
+# overwritten (different fact_key) and would sit alongside the corrected
+# rows forever. See load_facts.py's load_decisions().
+replace_on_reload: true

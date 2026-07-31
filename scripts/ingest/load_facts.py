@@ -299,8 +299,26 @@ def load_decisions(
     conn = _connect(db_path)
     published = 0
     quarantined = 0
+    replaced_existing = 0
     try:
         source_document_id = ensure_source_document(conn, mapping)
+        if mapping.get("replace_on_reload"):
+            # fact_key includes derived label text, which legitimately changes
+            # as extractor logic improves (e.g. a bug-fixed label or year
+            # resolution) - without this, a fact from a fixed extraction run
+            # gets a different fact_key than its pre-fix predecessor and the
+            # old, wrong row is never overwritten, just silently duplicated
+            # alongside the corrected one. Opt-in only: every other mapping's
+            # behaviour (ON CONFLICT upsert against the existing fact_key) is
+            # unchanged. facts.fact_nodes/lineage_edges cascade on delete.
+            cur = conn.execute(
+                "DELETE FROM facts WHERE source_document_id = ?", (source_document_id,)
+            )
+            replaced_existing = cur.rowcount
+            conn.execute(
+                "DELETE FROM facts_pending_attribution WHERE source_document_id = ?",
+                (source_document_id,),
+            )
         for decision in decisions:
             row = decision.row
             if decision.publishable:
@@ -316,4 +334,8 @@ def load_decisions(
         conn.commit()
     finally:
         conn.close()
-    return {"published": published, "quarantined": quarantined}
+    return {
+        "published": published,
+        "quarantined": quarantined,
+        "replaced_existing": replaced_existing,
+    }
