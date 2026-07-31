@@ -15,7 +15,7 @@ import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
 import DebtViewer from "@/components/DebtViewer";
-import { maxAdditiveDepth } from "@/lib/sunburstTree";
+import { maxAdditiveDepth, additiveChildren } from "@/lib/sunburstTree";
 
 export default function HomeClient() {
   const dark = useDarkMode();
@@ -127,8 +127,10 @@ export default function HomeClient() {
     level === "federal" && tree?.children?.length === 1 ? tree.children[0] : tree;
   const currentNode = drillPath.length > 0 ? drillPath[drillPath.length - 1] : rootNode;
   const rawChildren = currentNode?.children ?? null;
+  // Exclude Statement 6 / FBO navigation folders from pie/bar — they preserve the
+  // parent amount and would double the chart total (e.g. Social protection $286B + FBO $286B).
   const displayedChildren = useMemo(
-    () => (rawChildren?.length ? foldToTopN(rawChildren) : []),
+    () => (rawChildren?.length ? foldToTopN(additiveChildren(rawChildren)) : []),
     [rawChildren],
   );
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
@@ -177,8 +179,17 @@ export default function HomeClient() {
   }, [drillPath, currentNode]);
 
   const chartTotalNote = useMemo(() => {
+    const kids = additiveChildren(rawChildren);
+    if (!kids.length) return null;
+    const parentVal = currentNode?.value ?? 0;
+    const sum = kids.reduce((s, n) => s + n.value, 0);
+    // When slices roughly partition the parent, amounts are parent-year consistent
+    // even if nested related packs stamp fact_financial_year (e.g. AusTender 2019-20).
+    if (parentVal > 0 && Math.abs(sum - parentVal) <= parentVal * 0.05) {
+      return null;
+    }
     const fys = new Set(
-      (displayedChildren || [])
+      kids
         .map((n) => n.breakdown?.fact_financial_year)
         .filter((y): y is string => !!y && y !== year),
     );
@@ -190,7 +201,7 @@ export default function HomeClient() {
       return `Chart slices use mixed published years (${[...fys].sort().join(", ")}); not the selected ${year} total`;
     }
     return null;
-  }, [displayedChildren, year]);
+  }, [rawChildren, year, currentNode]);
 
   const atLeaf =
     !!currentNode &&

@@ -1,0 +1,26 @@
+source_id: federal_austender_contracts
+title: AusTender top contracts under Defence / Health / Infrastructure (CN 2019–20)
+publisher: Department of Finance (AusTender)
+jurisdiction: Commonwealth
+government_level: federal
+source_family: contracts
+measure_type: contract_value
+accounting_basis: commitment
+estimate_status: contract
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/austender_contracts_topn.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_austender_ocds_api/snapshots/20260721T024615Z/files/2019-20-australian-government-contract-data.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

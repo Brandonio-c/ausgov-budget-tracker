@@ -37,6 +37,8 @@ def test_defence_extract_joins_label_and_numeric_line() -> None:
 
     snippet = (
         "Budget Expenses and Performance\n"
+        "2024-25 Estimated actual 2025-26 Budget 2026-27 Forward estimate "
+        "2027-28 Forward estimate 2028-29 Forward estimate\n"
         "Program 2.5 Navy Capabilities Total funded expenditure\n"
         "1,234,567 2,345,678 3,456,789 4,000,000 5,000,000\n"
         "Employees 100,000 100,000 100,000 100,000 100,000\n"
@@ -45,7 +47,7 @@ def test_defence_extract_joins_label_and_numeric_line() -> None:
         rows = mod.extract_pdf(
             Path("fake-defence.pdf"),
             portfolio="Defence",
-            source_id="federal_pbs_defence",
+            source_id="federal_pbs_defence_2025_26",
         )
     totals = [
         r

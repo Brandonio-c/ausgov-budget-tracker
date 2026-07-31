@@ -417,6 +417,133 @@ def link_pbs_to_components(conn: sqlite3.Connection) -> int:
     return inserted
 
 
+def link_path_children_under_cascade(
+    conn: sqlite3.Connection,
+    *,
+    child_source_key: str,
+    crosswalk_id: str,
+    parent_sources: tuple[str, ...] = (
+        "federal_dss_pbs_programs",
+        "federal_health_pbs_programs",
+        "federal_budget_statement_6_components",
+        "federal_budget_statement_6_a61",
+        "federal_pbs_programs_s6_bridge",
+    ),
+    priority: int = 55,
+) -> int:
+    """Attach ``{parent_path} / …`` children from *child_source_key* under cascade parents."""
+    children = conn.execute(
+        """
+        SELECT n.id, n.name FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key = ?
+          AND n.name LIKE '% / %'
+        """,
+        (child_source_key,),
+    ).fetchall()
+    parents = conn.execute(
+        f"""
+        SELECT n.id, n.name, d.source_key FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key IN ({", ".join("?" for _ in parent_sources)})
+        """,
+        parent_sources,
+    ).fetchall()
+    # Prefer earlier parent_sources entries when names collide (e.g. bare "Defence")
+    sk_rank = {sk: i for i, sk in enumerate(parent_sources)}
+    by_lower: dict[str, int] = {}
+    by_lower_rank: dict[str, int] = {}
+    for nid, name, sk in parents:
+        key = name.lower()
+        rank = sk_rank.get(sk, 99)
+        if key not in by_lower or rank < by_lower_rank[key]:
+            by_lower[key] = int(nid)
+            by_lower_rank[key] = rank
+
+    inserted = 0
+    seen: set[tuple[int, int]] = set()
+    for child_id, child_name in children:
+        parts = [p.strip() for p in child_name.split(" / ") if p.strip()]
+        if len(parts) < 2:
+            continue
+        parent_id = None
+        attach_id = int(child_id)
+        for cut in range(len(parts) - 1, 0, -1):
+            prefix = " / ".join(parts[:cut])
+            pid = by_lower.get(prefix.lower())
+            if pid is None:
+                continue
+            child_path = " / ".join(parts[: cut + 1])
+            crow = conn.execute(
+                """
+                SELECT n.id FROM nodes n
+                JOIN source_documents d ON d.id = n.source_document_id
+                WHERE d.source_key = ? AND lower(n.name) = lower(?)
+                """,
+                (child_source_key, child_path),
+            ).fetchone()
+            if not crow:
+                continue
+            parent_id = pid
+            attach_id = int(crow[0])
+            break
+        if parent_id is None:
+            continue
+        pair = (parent_id, attach_id)
+        if pair in seen:
+            continue
+        seen.add(pair)
+        inserted += _insert_same_group(
+            conn,
+            parent_id,
+            attach_id,
+            crosswalk_id,
+            priority,
+            f"{crosswalk_id}:{child_name}",
+        )
+    return inserted
+
+
+def link_grants_under_pbs(conn: sqlite3.Connection) -> int:
+    """Hang GrantConnect grant-program nodes under matched PBS / S6 parents."""
+    return link_path_children_under_cascade(
+        conn,
+        child_source_key="federal_grantconnect_awards",
+        crosswalk_id="grantconnect_under_pbs",
+        priority=60,
+    )
+
+
+def link_dss_under_pbs(conn: sqlite3.Connection) -> int:
+    """Hang DSS recipient demographics under Social protection PBS parents."""
+    return link_path_children_under_cascade(
+        conn,
+        child_source_key="federal_dss_payment_demographics",
+        crosswalk_id="dss_demo_under_pbs",
+        parent_sources=(
+            "federal_dss_pbs_programs",
+            "federal_budget_statement_6_components",
+        ),
+        priority=58,
+    )
+
+
+def link_austender_under_s6(conn: sqlite3.Connection) -> int:
+    """Hang AusTender contract aggregates under Defence / Health / Transport A.6.1."""
+    return link_path_children_under_cascade(
+        conn,
+        child_source_key="federal_austender_contracts",
+        crosswalk_id="austender_under_s6",
+        # Prefer A.6.1 / components only — s6_bridge also has a bare "Defence"
+        # node that would steal the name index.
+        parent_sources=(
+            "federal_budget_statement_6_a61",
+            "federal_budget_statement_6_components",
+        ),
+        priority=50,
+    )
+
+
 def link_ordered_cascade(conn: sqlite3.Connection) -> dict[str, int]:
     """Emit a61→components and components/a61→PBS same_group edges."""
     result = {
@@ -496,6 +623,12 @@ def run_pack(pack_id: str, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
             "pbs_programs_s6_bridge",
         ):
             summary["cascade_edges"] = link_ordered_cascade(conn)
+        if pack_id == "grantconnect_awards":
+            summary["grant_links"] = link_grants_under_pbs(conn)
+        if pack_id == "dss_payment_demographics":
+            summary["dss_links"] = link_dss_under_pbs(conn)
+        if pack_id == "austender_contracts":
+            summary["austender_links"] = link_austender_under_s6(conn)
         conn.commit()
     finally:
         conn.close()
@@ -510,6 +643,9 @@ ALL_PACKS = [
     "pbs_programs_health",
     "pbs_programs_s6_bridge",
     "federal_fbo_function_subfunction",
+    "grantconnect_awards",
+    "dss_payment_demographics",
+    "austender_contracts",
 ]
 
 

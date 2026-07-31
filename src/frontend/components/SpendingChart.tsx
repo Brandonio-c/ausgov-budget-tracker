@@ -4,7 +4,7 @@ import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { TreeNode } from "@/lib/types";
-import { colorsFor, formatAud, formatAudFull } from "@/lib/colors";
+import { colorsFor, formatAud, formatAudFull, formatMeasureValue } from "@/lib/colors";
 import {
   buildSunburst,
   resolveSunburstNode,
@@ -23,6 +23,14 @@ interface Props {
   totalNote?: string | null;
   ringDepth?: number;
   centerLabel?: string | null;
+  /** When false, hide the total line entirely. */
+  showTotal?: boolean;
+  /** Override default "Total:" label (e.g. Combined non-consolidated). */
+  totalLabel?: string | null;
+  /** Unit for formatting (AUD | percent | …). */
+  valueUnit?: string | null;
+  /** When false, do not imply an additive national total. */
+  isAdditive?: boolean;
 }
 
 const MIN_CHART_HEIGHT = 360;
@@ -42,6 +50,10 @@ export default function SpendingChart({
   totalNote,
   ringDepth = 2,
   centerLabel = null,
+  showTotal = true,
+  totalLabel = null,
+  valueUnit = "AUD",
+  isAdditive = true,
 }: Props) {
   const { chartMaximized } = useSplitPaneLayout();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -332,6 +344,8 @@ export default function SpendingChart({
   }
 
   const displayTotal = chartType === "rings" && sunburst ? sunburst.total : total;
+  const fmt = (v: number) => formatMeasureValue(v, valueUnit);
+  const showTotalLine = showTotal && isAdditive && valueUnit !== "percent";
 
   return (
     <div
@@ -355,14 +369,21 @@ export default function SpendingChart({
           notMerge
         />
       </div>
-      <p className="mt-1 shrink-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Total: {formatAudFull(displayTotal)}
-        {totalNote ? (
-          <span className="block text-xs text-amber-700 dark:text-amber-300/90">
-            {totalNote}
-          </span>
-        ) : null}
-      </p>
+      {showTotalLine ? (
+        <p className="mt-1 shrink-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          {totalLabel ?? "Total"}: {fmt(displayTotal)}
+          {totalNote ? (
+            <span className="block text-xs text-amber-700 dark:text-amber-300/90">{totalNote}</span>
+          ) : null}
+        </p>
+      ) : (
+        <p className="mt-1 shrink-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          {totalLabel ?? (!isAdditive ? "Non-consolidated comparison" : null)}
+          {totalNote ? (
+            <span className="block text-xs text-amber-700 dark:text-amber-300/90">{totalNote}</span>
+          ) : null}
+        </p>
+      )}
 
       {!chartMaximized ? (
         <>

@@ -1,0 +1,153 @@
+# Explicit dashboard view families — incompatible families must not share one additive tree.
+# API modes map 1:1 (or via alias) onto these ids.
+
+version: 1
+
+families:
+  actual_expense:
+    compatible_measure_types: null  # any in compatibility_group actual_expense
+    compatible_units: [AUD]
+    compatible_price_bases: [not_applicable, unspecified, current_prices]
+    compatible_valuation_bases: [not_applicable, unspecified]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    can_mix_observation_dates: true
+    root_total_allowed: true
+    legacy_compatibility_group: actual_expense
+
+  budget_expense:
+    compatible_units: [AUD]
+    compatible_price_bases: [not_applicable, unspecified, current_prices]
+    compatible_valuation_bases: [not_applicable, unspecified]
+    allowed_estimate_statuses: [budget, forward_estimate, revised_estimate, estimated_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    can_mix_observation_dates: true
+    root_total_allowed: true
+    legacy_compatibility_group: budget_expense
+
+  gfs_revenue:
+    compatible_units: [AUD]
+    compatible_price_bases: [not_applicable, unspecified, current_prices]
+    compatible_valuation_bases: [not_applicable, unspecified]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    can_mix_observation_dates: true
+    root_total_allowed: true
+    legacy_compatibility_group: gfs_revenue
+    notes: >
+      GFS Table 1 is the canonical additive control. Detailed ABS taxation
+      categories must attach as related/reconciled detail, not co-added.
+
+  debt_stock:
+    compatible_units: [AUD]
+    compatible_price_bases: [not_applicable, unspecified]
+    compatible_valuation_bases: [face_value, fair_value, market_value, carrying_value, unspecified]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    can_mix_observation_dates: false
+    single_valuation_basis_for_total: true
+    root_total_allowed: true
+    legacy_compatibility_group: gfs_liability
+
+  gdp_current:
+    compatible_measure_types: [gdp_current]
+    compatible_units: [AUD]
+    compatible_price_bases: [current_prices]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gdp_chain_volume:
+    compatible_measure_types: [gdp_chain_volume]
+    compatible_units: [AUD]
+    compatible_price_bases: [chain_volume]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gdp_expenditure:
+    compatible_measure_types: [gdp_current]
+    compatible_units: [AUD]
+    compatible_price_bases: [current_prices]
+    path_prefix_allowlist: ["Expenditure on GDP", "GDP (current prices)"]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gva_current:
+    compatible_measure_types: [gdp_current, gva_current]
+    compatible_units: [AUD]
+    compatible_price_bases: [current_prices]
+    path_hint: industry_gva
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gva_chain_volume:
+    compatible_measure_types: [gdp_chain_volume, gva_chain_volume]
+    compatible_units: [AUD]
+    compatible_price_bases: [chain_volume]
+    path_hint: industry_gva
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gsp_current:
+    compatible_measure_types: [gsp_current]
+    compatible_units: [AUD]
+    compatible_price_bases: [current_prices]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  gsp_chain_volume:
+    compatible_measure_types: [gsp_chain_volume]
+    compatible_units: [AUD]
+    compatible_price_bases: [chain_volume]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: true
+    additive_across_time: false
+    root_total_allowed: true
+    legacy_compatibility_group: gdp
+
+  ratios:
+    compatible_measure_types: [tax_to_gdp_ratio]
+    compatible_units: [percent]
+    compatible_price_bases: [not_applicable]
+    allowed_estimate_statuses: [actual, audited_actual]
+    additive_across_nodes: false
+    additive_across_time: false
+    root_total_allowed: false
+    legacy_compatibility_group: gdp
+
+# Dashboard mode → view_family (PR2 expands beyond legacy `gdp`)
+mode_to_family:
+  actuals: actual_expense
+  budget: budget_expense
+  debt: debt_stock
+  revenue: gfs_revenue
+  gdp: gdp_current  # legacy alias — prefer explicit modes
+  gdp_current: gdp_current
+  gdp_chain_volume: gdp_chain_volume
+  gdp_expenditure: gdp_expenditure
+  gva_current: gva_current
+  gva_chain_volume: gva_chain_volume
+  gsp_current: gsp_current
+  gsp_chain_volume: gsp_chain_volume
+  ratios: ratios

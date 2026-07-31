@@ -1,0 +1,2 @@
+Program expenses Employees Suppliers Depreciation Total
+100 200 300 400 500

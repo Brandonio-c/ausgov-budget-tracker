@@ -1,0 +1,26 @@
+source_id: federal_grantconnect_awards
+title: GrantConnect awards FY 2024–25 aggregated under PBS / Statement 6 parents
+publisher: Commonwealth of Australia (GrantConnect)
+jurisdiction: Commonwealth
+government_level: federal
+source_family: grant_awards
+measure_type: grant_award
+accounting_basis: commitment
+estimate_status: award
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/grantconnect_awards_2024_25.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_grantconnect/snapshots/manual-20260722T062855Z/files/federal_grantconnect__grant_awards_pub_2024q3.xlsx
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

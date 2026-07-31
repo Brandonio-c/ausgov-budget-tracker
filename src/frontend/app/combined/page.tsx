@@ -19,7 +19,7 @@ import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
-import { maxAdditiveDepth } from "@/lib/sunburstTree";
+import { maxAdditiveDepth, additiveChildren } from "@/lib/sunburstTree";
 
 function CombinedPageInner() {
   const dark = useDarkMode();
@@ -35,7 +35,7 @@ function CombinedPageInner() {
   const [year, setYear] = useState<string>("");
   const [combinedTree, setCombinedTree] = useState<TreeNode | null>(null);
   const [missingLevels, setMissingLevels] = useState<string[]>([]);
-  const [chartType, setChartType] = useState<ChartType>("pie");
+  const [chartType, setChartType] = useState<ChartType>("bar");
   const [ringDepth, setRingDepth] = useState(2);
   const [drillPath, setDrillPath] = useState<TreeNode[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
@@ -165,7 +165,7 @@ function CombinedPageInner() {
     drillPath.length > 0 ? drillPath[drillPath.length - 1] : combinedTree;
   const rawChildren = currentNode?.children ?? null;
   const displayedChildren = useMemo(
-    () => (rawChildren?.length ? foldToTopN(rawChildren) : []),
+    () => (rawChildren?.length ? foldToTopN(additiveChildren(rawChildren)) : []),
     [rawChildren],
   );
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
@@ -406,9 +406,12 @@ function CombinedPageInner() {
                 dark={dark}
                 onNodeClick={handleNodeClick}
                 onNodeHover={handleNodeHover}
+                showTotal={drillPath.length > 0}
+                isAdditive={drillPath.length > 0}
+                totalLabel={drillPath.length === 0 ? "Non-consolidated comparison" : null}
                 totalNote={
                   drillPath.length === 0
-                    ? "Chart shows each level separately — do not treat the pie total as a national sum"
+                    ? "Levels are shown side-by-side for comparison — not a consolidated Australian total"
                     : null
                 }
                 ringDepth={ringDepth}

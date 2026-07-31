@@ -1,0 +1,9 @@
+id: grantconnect_awards
+title: GrantConnect awards nested under PBS / Statement 6 (FY 2024–25)
+source_key: federal_grantconnect_awards
+compatibility_group: commitment
+edge_kind: same_group
+extractor: scripts/ingest/extractors/grantconnect_awards.py
+staging_csv: data/staging/breakdowns/grantconnect_awards_2024_25.csv
+mapping: config/mappings/federal_grantconnect_awards.yaml
+landing_url: https://www.grants.gov.au/

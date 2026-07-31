@@ -1,0 +1,12 @@
+{
+  "timestamp": "20260724T220533Z",
+  "extractor": "scripts/ingest/extractors/pbs_programs_all.py",
+  "year_resolver": "scripts/ingest/extractors/pbs_year_resolve.py",
+  "full_reprocess_completed": false,
+  "facts_added": null,
+  "facts_removed": null,
+  "facts_corrected": null,
+  "facts_unchanged": null,
+  "facts_quarantined": null,
+  "notes": "Header-aware resolver landed; full PDF reprocess pending operator run."
+}

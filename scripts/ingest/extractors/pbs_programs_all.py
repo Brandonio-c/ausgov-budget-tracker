@@ -17,15 +17,21 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from extractors import SKIP_LINE, iter_pdf_pages  # noqa: E402
+from extractors.pbs_year_resolve import (  # noqa: E402
+    parse_year_header_line,
+    resolve_years_for_nums,
+    template_for_budget_year,
+)
 
 OUT_DIR = REPO_ROOT / "data/staging/breakdowns"
+QUARANTINE_DIR = REPO_ROOT / "data/staging/quarantine"
 LANDING = "https://budget.gov.au/content/pbs/index.htm"
 
 FIVE_TAIL = re.compile(
     r"^(?P<label>.*?)(?P<nums>(?:\s+-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|\s+-?\d+(?:\.\d+)?){3,6})\s*$"
 )
-YEARS_DEFAULT = ["2024-25", "2025-26", "2026-27", "2027-28", "2028-29", "2029-30"]
 
+# Retained only for status hints when headers provide FYs; never used to invent columns.
 STATUS_BY_FY = {
     "2024-25": "actual",
     "2025-26": "estimated_actual",
@@ -128,8 +134,17 @@ def _should_stop_table(line: str) -> bool:
     return False
 
 
+def _budget_year_from_source(source_id: str, stem: str) -> str | None:
+    blob = f"{source_id} {stem}"
+    m = re.search(r"(20\d{2})[_-](\d{2})", blob)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}"
+    return None
+
+
 def _append_year_rows(
     rows: list[dict],
+    quarantine: list[dict],
     *,
     label: str,
     nums: list[str],
@@ -139,12 +154,40 @@ def _append_year_rows(
     pdf: Path,
     page_no: int,
     unit: str,
+    header_cols,
+    source_budget_year: str | None,
+    table_caption: str | None,
     prefer: bool = False,
+    use_template: bool = False,
 ) -> None:
     if len(nums) < 3:
         return
-    years = YEARS_DEFAULT[-len(nums) :]
-    for fy, tok in zip(years, nums):
+    template = (
+        template_for_budget_year(source_budget_year)
+        if use_template and source_budget_year
+        else None
+    )
+    year_cols, reason = resolve_years_for_nums(
+        nums,
+        header_cols=header_cols,
+        source_budget_year=source_budget_year,
+        layout_template=template,
+    )
+    if year_cols is None:
+        quarantine.append(
+            {
+                "reason": reason,
+                "label": label,
+                "nums": " ".join(nums),
+                "portfolio": portfolio,
+                "source_id": source_id,
+                "page": page_no,
+                "pdf": pdf.name,
+                "quality_status": "quarantined",
+            }
+        )
+        return
+    for col, tok in zip(year_cols, nums):
         if unit == "$m":
             try:
                 amount = int(float(tok.replace(",", "")) * 1_000_000)
@@ -154,19 +197,28 @@ def _append_year_rows(
             amount = _parse_thousands(tok)
             if amount is None:
                 continue
+        status = col.estimate_status or STATUS_BY_FY.get(col.financial_year, "budget")
         rows.append(
             {
-                "fy": fy,
+                "fy": col.financial_year,
                 "amount": amount,
                 "category": f"{portfolio} / {label}",
                 "portfolio": portfolio,
                 "program_label": label,
-                "estimate_status": STATUS_BY_FY.get(fy, "budget"),
+                "estimate_status": status,
                 "source_id_origin": source_id,
                 "prefer_program_total": prefer,
+                "source_budget_year": source_budget_year,
+                "column_header_original": col.column_header_original,
+                "year_inference_method": col.inference_method,
+                "year_inference_confidence": col.confidence,
+                "table_caption": table_caption,
+                "page_number": page_no,
+                "quality_status": "ok",
                 "locator": (
                     f"source_id:{source_id} | pdf:{pdf.name} | page:{page_no} | "
-                    f"program:{label} | fy:{fy} | unit:{unit}"
+                    f"program:{label} | fy:{col.financial_year} | unit:{unit} | "
+                    f"infer:{col.inference_method}/{col.confidence}"
                 ),
                 "landing_url": source_url or LANDING,
                 "resource_url": source_url or LANDING,
@@ -180,10 +232,15 @@ def extract_pdf(
     portfolio: str,
     source_id: str,
     source_url: str = LANDING,
+    allow_template_fallback: bool = True,
 ) -> list[dict]:
     rows: list[dict] = []
+    quarantine: list[dict] = []
     capturing = False
     pending: list[str] = []
+    header_cols = None
+    table_caption: str | None = None
+    source_budget_year = _budget_year_from_source(source_id, pdf.stem)
     for page_no, text in iter_pdf_pages(pdf):
         if _is_start_page(text):
             capturing = True
@@ -196,9 +253,29 @@ def extract_pdf(
             if capturing and _should_stop_table(line):
                 capturing = False
                 pending = []
+                header_cols = None
                 break
             if SKIP_LINE.match(line):
                 continue
+
+            # Capture / refresh year headers (including continuation pages)
+            parsed_header = parse_year_header_line(line)
+            if parsed_header and len(parsed_header) >= 3:
+                header_cols = parsed_header
+                table_caption = line[:200]
+                continue
+
+            common = dict(
+                portfolio=portfolio,
+                source_id=source_id,
+                source_url=source_url,
+                pdf=pdf,
+                page_no=page_no,
+                header_cols=header_cols,
+                source_budget_year=source_budget_year,
+                table_caption=table_caption,
+                use_template=allow_template_fallback and header_cols is None,
+            )
 
             # Defence-style: label line then numeric-only follow-on
             if pending and NUMS_ONLY.match(line):
@@ -211,15 +288,12 @@ def extract_pdf(
                 if prefer or re.search(r"Program\s+\d+", label, re.I):
                     _append_year_rows(
                         rows,
+                        quarantine,
                         label=label,
                         nums=nums,
-                        portfolio=portfolio,
-                        source_id=source_id,
-                        source_url=source_url,
-                        pdf=pdf,
-                        page_no=page_no,
                         unit="$000",
                         prefer=prefer,
+                        **common,
                     )
                 continue
 
@@ -238,15 +312,12 @@ def extract_pdf(
                             if len(nums) >= 3 and any("." in n or "," in n for n in nums):
                                 _append_year_rows(
                                     rows,
+                                    quarantine,
                                     label=f"Key cost category / {label}",
                                     nums=nums,
-                                    portfolio=portfolio,
-                                    source_id=source_id,
-                                    source_url=source_url,
-                                    pdf=pdf,
-                                    page_no=page_no,
                                     unit="$m",
                                     prefer=True,
+                                    **common,
                                 )
                                 continue
                 pending.append(_norm(line))
@@ -260,7 +331,6 @@ def extract_pdf(
                 pending = []
             if len(label) < 4:
                 continue
-            # Skip bare "Total …" unless it is a Program total funded expenditure line
             prefer = bool(PROGRAM_TOTAL.search(label))
             if label.lower().startswith("total") and not prefer:
                 continue
@@ -270,7 +340,6 @@ def extract_pdf(
                 and not prefer
             ):
                 continue
-            # Prefer program totals; skip Employees/Suppliers noise when we have totals
             if re.match(r"^(?:Employees|Suppliers|Other expenses)\b", label, re.I):
                 continue
             nums = re.findall(
@@ -278,15 +347,12 @@ def extract_pdf(
             )
             _append_year_rows(
                 rows,
+                quarantine,
                 label=label,
                 nums=nums,
-                portfolio=portfolio,
-                source_id=source_id,
-                source_url=source_url,
-                pdf=pdf,
-                page_no=page_no,
                 unit="$000",
                 prefer=prefer,
+                **common,
             )
 
     # Prefer program-total / key-cost rows over duplicate generic lines
@@ -323,6 +389,13 @@ def extract_pdf(
                 continue
         r.pop("prefer_program_total", None)
         cleaned.append(r)
+    # Persist quarantine sidecar for this extract
+    if quarantine:
+        QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
+        qpath = QUARANTINE_DIR / f"pbs_quarantine_{source_id}.jsonl"
+        with qpath.open("a", encoding="utf-8") as fh:
+            for item in quarantine:
+                fh.write(json.dumps(item, ensure_ascii=False) + "\n")
     return cleaned
 
 

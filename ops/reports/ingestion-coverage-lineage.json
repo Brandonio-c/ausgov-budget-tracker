@@ -1,0 +1,76 @@
+{
+  "datasets": [
+    {
+      "canonical_dataset_id": "abs_gfs_table4_expenses",
+      "coverage_status": "fully_ingested",
+      "fact_count": 230,
+      "fact_source_keys": [
+        "abs_gfs_commonwealth_130"
+      ],
+      "extractor_name": "adapters/abs_gfs.py",
+      "notes": "Jurisdiction Table_4 melts share one adapter; raw IDs map via abs_gfs_* sources."
+    },
+    {
+      "canonical_dataset_id": "abs_gfs_table1_revenue",
+      "coverage_status": "partially_ingested",
+      "fact_count": 230,
+      "fact_source_keys": [
+        "abs_gfs_commonwealth_130"
+      ],
+      "extractor_name": "m4_gfs_revenue.py",
+      "notes": "Revenue mode uses gfs_revenue; detailed tax is separate dataset below."
+    },
+    {
+      "canonical_dataset_id": "abs_taxation_revenue_detail",
+      "coverage_status": "partially_ingested",
+      "fact_count": 0,
+      "fact_source_keys": [],
+      "extractor_name": "m_gdp_tax.py",
+      "notes": "Must attach as related detail under GFS Taxation revenue \u2014 not additive duplicate."
+    },
+    {
+      "canonical_dataset_id": "federal_pbs_programs",
+      "coverage_status": "partially_ingested",
+      "fact_count": 66183,
+      "fact_source_keys": [
+        "federal_pbs_programs_all",
+        "federal_dss_pbs_programs",
+        "federal_health_pbs_programs",
+        "federal_pbs_programs_s6_bridge"
+      ],
+      "extractor_name": "extractors/pbs_programs_all.py",
+      "notes": "Header-aware year resolution; quarantined rows excluded."
+    },
+    {
+      "canonical_dataset_id": "federal_statement_6",
+      "coverage_status": "partially_ingested",
+      "fact_count": 657,
+      "fact_source_keys": [
+        "federal_budget_statement_6_a61",
+        "federal_budget_statement_6_components"
+      ],
+      "extractor_name": "breakdown_pack.py",
+      "notes": null
+    },
+    {
+      "canonical_dataset_id": "federal_fbo_appendix_a",
+      "coverage_status": "fully_ingested",
+      "fact_count": 85,
+      "fact_source_keys": [
+        "federal_fbo_2024_25_function_subfunction"
+      ],
+      "extractor_name": "extractors/fbo_appendix_a.py",
+      "notes": null
+    },
+    {
+      "canonical_dataset_id": "state_borrowing_authorities",
+      "coverage_status": "partially_ingested",
+      "fact_count": 0,
+      "fact_source_keys": [],
+      "extractor_name": "m_borrowing_authorities.py",
+      "notes": "Mixed face/fair value \u2014 API disables unqualified totals when mixed."
+    }
+  ],
+  "alias_count": 2,
+  "facts_source_keys_observed": 121
+}

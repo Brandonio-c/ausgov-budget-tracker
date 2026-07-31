@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e . 2>/dev/null || true
+          pip install fastapi uvicorn pydantic python-multipart
+      - name: Ruff
+        run: python -m ruff check scripts src/backend tests/unit || true
+      - name: Build fixture DB
+        run: python scripts/ingest/build_fixture_db.py
+      - name: Unit tests
+        run: python -m pytest tests/unit -q
+      - name: Integration tests
+        run: python -m pytest tests/integration -q
+        env:
+          FACTS_DB_PATH: data/test/facts_fixture.db
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint || true
+      - run: npx tsc --noEmit
+      - run: npm run build

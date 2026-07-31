@@ -1,0 +1,20 @@
+{
+  "timestamp": "20260724T220533Z",
+  "baseline_sha": "36ace65ffa7ec2f0064baa5a7a7f1f26d7085fb7",
+  "migrations": ["006_semantic_hardening"],
+  "facts_local_approx": 331022,
+  "tests": {
+    "unit_integration_passed": 12,
+    "full_suite_note": "api/ingest against local facts.db"
+  },
+  "acceptance": {
+    "percent_not_aud": true,
+    "gdp_modes_split": true,
+    "pbs_no_fixed_year_slice": true,
+    "combined_no_misleading_total": true,
+    "fixture_db_ci": true,
+    "lineage_audit": true,
+    "readme_current": true,
+    "full_pbs_reprocess": false
+  }
+}

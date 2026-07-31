@@ -54,6 +54,57 @@ def apply_sql(conn: sqlite3.Connection, sql: str) -> None:
     conn.executescript(sql)
 
 
+def ensure_columns(conn: sqlite3.Connection, table: str, columns: list[tuple[str, str]]) -> None:
+    """Idempotently ADD COLUMN definitions (name, sql_type_and_nullability)."""
+    existing = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+    for name, typedef in columns:
+        if name in existing:
+            continue
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typedef}")
+
+
+def apply_006_semantic_hardening(conn: sqlite3.Connection, sql: str) -> None:
+    """Apply 006 with idempotent ALTERs then remaining DML/DDL from the SQL file."""
+    ensure_columns(
+        conn,
+        "facts",
+        [
+            ("amount_value", "REAL"),
+            ("scale", "TEXT"),
+            ("price_basis", "TEXT"),
+            ("volume_basis", "TEXT"),
+            ("seasonal_adjustment", "TEXT"),
+            ("source_budget_year", "TEXT"),
+            ("column_header_original", "TEXT"),
+            ("year_inference_method", "TEXT"),
+            ("year_inference_confidence", "TEXT"),
+            ("canonical_dataset_id", "TEXT"),
+            ("extractor_run_id", "TEXT"),
+            ("quality_status", "TEXT"),
+            ("quality_flags_json", "TEXT"),
+            ("view_family", "TEXT"),
+        ],
+    )
+    ensure_columns(
+        conn,
+        "measure_definitions",
+        [
+            ("view_family", "TEXT"),
+            ("default_unit", "TEXT"),
+            ("root_total_allowed", "INTEGER NOT NULL DEFAULT 1"),
+        ],
+    )
+    # Strip ALTER TABLE lines; run the rest via executescript
+    kept: list[str] = []
+    for line in sql.splitlines():
+        if line.strip().upper().startswith("ALTER TABLE"):
+            continue
+        kept.append(line)
+    body = "\n".join(kept).strip()
+    if body:
+        conn.executescript(body)
+
+
 def apply_migration(
     conn: sqlite3.Connection,
     migration_id: str,
@@ -73,7 +124,10 @@ def apply_migration(
                 f"stored={existing['checksum']} current={checksum}"
             )
         return False
-    apply_sql(conn, sql)
+    if migration_id.startswith("006_"):
+        apply_006_semantic_hardening(conn, sql)
+    else:
+        apply_sql(conn, sql)
     conn.execute(
         """
         INSERT INTO schema_migrations (migration_id, applied_at, checksum, notes)

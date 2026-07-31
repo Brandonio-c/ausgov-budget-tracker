@@ -24,9 +24,14 @@ class TreeNode(BaseModel):
     mixed_observation_dates: Optional[bool] = None
     observation_dates: Optional[list[str]] = None
     valuation_basis: Optional[str] = None
+    valuation_bases: Optional[list[str]] = None
+    mixed_valuation_bases: Optional[bool] = None
     amount_granularity: Optional[str] = None
     warning: Optional[str] = None
     is_aggregate: Optional[bool] = None
+    unit: Optional[str] = None
+    view_family: Optional[str] = None
+    root_total_allowed: Optional[bool] = None
 
 
 TreeNode.model_rebuild()

@@ -1,0 +1,9 @@
+id: austender_contracts
+title: AusTender contracts nested under Defence / Health / Transport (historical CN)
+source_key: federal_austender_contracts
+compatibility_group: commitment
+edge_kind: same_group
+extractor: scripts/ingest/extractors/austender_contracts.py
+staging_csv: data/staging/breakdowns/austender_contracts_topn.csv
+mapping: config/mappings/federal_austender_contracts.yaml
+landing_url: https://www.tenders.gov.au/

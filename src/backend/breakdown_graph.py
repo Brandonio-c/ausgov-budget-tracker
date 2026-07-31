@@ -272,7 +272,7 @@ def build_same_group_subtree(
     *,
     parent_name: str | None = None,
     depth: int = 0,
-    max_depth: int = 6,
+    max_depth: int = 8,
     allow_nearest_fy: bool = False,
 ) -> tuple[list[dict[str, Any]], None]:
     if depth > max_depth:
@@ -322,12 +322,13 @@ def build_related_subtree(
     *,
     parent_name: str | None = None,
     depth: int = 0,
-    max_depth: int = 6,
+    max_depth: int = 8,
     source_key_prefixes: tuple[str, ...] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """
     Load related_breakdown children for a leaf; nest same_group under each.
     Uses nearest-FY fallback for deeper same_group nests when needed.
+    Depth 8 leaves room for S6 → component → PBS → grant program → recipient.
     """
     if depth > max_depth:
         return [], None

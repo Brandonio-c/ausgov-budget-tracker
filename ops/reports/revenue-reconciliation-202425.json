@@ -1,0 +1,95 @@
+{
+  "year": "2024-25",
+  "rows": [
+    {
+      "jurisdiction": "ACT",
+      "financial_year": "2024-25",
+      "control_amount": 2754000000.0,
+      "detail_sum": 0.0,
+      "difference": -2754000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "Commonwealth",
+      "financial_year": "2024-25",
+      "control_amount": 675173000000.0,
+      "detail_sum": 675984000000.0,
+      "difference": 811000000.0,
+      "difference_percentage": 0.12011736251301519,
+      "status": "ok",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "NSW",
+      "financial_year": "2024-25",
+      "control_amount": 54682000000.0,
+      "detail_sum": 0.0,
+      "difference": -54682000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "NT",
+      "financial_year": "2024-25",
+      "control_amount": 1008000000.0,
+      "detail_sum": 0.0,
+      "difference": -1008000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "QLD",
+      "financial_year": "2024-25",
+      "control_amount": 30821000000.0,
+      "detail_sum": 0.0,
+      "difference": -30821000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "SA",
+      "financial_year": "2024-25",
+      "control_amount": 9373000000.0,
+      "detail_sum": 0.0,
+      "difference": -9373000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "TAS",
+      "financial_year": "2024-25",
+      "control_amount": 2411000000.0,
+      "detail_sum": 0.0,
+      "difference": -2411000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "VIC",
+      "financial_year": "2024-25",
+      "control_amount": 46278000000.0,
+      "detail_sum": 0.0,
+      "difference": -46278000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    },
+    {
+      "jurisdiction": "WA",
+      "financial_year": "2024-25",
+      "control_amount": 17891000000.0,
+      "detail_sum": 0.0,
+      "difference": -17891000000.0,
+      "difference_percentage": 100.0,
+      "status": "warning",
+      "tolerance_pct": 5.0
+    }
+  ]
+}

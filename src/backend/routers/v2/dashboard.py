@@ -21,6 +21,12 @@ from ...abs_gfs_revenue_hierarchy import (
     abs_gfs_revenue_path,
     is_abs_gfs_revenue_source,
 )
+from ...compatibility import (
+    assert_compatible_or_raise,
+    display_value,
+    mode_to_view_family,
+    validate_fact_set,
+)
 from ...gdp_hierarchy import gdp_hierarchy_path
 from ...breakdown_graph import (
     apply_edge_cascade_to_budget_tree,
@@ -42,10 +48,38 @@ from .citation import build_citation
 
 router = APIRouter(prefix="/dashboard", tags=["v2-dashboard"])
 
-Mode = Literal["actuals", "budget", "debt", "revenue", "gdp"]
+Mode = Literal[
+    "actuals",
+    "budget",
+    "debt",
+    "revenue",
+    "gdp",  # legacy alias → gdp_current
+    "gdp_current",
+    "gdp_chain_volume",
+    "gdp_expenditure",
+    "gva_current",
+    "gva_chain_volume",
+    "gsp_current",
+    "gsp_chain_volume",
+    "ratios",
+]
 TOTAL_RE = re.compile(r"^total\b", re.IGNORECASE)
 
 LEVEL_ORDER = ("federal", "state", "territory", "local")
+
+_ECONOMY_MODES = frozenset(
+    {
+        "gdp",
+        "gdp_current",
+        "gdp_chain_volume",
+        "gdp_expenditure",
+        "gva_current",
+        "gva_chain_volume",
+        "gsp_current",
+        "gsp_chain_volume",
+        "ratios",
+    }
+)
 
 
 def _facts_conn():
@@ -62,10 +96,17 @@ def _normalize_level(level: str) -> str:
 
 
 def _mode_filters(mode: Mode) -> dict[str, Any]:
+    """Map API mode → legacy compatibility_group + estimate statuses + view_family."""
+    try:
+        view_family = mode_to_view_family("gdp_current" if mode == "gdp" else mode)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     if mode == "actuals":
         return {
             "compatibility_group": "actual_expense",
             "estimate_statuses": ("actual", "audited_actual"),
+            "view_family": view_family,
         }
     if mode == "budget":
         return {
@@ -76,26 +117,58 @@ def _mode_filters(mode: Mode) -> dict[str, Any]:
                 "revised_estimate",
                 "estimated_actual",
             ),
+            "view_family": view_family,
         }
     if mode == "debt":
         return {
             "compatibility_group": "gfs_liability",
             "estimate_statuses": ("actual", "audited_actual"),
+            "view_family": view_family,
         }
     if mode == "revenue":
         return {
             "compatibility_group": "gfs_revenue",
             "estimate_statuses": ("actual", "audited_actual"),
+            "view_family": view_family,
         }
-    if mode == "gdp":
+    if mode in _ECONOMY_MODES:
         return {
             "compatibility_group": "gdp",
             "estimate_statuses": ("actual", "audited_actual"),
+            "view_family": view_family,
+            "economy_mode": mode if mode != "gdp" else "gdp_current",
         }
     raise HTTPException(
         status_code=400,
-        detail="mode must be 'actuals', 'budget', 'debt', 'revenue', or 'gdp'",
+        detail=(
+            "mode must be actuals|budget|debt|revenue|gdp|gdp_current|"
+            "gdp_chain_volume|gdp_expenditure|gva_current|gva_chain_volume|"
+            "gsp_current|gsp_chain_volume|ratios"
+        ),
     )
+
+
+def _economy_measure_clause(economy_mode: str | None) -> tuple[str, tuple[str, ...]]:
+    """SQL fragment restricting GDP-bucket facts to one view family."""
+    if not economy_mode:
+        return "", ()
+    if economy_mode == "gdp_current":
+        return "AND f.measure_type = ?", ("gdp_current",)
+    if economy_mode == "gdp_chain_volume":
+        return "AND f.measure_type = ?", ("gdp_chain_volume",)
+    if economy_mode == "gdp_expenditure":
+        return "AND f.measure_type = ?", ("gdp_current",)
+    if economy_mode == "gva_current":
+        return "AND f.measure_type IN (?, ?)", ("gdp_current", "gva_current")
+    if economy_mode == "gva_chain_volume":
+        return "AND f.measure_type IN (?, ?)", ("gdp_chain_volume", "gva_chain_volume")
+    if economy_mode == "gsp_current":
+        return "AND f.measure_type = ?", ("gsp_current",)
+    if economy_mode == "gsp_chain_volume":
+        return "AND f.measure_type = ?", ("gsp_chain_volume",)
+    if economy_mode == "ratios":
+        return "AND f.measure_type = ?", ("tax_to_gdp_ratio",)
+    return "", ()
 
 
 def _estatus_clause(statuses: tuple[str, ...]) -> tuple[str, tuple[str, ...]]:
@@ -137,20 +210,35 @@ def _preferred_basis(
     return None
 
 
-def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
+def _fact_rows(
+    conn,
+    mode: Mode,
+    level: str,
+    year: str,
+    *,
+    valuation_basis: str | None = None,
+) -> list[dict[str, Any]]:
     filt = _mode_filters(mode)
     preferred = _preferred_basis(conn, mode, level, year)
     est_sql, est_params = _estatus_clause(filt["estimate_statuses"])
+    eco_sql, eco_params = _economy_measure_clause(filt.get("economy_mode"))
     params: list[Any] = [
         filt["compatibility_group"],
         level,
         year,
         *est_params,
+        *eco_params,
     ]
     sql = f"""
         SELECT
             f.id AS fact_id,
             f.amount_aud,
+            f.amount_value,
+            f.quantity,
+            f.unit,
+            f.currency,
+            f.price_basis,
+            f.view_family,
             d.jurisdiction,
             n.name AS node_name,
             f.accounting_basis,
@@ -159,7 +247,8 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
             f.valuation_basis,
             f.amount_granularity,
             f.source_locator_json,
-            f.measure_type
+            f.measure_type,
+            f.quality_status
         FROM facts f
         JOIN source_documents d ON d.id = f.source_document_id
         JOIN measure_definitions m ON m.measure_type = f.measure_type
@@ -170,33 +259,80 @@ def _fact_rows(conn, mode: Mode, level: str, year: str) -> list[dict[str, Any]]:
               ELSE d.government_level END = ?
           AND f.financial_year = ?
           AND f.estimate_status {est_sql}
+          {eco_sql}
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
     """
     if preferred:
         sql += " AND f.accounting_basis = ?"
         params.append(preferred)
+    if valuation_basis and valuation_basis not in ("all", "comparison"):
+        sql += " AND COALESCE(f.valuation_basis, 'unspecified') = ?"
+        params.append(valuation_basis)
     sql += " ORDER BY d.jurisdiction, n.name"
     rows = []
     for r in conn.execute(sql, params).fetchall():
         locator = r["source_locator_json"] or ""
-        # Leaf-only rollup: skip synthetic parent sums when children exist in the feed.
         if "roll_up:sum_instruments" in locator:
             continue
         if (r["amount_granularity"] or "") == "instrument_type_aggregate" and "roll_up:" in locator:
             continue
-        rows.append(
-            {
-                "fact_id": int(r["fact_id"]),
-                "amount_aud": float(r["amount_aud"] or 0),
-                "jurisdiction": r["jurisdiction"] or "Uncategorized",
-                "node_name": (r["node_name"] or "Uncategorized").strip(),
-                "accounting_basis": r["accounting_basis"],
-                "source_key": r["source_key"],
-                "observation_date": r["observation_date"],
-                "valuation_basis": r["valuation_basis"],
-                "amount_granularity": r["amount_granularity"],
-                "measure_type": r["measure_type"],
-            }
+        row = {
+            "fact_id": int(r["fact_id"]),
+            "amount_aud": r["amount_aud"],
+            "amount_value": r["amount_value"],
+            "quantity": r["quantity"],
+            "unit": r["unit"] or "AUD",
+            "currency": r["currency"],
+            "price_basis": r["price_basis"] or "unspecified",
+            "view_family": r["view_family"],
+            "jurisdiction": r["jurisdiction"] or "Uncategorized",
+            "node_name": (r["node_name"] or "Uncategorized").strip(),
+            "accounting_basis": r["accounting_basis"],
+            "source_key": r["source_key"],
+            "observation_date": r["observation_date"],
+            "valuation_basis": r["valuation_basis"],
+            "amount_granularity": r["amount_granularity"],
+            "measure_type": r["measure_type"],
+        }
+        val = display_value(row)
+        if val is None:
+            continue
+        row["amount_aud"] = float(val)  # tree builder uses amount_aud as display magnitude
+        eco = filt.get("economy_mode")
+        name = row["node_name"]
+        anzsic = bool(re.search(r"\([A-S]\)\s*$", name)) or bool(
+            re.search(r"\([A-S]\)\s*/", name)
         )
+        if eco == "gdp_current":
+            # National GDP / expenditure aggregates only — not industry GVA lines.
+            if anzsic:
+                continue
+            if re.search(r"tax.*%|% of gdp|derived ratio", name, re.I):
+                continue
+        elif eco == "gdp_chain_volume":
+            if anzsic:
+                continue
+        elif eco == "gdp_expenditure":
+            if anzsic:
+                continue
+            if not re.search(
+                r"expenditure on gdp|gdp \(current|final consumption|gross fixed|"
+                r"changes in inventories|exports of goods|imports of goods|less imports",
+                name,
+                re.I,
+            ):
+                continue
+        elif eco in ("gva_current", "gva_chain_volume"):
+            if not anzsic and not re.search(r"\bgva\b|gross value added|industry", name, re.I):
+                continue
+        elif eco in ("gsp_current", "gsp_chain_volume"):
+            if not re.search(r"\bgsp\b|gross state", name, re.I) and row["measure_type"] not in (
+                "gsp_current",
+                "gsp_chain_volume",
+            ):
+                # measure filter already applied; keep all gsp_* rows
+                pass
+        rows.append(row)
     return rows
 
 
@@ -220,7 +356,7 @@ def _path_parts(node_name: str, source_key: str | None = None, mode: Mode | None
         return abs_gfs_revenue_path(name)
     if is_abs_gfs_source(source_key):
         return abs_gfs_hierarchy_path(name)
-    if mode == "gdp":
+    if mode in _ECONOMY_MODES or mode == "gdp":
         return gdp_hierarchy_path(name)
     parts = [p.strip() for p in name.split(" / ") if p.strip()]
     return parts or [name or "Uncategorized"]
@@ -278,6 +414,7 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
         if row.get("valuation_basis"):
             cursor["valuation_basis"] = row["valuation_basis"]
             cursor.setdefault("valuation_bases", set()).add(str(row["valuation_basis"]))
+            root.setdefault("valuation_bases", set()).add(str(row["valuation_basis"]))
         if row.get("amount_granularity"):
             cursor["amount_granularity"] = row["amount_granularity"]
             cursor["is_aggregate"] = row["amount_granularity"] in {
@@ -285,8 +422,11 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
                 "scheme_aggregate",
                 "council_aggregate",
             }
-        # Published GDP totals should keep their amount when children are attached
-        if mode == "gdp" and re.search(r"gdp \(current|gsp \(current|gdp \(chain", parts[-1], re.I):
+        if row.get("unit"):
+            cursor["unit"] = row["unit"]
+        if mode in _ECONOMY_MODES and re.search(
+            r"gdp \(current|gsp \(current|gdp \(chain", parts[-1], re.I
+        ):
             cursor["preserve_amount"] = True
     _prune_totals(root)
     return root
@@ -304,17 +444,27 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
     breakdown = _breakdown_meta(node)
     obs_dates = sorted(node.get("observation_dates") or [])
     mixed = len(obs_dates) > 1
+    val_bases = sorted(node.get("valuation_bases") or [])
+    mixed_val = len(val_bases) > 1
+    warnings: list[str] = []
+    if mixed:
+        warnings.append(
+            "Mixed observation dates across nested liabilities — do not treat as a single as-at stock."
+        )
+    if mixed_val:
+        warnings.append(
+            "Mixed valuation bases — comparison only; do not treat as an unqualified total."
+        )
     extra = {
         "valuation_basis": node.get("valuation_basis"),
+        "valuation_bases": val_bases or None,
+        "mixed_valuation_bases": mixed_val if val_bases else None,
         "amount_granularity": node.get("amount_granularity"),
         "is_aggregate": node.get("is_aggregate"),
         "observation_dates": obs_dates or None,
         "mixed_observation_dates": mixed if obs_dates else None,
-        "warning": (
-            "Mixed observation dates across nested liabilities — do not treat as a single as-at stock."
-            if mixed
-            else None
-        ),
+        "unit": node.get("unit"),
+        "warning": "; ".join(warnings) if warnings else None,
     }
     if children_map:
         children = [_to_tree_node(k, v) for k, v in children_map.items()]
@@ -449,19 +599,33 @@ def dashboard_tree(
     mode: Mode = Query(...),
     level: str = Query(...),
     year: str = Query(...),
+    valuation_basis: str | None = Query(
+        None,
+        description="Debt filter: face_value|fair_value|… or all/comparison",
+    ),
 ) -> TreeNode:
     level = _normalize_level(level)
+    filt = _mode_filters(mode)
     conn = _facts_conn()
     try:
-        rows = _fact_rows(conn, mode, level, year)
+        rows = _fact_rows(conn, mode, level, year, valuation_basis=valuation_basis)
         if not rows:
             raise HTTPException(
                 status_code=404,
                 detail=f"No {mode} data for level={level!r} year={year!r}",
             )
+        try:
+            decision = assert_compatible_or_raise(
+                validate_fact_set(
+                    rows,
+                    view_family=filt["view_family"],
+                    valuation_filter=valuation_basis,
+                )
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
         tree_dict = _build_tree_dict(rows, mode=mode)
-        # Prefer same_group (already nested). Else attach related_breakdown.
-        # Debt/liability stocks have no Statement 6 / PBS related packs.
         if mode == "actuals":
             attach_related_to_tree(conn, tree_dict, year)
         elif mode == "budget" and level == "federal":
@@ -472,9 +636,29 @@ def dashboard_tree(
         _to_tree_node(name, child)
         for name, child in (tree_dict.get("children") or {}).items()
     ]
-    total = sum(c.value for c in children)
     obs_dates = sorted(tree_dict.get("observation_dates") or [])
     mixed = len(obs_dates) > 1
+    val_bases = sorted(tree_dict.get("valuation_bases") or [])
+    mixed_val = len(val_bases) > 1
+    warnings = list(decision.warnings)
+    if mixed and mode == "debt":
+        warnings.append(
+            "Mixed observation dates across authorities — figures are not a single as-at stock."
+        )
+    if mixed_val:
+        warnings.append(
+            "Mixed valuation bases — comparison only; unqualified total disabled."
+        )
+        decision.root_total_allowed = False
+
+    if decision.root_total_allowed and decision.additive_across_nodes:
+        total = sum(c.value for c in children)
+    else:
+        total = 0.0
+        if not decision.root_total_allowed:
+            warnings.append("Root total suppressed (non-additive or incompatible set).")
+
+    unit = decision.units[0] if len(decision.units) == 1 else None
     return TreeNode(
         name=f"{level} — {year}",
         value=total,
@@ -482,11 +666,12 @@ def dashboard_tree(
         children=children,
         mixed_observation_dates=mixed if mode == "debt" and obs_dates else None,
         observation_dates=obs_dates if mode == "debt" and obs_dates else None,
-        warning=(
-            "Mixed observation dates across authorities — figures are not a single as-at stock."
-            if mixed and mode == "debt"
-            else None
-        ),
+        valuation_bases=val_bases or None,
+        mixed_valuation_bases=mixed_val if val_bases else None,
+        unit=unit,
+        view_family=decision.view_family,
+        root_total_allowed=decision.root_total_allowed,
+        warning="; ".join(warnings) if warnings else None,
     )
 
 

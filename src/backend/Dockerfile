@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir fastapi "uvicorn[standard]" "fastembed>=0.4" pypdf numpy
+    && pip install --no-cache-dir fastapi "uvicorn[standard]" "fastembed>=0.4" pypdf numpy pyyaml
 
 COPY . /app/backend
 
