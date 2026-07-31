@@ -7,7 +7,15 @@ from dataclasses import dataclass
 from typing import Sequence
 
 FY_TOKEN = re.compile(
-    r"(?P<fy>(?:20\d{2})\s*[–\-/]\s*(?:\d{2}|20\d{2}))",
+    # \xad (soft hyphen) is the character pypdf actually extracts for the
+    # hyphen in "20XX-XX" year ranges in several PBS documents (same
+    # character used elsewhere in these PDFs for wrapped words like
+    # "non\xadfinancial") - without it here, every such header line fails to
+    # match at all, silently forcing every row in the table onto the coarser
+    # source_layout_template fallback (or quarantine) instead of the
+    # accurate table_header_exact resolution. Confirmed on
+    # federal_pbs_2024_25_climate_change_energy_the_environment_and_water.
+    r"(?P<fy>(?:20\d{2})\s*[–\-\xad/]\s*(?:\d{2}|20\d{2}))",
     re.I,
 )
 STATUS_HINTS = [
@@ -29,7 +37,8 @@ class YearColumn:
 
 
 def normalize_fy(raw: str) -> str:
-    digits = re.findall(r"\d+", raw.replace("–", "-"))
+    raw = raw.replace("–", "-").replace("\xad", "-")
+    digits = re.findall(r"\d+", raw)
     if len(digits) >= 2:
         y1 = digits[0]
         y2 = digits[1]
@@ -37,7 +46,7 @@ def normalize_fy(raw: str) -> str:
             return f"{y1}-{y2}"
         if len(y1) == 4 and len(y2) == 4:
             return f"{y1}-{y2[-2:]}"
-    return re.sub(r"\s+", "", raw.replace("–", "-"))
+    return re.sub(r"\s+", "", raw)
 
 
 def parse_year_header_line(line: str) -> list[YearColumn] | None:

@@ -68,6 +68,23 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def _split_act_year(label: str, nums: list[str]) -> tuple[str, list[str]]:
+    """Move a bare (no thousands-separator) 4-digit token off the front of
+    `nums` back onto `label` when it is the enabling legislation's year, not
+    a data column - e.g. "Social Security (Administration) Act 1999
+    131,744,486 138,606,008". FIVE_TAIL's numeric-tail match otherwise
+    swallows that "1999" as if it were a real dollar figure, corrupting both
+    the label (missing its Act year) and the year-to-amount mapping (each
+    real value silently shifted one column). Confirmed on
+    federal_pbs_2026_27_social_services: "A New Tax System (Family
+    Assistance) (Administration) Act 1999 17,873,985 18,147,585" -> without
+    this, "1999" was treated as a dollar amount for one fiscal year while the
+    two real values were mis-attributed to the following two years."""
+    if nums and re.match(r"^-?\d{4}$", nums[0]) and re.search(r"\bAct$", label, re.I):
+        return f"{label} {nums[0]}", nums[1:]
+    return label, nums
+
+
 def _relative_or_str(path: Path) -> str:
     """repo-relative path when possible, else str(path) - unit tests exercise
     extract_pdf() with fake paths not under REPO_ROOT (e.g. Path("fake.pdf")),
@@ -329,6 +346,7 @@ def extract_pdf(
                 nums = re.findall(
                     r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?", line
                 )
+                label, nums = _split_act_year(label, nums)
                 prefer = bool(PROGRAM_TOTAL.search(label))
                 if prefer or re.search(r"Program\s+\d+", label, re.I):
                     _append_year_rows(
@@ -390,6 +408,7 @@ def extract_pdf(
             nums = re.findall(
                 r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?", m.group("nums")
             )
+            label, nums = _split_act_year(label, nums)
             _append_year_rows(
                 rows,
                 quarantine,

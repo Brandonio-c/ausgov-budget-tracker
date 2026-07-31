@@ -55,6 +55,52 @@ def test_wrapped_multiline_header_and_nil_row_no_longer_corrupt_labels():
     assert grants[0]["fy"] in {"2025-26", "2026-27", "2027-28", "2028-29", "2029-30"}
 
 
+def test_act_citation_year_not_treated_as_data_column():
+    """Regression test for a real corruption found on
+    federal_pbs_2026_27_social_services: a bare 4-digit legislation year in
+    labels like "Social Security (Administration) Act 1999" was being
+    swallowed by FIVE_TAIL's numeric-tail match as if it were a dollar
+    figure - fabricating a fact for one fiscal year and shifting every real
+    value onto the wrong year. The year must end up back on the label, and
+    every emitted amount must be one of the fixture's real values."""
+    rows = _extract(
+        "act_citation_year.txt",
+        portfolio="Test Portfolio",
+        source_id="test_act_year_2024_25",
+    )
+    act_rows = [r for r in rows if "Act 1999" in r["program_label"]]
+    assert len(act_rows) == 5
+    real_amounts = {131_744_486_000, 138_606_008_000, 140_000_000_000, 141_500_000_000, 142_900_000_000}
+    for r in act_rows:
+        assert r["amount"] in real_amounts
+        # The citation year must never itself appear as a fact amount.
+        assert r["amount"] != 1999
+        assert r["amount"] != 1_999_000
+
+
+def test_soft_hyphen_year_header_resolves_via_table_header_not_template():
+    """Regression test for federal_pbs_2024_25_climate_change_energy_the_
+    environment_and_water: pypdf extracts the hyphen in "20XX-XX" year
+    ranges as U+00AD (soft hyphen) in several PBS documents, identical to
+    the character used elsewhere in these PDFs for wrapped words like
+    "non\xadfinancial". FY_TOKEN's separator class previously only matched
+    en-dash/hyphen/slash, so the header silently failed to parse and every
+    row on the table fell back to the coarser budget-year template (or
+    quarantined) instead of the accurate table header."""
+    rows = _extract(
+        "soft_hyphen_year_header.txt",
+        portfolio="Test Portfolio",
+        source_id="test_soft_hyphen_2024_25",
+    )
+    totals = [r for r in rows if "Total funded expenditure" in r["program_label"]]
+    assert len(totals) == 5
+    for r in totals:
+        assert r["year_inference_method"] == "table_header"
+        assert r["year_inference_confidence"] == "high"
+    fys = {r["fy"] for r in totals}
+    assert fys == {"2024-25", "2025-26", "2026-27", "2027-28", "2028-29"}
+
+
 def test_multi_page_table_continuation_with_repeated_header():
     rows = _extract(
         "multi_page_repeated_header.txt",

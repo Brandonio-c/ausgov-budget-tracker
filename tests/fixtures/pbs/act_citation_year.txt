@@ -1,0 +1,7 @@
+Budgeted expenses for Outcome 1
+2024-25 Actual 2025-26 Estimated actual 2026-27 Budget 2027-28 Forward estimate 2028-29 Forward estimate
+Program 1.1 Sample Program
+Special appropriations
+Social Security (Administration) Act 1999 131,744,486 138,606,008 140,000,000 141,500,000 142,900,000
+Program 1.1 Sample Program Total funded expenditure
+131,744,486 138,606,008 140,000,000 141,500,000 142,900,000
