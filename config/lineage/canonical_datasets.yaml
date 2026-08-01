@@ -9,20 +9,34 @@ version: 1
 datasets:
   - canonical_dataset_id: abs_gfs_table4_expenses
     fact_source_keys: [abs_gfs_commonwealth_130]
-    raw_source_id_prefixes: [abs_gfs_]
+    # Deliberately NOT a bare "abs_gfs_" prefix: unlike PBS's
+    # discover_pbs_pdfs(), there is no dynamic per-file discovery adapter
+    # here - each jurisdiction variant (abs_gfs_state_nsw_231,
+    # abs_gfs_local_vic_332, etc) has its own explicit mapping YAML under
+    # config/mappings/, and the handoff/duplicate-alias source_ids
+    # (abs_gfs_nsw_state_2024_25 etc) are already handled via
+    # DUPLICATE_ALIASES. A bare "abs_gfs_" prefix here previously matched
+    # unrelated, genuinely-uningested raw releases (abs_gfs_annual_all_
+    # workbooks, abs_gfs_all_levels_sector_2024_25, ...), incorrectly
+    # crediting them as fully_ingested - caught by
+    # test_every_fully_ingested_source_has_nonzero_facts.
+    raw_source_id_prefixes: [abs_gfs_commonwealth_130]
     extractor_name: adapters/abs_gfs.py
     coverage_status: fully_ingested
     notes: Jurisdiction Table_4 melts share one adapter; raw IDs map via abs_gfs_* sources.
 
   - canonical_dataset_id: abs_gfs_table1_revenue
     fact_source_keys: [abs_gfs_commonwealth_130]  # revenue sheets same workbook family
-    raw_source_id_prefixes: [abs_gfs_]
+    raw_source_id_prefixes: [abs_gfs_commonwealth_130]
     extractor_name: m4_gfs_revenue.py
     coverage_status: partially_ingested
     notes: Revenue mode uses gfs_revenue; detailed tax is separate dataset below.
 
   - canonical_dataset_id: abs_taxation_revenue_detail
-    fact_source_keys: []
+    fact_source_keys:
+      - abs_taxation_revenue_key_tables_2024_25_federal
+      - abs_taxation_revenue_key_tables_2024_25_state
+      - abs_taxation_revenue_key_tables_2024_25_territory
     raw_source_id_prefixes: [abs_taxation]
     extractor_name: m_gdp_tax.py
     coverage_status: partially_ingested
@@ -34,7 +48,18 @@ datasets:
       - federal_dss_pbs_programs
       - federal_health_pbs_programs
       - federal_pbs_programs_s6_bridge
-    raw_source_id_prefixes: [federal_pbs_, federal_transparency_portal]
+    # Matches extractors/pbs_programs_all.py's own discover_pbs_pdfs() filter
+    # exactly ("pbs" or "portfolio_budget" anywhere in source_id, not just as
+    # a prefix) - registry entries like federal_dss_pbs_2026_27,
+    # federal_defence_pbs_2026_27, federal_ndia_pbs_2026_27 etc. are
+    # discovered and ingested by that same generalized adapter even though
+    # their source_id doesn't start with "federal_pbs_".
+    raw_source_id_prefixes: [federal_pbs_, federal_transparency_portal, pbs, portfolio_budget]
+    # discover_pbs_pdfs() only picks up .pdf assets - an index/landing page
+    # (e.g. federal_pbs_index_2026_27, html only) matches the source_id
+    # substring rule above but isn't actually processed; require an actual
+    # pdf asset before crediting coverage.
+    handled_formats: [pdf]
     extractor_name: extractors/pbs_programs_all.py
     coverage_status: partially_ingested
     notes: Header-aware year resolution; quarantined rows excluded.
@@ -54,8 +79,23 @@ datasets:
     coverage_status: fully_ingested
 
   - canonical_dataset_id: state_borrowing_authorities
-    fact_source_keys: []
-    raw_source_id_prefixes: [nsw_tcorp, vic_tcv, qld_qtc, sa_safa, wa_wutc, tas_tascorp, act_, nt_]
+    fact_source_keys:
+      - nsw_tcorp_bonds_on_issue
+      - nsw_tcorp_weekly_bonds
+      - nt_nttc_borrowing_strategy
+      - qld_qtc_aud_bond_outstandings
+      - qld_qtc_benchmark_bonds
+      - qld_qtc_weekly_outstandings_2026_07_17
+      - sa_safa_weekly_funding_update
+      - tas_tascorp_annual_report_2024_25
+      - vic_tcv_amount_on_issue
+      - wa_watc_funding_sources
+    # Narrowed to the exact confirmed source_keys above (not bare "act_"/
+    # "nt_" prefixes, which matched many unrelated ACT/NT registry sources -
+    # same over-broad-prefix bug as abs_gfs_ above, caught by
+    # test_every_fully_ingested_source_has_nonzero_facts). "wa_wutc" was
+    # also a typo for the real prefix "wa_watc".
+    raw_source_id_prefixes: [nsw_tcorp, vic_tcv, qld_qtc, sa_safa, wa_watc, tas_tascorp, nt_nttc]
     extractor_name: m_borrowing_authorities.py
     coverage_status: partially_ingested
     notes: Mixed face/fair value — API disables unqualified totals when mixed.

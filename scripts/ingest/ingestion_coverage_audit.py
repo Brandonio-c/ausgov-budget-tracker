@@ -30,6 +30,7 @@ RAW = REPO_ROOT / "data" / "raw"
 MAPPINGS = REPO_ROOT / "config" / "mappings"
 INGEST = REPO_ROOT / "scripts" / "ingest"
 REPORTS = REPO_ROOT / "ops" / "reports"
+CANONICAL_DATASETS = REPO_ROOT / "config" / "lineage" / "canonical_datasets.yaml"
 
 STATUSES = (
     "fully_ingested",
@@ -210,6 +211,41 @@ def _facts_by_source(conn: sqlite3.Connection | None) -> dict[str, dict[str, Any
     return out
 
 
+def _load_canonical_datasets() -> list[dict[str, Any]]:
+    if not CANONICAL_DATASETS.is_file():
+        return []
+    doc = yaml.safe_load(CANONICAL_DATASETS.read_text(encoding="utf-8")) or {}
+    return doc.get("datasets") or []
+
+
+def _family_coverage(
+    source_id: str,
+    detected_formats: list[str],
+    datasets: list[dict[str, Any]],
+    facts: dict[str, dict[str, Any]],
+) -> tuple[str, str] | None:
+    """Return (canonical_dataset_id, coverage_status) if this source is
+    served by a shared family adapter (declared in canonical_datasets.yaml)
+    rather than its own dedicated mapping - e.g. one of the 63 individual
+    PBS portfolio PDFs, ingested via the generalized pbs_programs_all
+    extractor rather than a per-source_id mapping file. None if no
+    declared family matches, the family has zero facts loaded, or this
+    source's own asset formats aren't among the family's handled_formats
+    (e.g. an HTML index page that matches the source_id pattern but isn't
+    actually processed by the extractor)."""
+    for ds in datasets:
+        prefixes = ds.get("raw_source_id_prefixes") or []
+        if not any(p in source_id for p in prefixes):
+            continue
+        handled = ds.get("handled_formats")
+        if handled and not (set(detected_formats) & set(handled)):
+            continue
+        keys = ds.get("fact_source_keys") or []
+        if any(int((facts.get(k) or {}).get("fact_count") or 0) > 0 for k in keys):
+            return ds["canonical_dataset_id"], ds.get("coverage_status") or "partially_ingested"
+    return None
+
+
 def _value_rank(source_id: str) -> tuple[int, str]:
     for rank, pattern, label in VALUE_RANK_RULES:
         if pattern.search(source_id):
@@ -224,6 +260,7 @@ def classify(
     mapping_ids: set[str],
     code_refs: set[str],
     facts: dict[str, dict[str, Any]],
+    canonical_datasets: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     fact_info = facts.get(source_id) or {}
     fact_count = int(fact_info.get("fact_count") or 0)
@@ -235,6 +272,12 @@ def classify(
 
     has_mapping = source_id in mapping_ids or source_id in code_refs
     has_files = acquired is not None and acquired.get("asset_count", 0) > 0
+
+    family = None
+    if fact_count == 0 and has_files and canonical_datasets:
+        family = _family_coverage(
+            source_id, (acquired or {}).get("formats") or [], canonical_datasets, facts
+        )
 
     if source_id in NO_BULK:
         status = "officially_unavailable"
@@ -270,6 +313,11 @@ def classify(
         status = "partially_ingested"
         reason = "facts_present_without_dedicated_mapping_file"
         next_action = "add_explicit_mapping"
+    elif family is not None:
+        canonical_dataset_id, family_status = family
+        status = family_status
+        reason = f"covered_via_family_adapter:{canonical_dataset_id}"
+        next_action = "improve_per_source_lineage"
     elif has_mapping and has_files:
         status = "adapter_broken"
         reason = "mapping_or_adapter_exists_but_zero_facts"
@@ -295,6 +343,7 @@ def classify(
         "viz_value_rank": rank,
         "viz_bucket": viz_bucket,
         "canonical_of": canonical,
+        "adapter_family": family[0] if family is not None else None,
     }
 
 
@@ -307,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     _, sources = load_registry()
     mapping_ids = _mapping_ids()
     code_refs = _ingest_code_refs()
+    canonical_datasets = _load_canonical_datasets()
     conn = sqlite3.connect(str(args.db)) if args.db.exists() else None
     facts = _facts_by_source(conn)
     total_facts = 0
@@ -323,6 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            canonical_datasets=canonical_datasets,
         )
         rows.append(
             {
@@ -361,6 +412,7 @@ def main(argv: list[str] | None = None) -> int:
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            canonical_datasets=canonical_datasets,
         )
         rows.append(
             {
