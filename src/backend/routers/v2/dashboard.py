@@ -906,6 +906,33 @@ def dashboard_item_children(
             conn, nid, fy, parent_name=row["node_name"]
         )
         if same_list:
+            # A node can have BOTH same_group children (Statement 6's own
+            # further additive breakdown - functions/subfunctions almost
+            # always do, via the a61_to_components/pbs_under_component
+            # cascades) AND related_breakdown children (e.g. this
+            # crosswalk's PBS program detail). Surfacing only same_group
+            # here would make every related_breakdown edge on a
+            # non-leaf Statement 6 node permanently unreachable - append a
+            # clearly non-additive folder rather than dropping it.
+            related_list, related_bd = build_related_subtree(
+                conn, nid, fy, parent_name=row["node_name"]
+            )
+            if related_list and related_bd:
+                same_list = list(same_list) + [
+                    {
+                        "name": "Related PBS program detail",
+                        "node": {
+                            "children": {item["name"]: item["node"] for item in related_list},
+                            "amount": float(row["amount_aud"] or 0),
+                            "fact_id": None,
+                            "node_id": None,
+                            "source_key": related_bd.get("source_key"),
+                            "compatibility_group": related_bd.get("compatibility_group"),
+                            "breakdown": related_bd,
+                            "preserve_amount": True,
+                        },
+                    }
+                ]
             children = [
                 _to_tree_node(item["name"], item["node"]) for item in same_list
             ]
