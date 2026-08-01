@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "playwright test",
     "build:vibefactory": "NEXT_PUBLIC_API_BASE=https://ausgov-budget-api.vibefactory.app next build",
     "deploy:vibefactory": "npm run build:vibefactory && wrangler deploy --config wrangler.vibefactory.toml"
   },
@@ -20,6 +21,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
