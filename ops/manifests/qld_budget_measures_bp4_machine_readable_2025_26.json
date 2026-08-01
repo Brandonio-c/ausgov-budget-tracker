@@ -1,0 +1,7 @@
+{
+  "urls": [
+    {"name": "budget-measures-bp4-2025-26-budget.csv", "url": "https://www.data.qld.gov.au/dataset/30cce1c9-e032-4788-b795-e5173ebd9def/resource/67f5dfed-5b4c-4692-b1c1-f2afca72f21e/download/budget-measures-bp4-2025-26-budget.csv"},
+    {"name": "data-dictionary-budget-measures-budget-paper-4-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/30cce1c9-e032-4788-b795-e5173ebd9def/resource/426cb7aa-42d0-4d52-97fe-95ef7d9cf0bf/download/data-dictionary-budget-measures-budget-paper-4-2025-26.csv"},
+    {"name": "explanatory-notes-budget-measures-budget-paper-4-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/30cce1c9-e032-4788-b795-e5173ebd9def/resource/a22169c8-7c1b-40ff-a50d-66d3b15d6ed9/download/explanatory-notes-budget-measures-budget-paper-4-2025-26.csv"}
+  ]
+}

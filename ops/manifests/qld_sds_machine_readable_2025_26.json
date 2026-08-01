@@ -1,0 +1,8 @@
+{
+  "urls": [
+    {"name": "sds-balance-sheets-service-delivery-statements-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/6132a498-6195-4b1d-b18e-997fd25c5140/resource/ce6a5a90-68d5-4bf3-8014-5081b3455f95/download/sds-balance-sheets-service-delivery-statements-2025-26.csv"},
+    {"name": "sds-income-statements-service-delivery-statements-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/6132a498-6195-4b1d-b18e-997fd25c5140/resource/9f224739-09f2-40cd-9669-1c7f55ec4d6e/download/sds-income-statements-service-delivery-statements-2025-26.csv"},
+    {"name": "sds-cash-flow-statements-service-delivery-statements-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/6132a498-6195-4b1d-b18e-997fd25c5140/resource/8e1e5d65-da51-45db-b335-f94d9f3c5d58/download/sds-cash-flow-statements-service-delivery-statements-2025-26.csv"},
+    {"name": "data-dictionary-sds-financial-statements-budget-paper-5-2025-26.csv", "url": "https://www.data.qld.gov.au/dataset/6132a498-6195-4b1d-b18e-997fd25c5140/resource/6f378a6c-1801-4b04-8bf6-32cad61b46f7/download/data-dictionary-sds-financial-statements-budget-paper-5-2025-26.csv"}
+  ]
+}
