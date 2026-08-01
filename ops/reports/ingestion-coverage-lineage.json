@@ -23,15 +23,19 @@
     {
       "canonical_dataset_id": "abs_taxation_revenue_detail",
       "coverage_status": "partially_ingested",
-      "fact_count": 0,
-      "fact_source_keys": [],
+      "fact_count": 2530,
+      "fact_source_keys": [
+        "abs_taxation_revenue_key_tables_2024_25_federal",
+        "abs_taxation_revenue_key_tables_2024_25_state",
+        "abs_taxation_revenue_key_tables_2024_25_territory"
+      ],
       "extractor_name": "m_gdp_tax.py",
       "notes": "Must attach as related detail under GFS Taxation revenue \u2014 not additive duplicate."
     },
     {
       "canonical_dataset_id": "federal_pbs_programs",
       "coverage_status": "partially_ingested",
-      "fact_count": 57465,
+      "fact_count": 54431,
       "fact_source_keys": [
         "federal_pbs_programs_all",
         "federal_dss_pbs_programs",
@@ -65,8 +69,19 @@
     {
       "canonical_dataset_id": "state_borrowing_authorities",
       "coverage_status": "partially_ingested",
-      "fact_count": 0,
-      "fact_source_keys": [],
+      "fact_count": 170,
+      "fact_source_keys": [
+        "nsw_tcorp_bonds_on_issue",
+        "nsw_tcorp_weekly_bonds",
+        "nt_nttc_borrowing_strategy",
+        "qld_qtc_aud_bond_outstandings",
+        "qld_qtc_benchmark_bonds",
+        "qld_qtc_weekly_outstandings_2026_07_17",
+        "sa_safa_weekly_funding_update",
+        "tas_tascorp_annual_report_2024_25",
+        "vic_tcv_amount_on_issue",
+        "wa_watc_funding_sources"
+      ],
       "extractor_name": "m_borrowing_authorities.py",
       "notes": "Mixed face/fair value \u2014 API disables unqualified totals when mixed."
     }
