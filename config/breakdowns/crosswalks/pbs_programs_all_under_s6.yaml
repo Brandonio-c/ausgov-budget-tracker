@@ -1,0 +1,314 @@
+# Crosswalk: federal_pbs_programs_all program facts -> Statement 6 function/
+# subfunction hierarchy, as related_breakdown (non-additive) navigation.
+#
+# Evidence tiers (checked in this order for every PBS fact):
+#   1. explicit_existing_mapping  - an identifier already correct elsewhere
+#      (not used in this file; none of the 63 PBS documents carry an
+#      explicit Statement 6 identifier of their own).
+#   2. portfolio_ownership        - the PBS portfolio's well-documented,
+#      stable government-structure ownership of a Statement 6 function.
+#      See `portfolio_defaults` below.
+#   3. published_classification   - not used in this file (Statement 6 does
+#      not publish a portfolio->function crosswalk directly; PBS documents
+#      do not cite their own COFOG/S6 function).
+#   4. exact_label_with_portfolio_context - an exact (not fuzzy/regex),
+#      case-insensitive substring in the PBS program_label, corroborated by
+#      which portfolio it appears in, matching a specific existing Statement
+#      6 subfunction/component node exactly. See `program_label_overrides`.
+#   5. manual_review              - not used in this pass; anything not
+#      resolved by 2 or 4 is left unmapped and reported, not guessed.
+#
+# `program_label_overrides` are checked before `portfolio_defaults` for a
+# given fact; if neither matches, or the matching portfolio_defaults entry
+# has status: ambiguous, the fact is left unmapped and reported with a
+# reason - never silently defaulted to "General public services" or similar.
+#
+# All statement6_function / statement6_subfunction / statement6_component
+# values below were verified to exist as real nodes under
+# federal_budget_statement_6_* source_documents before being written here
+# (queried directly against data/facts.db, not assumed).
+
+id: pbs_programs_all_under_s6
+version: 1
+crosswalk_id: pbs_programs_all_under_s6
+edge_kind: related_breakdown
+
+portfolio_defaults:
+  - pbs_portfolio: "Social Services"
+    statement6_function: "Social security and welfare"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      DSS's entire portfolio remit is social security and welfare payments
+      and services; function-level default. Subfunction-level routing for
+      specific programs (aged, disability, families, unemployed) is via
+      program_label_overrides below where the label gives an exact,
+      corroborated match to a real S6 subfunction.
+
+  - pbs_portfolio: "Health Disability and Ageing"
+    statement6_function: "Health"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      Function-level default only. NDIA/NDIS programs administered within
+      this portfolio are routed to Social security and welfare via
+      program_label_overrides (NDIA is legally the National Disability
+      Insurance Agency, an executive agency inside this portfolio, but its
+      Statement 6 classification is Social security and welfare, not
+      Health - confirmed against real S6 node names).
+
+  - pbs_portfolio: "Defence"
+    statement6_function: "Defence"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      Statement 6 carries no Defence subfunction breakdown (verified: zero
+      "Defence / ..." nodes exist) - function-level attach only.
+
+  - pbs_portfolio: "Education"
+    statement6_function: "Education"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Veterans' Affairs"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to veterans and dependants"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      Default only for programs not caught by a health-related label
+      override below. DVA also runs veterans' health/pharmaceutical
+      programs (Statement 6 classifies these under Health), routed via
+      program_label_overrides - not this default.
+
+  - pbs_portfolio: "Agriculture Fisheries and Forestry"
+    statement6_function: "Agriculture, forestry and fishing"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Employment and Workplace Relations"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to the unemployed and the sick"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      Dominant program spend in this portfolio is unemployment/working-age
+      income support; the portfolio also runs workplace-relations/OH&S
+      functions with no single clean Statement 6 destination - those
+      remain unmapped unless a label override applies (none defined yet).
+
+  - pbs_portfolio: "Finance"
+    statement6_function: "General public services"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Foreign Affairs and Trade"
+    statement6_function: "General public services"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Home Affairs"
+    statement6_function: "Public order and safety"
+    confidence: high
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Industry Science and Resources"
+    statement6_function: "Other economic affairs"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Climate Change Energy the Environment and Water"
+    statement6_function: "Fuel and energy"
+    confidence: low
+    evidence: portfolio_ownership
+    status: mapped
+    notes: >
+      Portfolio also covers environment/water programs that arguably
+      belong under Housing and community amenities in Statement 6's
+      classification; only the dominant energy component is mapped here
+      with confidence: low. Not upgraded to high without program-level
+      evidence.
+
+  - pbs_portfolio: "Prime Minister and Cabinet"
+    statement6_function: "General public services"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+
+  - pbs_portfolio: "Treasury"
+    statement6_function: "General public services"
+    confidence: medium
+    evidence: portfolio_ownership
+    status: mapped
+
+  # Genuinely ambiguous, cross-function portfolios: deliberately NOT
+  # assigned a default. Every fact in these portfolios stays unmapped
+  # unless a program_label_override below applies - required test case for
+  # "ambiguous mappings must remain unmapped and be reported".
+  - pbs_portfolio: "Attorney-General's"
+    status: ambiguous
+    confidence: low
+    evidence: portfolio_ownership
+    reason: >
+      Portfolio spans courts and legal services, emergency management,
+      human rights, and integrity/security functions with no single
+      dominant Statement 6 function and no program-level evidence
+      established in this pass to split them reliably.
+
+  - pbs_portfolio: "Infrastructure Transport Regional Development Communications Sport and the Arts"
+    status: ambiguous
+    confidence: low
+    evidence: portfolio_ownership
+    reason: >
+      Portfolio name itself spans at least three distinct Statement 6
+      functions (Transport and communication; Recreation and culture for
+      sport/arts; Housing and community amenities for regional
+      development) with no single dominant destination and no
+      program-level evidence established in this pass to split them
+      reliably.
+
+program_label_overrides:
+  - pbs_portfolio: "Health Disability and Ageing"
+    label_contains: "National Disability Insurance Scheme"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Health Disability and Ageing"
+    label_contains: "National Disability Insurance Agency"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Health Disability and Ageing"
+    label_contains: "NDIS Quality and Safeguards"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme – quality and safeguards"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  # DSS (Social Services) also administers NDIS-adjacent programs directly
+  # (e.g. "Support for National Disability Insurance Scheme"); same exact
+  # labels, same real S6 target, just a different owning portfolio.
+  - pbs_portfolio: "Social Services"
+    label_contains: "National Disability Insurance Scheme"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "National Disability Insurance Agency"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "NDIS Quality and Safeguards"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    statement6_component: "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme – quality and safeguards"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Health Disability and Ageing"
+    label_contains: "Aged Care"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to the aged"
+    confidence: medium
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+    notes: >
+      Australian Statement 6 classifies residential/home aged care under
+      Social security and welfare (Assistance to the aged), not Health -
+      confirmed against real S6 node names.
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Child Care"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to families with children"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Paid Parental Leave"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to families with children"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Support for Seniors"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to the aged"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Support for Carers"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Support for People with Disability"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to people with disabilities"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Social Services"
+    label_contains: "Working Age Payments"
+    statement6_function: "Social security and welfare"
+    statement6_subfunction: "Social security and welfare / Assistance to the unemployed and the sick"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Veterans' Affairs"
+    label_contains: "pharmaceutical"
+    statement6_function: "Health"
+    statement6_subfunction: "Health / Medical services and benefits"
+    statement6_component: "Health / Medical services and benefits / Veterans' pharmaceutical benefits"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Veterans' Affairs"
+    label_contains: "Health Support"
+    statement6_function: "Health"
+    statement6_subfunction: "Health / Medical services and benefits"
+    confidence: medium
+    evidence: exact_label_with_portfolio_context
+    status: mapped
