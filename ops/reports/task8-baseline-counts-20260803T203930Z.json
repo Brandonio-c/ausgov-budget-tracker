@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-08-03T20:39:55.148101+00:00",
+  "phase": "before_task8_rebuild",
+  "counts": {
+    "facts": 321950,
+    "nodes": 230391,
+    "fact_nodes": 321950,
+    "breakdown_edges": 33756,
+    "pbs_facts": 53083,
+    "pbs_nodes": 9817,
+    "pbs_crosswalk_edges": 16365,
+    "pbs_samegroup_edges": 9791,
+    "quarantine_pending_attribution": 15,
+    "quarantine_pbs_pending": 0,
+    "non_pbs_facts": 268867
+  }
+}

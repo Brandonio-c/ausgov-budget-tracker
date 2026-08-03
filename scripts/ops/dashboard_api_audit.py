@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sqlite3
 import sys
 from dataclasses import dataclass, field
@@ -45,6 +44,9 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = REPO_ROOT / "data" / "facts.db"
 STAMP = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
+from pbs_label_classifier import classify_label  # noqa: E402
 
 # Representative test cases for the PBS -> Statement 6 crosswalk
 # (config/breakdowns/crosswalks/pbs_programs_all_under_s6.yaml), one per
@@ -78,24 +80,17 @@ REQUIRED_PATHS: list[dict[str, str]] = [
 MIN_FLAG_AMOUNT = 1_000_000
 MIN_FLAG_PCT_OF_PARENT = 0.01
 # Node names that are navigation/related-detail branches, not additive GFS
-# expense decomposition - must never be flagged as "missing additive depth"
-# the same way a real expense branch would be. Kept as a secondary,
-# name-based signal alongside the primary, DB-driven compatibility_group
-# check (edge_kind_failures) below.
+# expense decomposition - used only to decide whether a leaf is worth a
+# citation check below, never as a hard-failure signal on its own. An
+# earlier version also used this as a secondary, name-based edge_kind
+# check ("payment"/"grant" appearing anywhere in the name) - dropped after
+# it flagged hundreds of legitimate PBS program/administered-item names
+# (e.g. "Program 1.4: Payments to International Organisations") against
+# the real corpus; the DB-driven compatibility_group check below is the
+# only reliable signal for that invariant.
 NON_ADDITIVE_HINTS = ("grant", "contract", "invoice", "recipient", "payment", "award")
 
-# First-pass label-quality smell test used by this audit's own hard-failure
-# gate. The authoritative, more thorough classifier lives in
-# scripts/ingest/pbs_label_classifier.py (Task 5) and is what actually
-# gates what gets published to the crosswalk in the first place; this is a
-# cheaper, redundant safety net so the audit itself also catches a
-# regression if a header/fragment ever reaches a live citation again.
-HEADER_SMELL = re.compile(
-    r"\$['’]?000|\$m\b|\$b\b|\bEXPENSES\b|\bASSETS\b|\bLIABILITIES\b|\bREVENUE\b|"
-    r"\bCASH FLOW\b|\bEQUITY\b|\bEMPLOYEE BENEFITS\b",
-    re.I,
-)
-NUMERIC_SEQUENCE = re.compile(r"(-?\(?\d[\d,]{2,}\)?\s*){3,}")
+PBS_SOURCE_KEY_PREFIX = "federal_pbs_"
 
 LEVEL_ALIASES = {"federal": {"federal", "national"}}
 
@@ -167,16 +162,6 @@ def _fact_row(conn: sqlite3.Connection, fact_id: int) -> dict[str, Any] | None:
     }
 
 
-def _label_smells_like_non_program(label: str) -> str | None:
-    if HEADER_SMELL.search(label or ""):
-        return "header_or_financial_statement_line"
-    if NUMERIC_SEQUENCE.search(label or ""):
-        return "concatenated_numeric_row"
-    if len(label or "") > 200:
-        return "excessive_length"
-    return None
-
-
 def _walk(
     base_url: str,
     conn: sqlite3.Connection,
@@ -240,14 +225,6 @@ def _walk(
                     "child_compatibility_group": fact_row["compatibility_group"],
                 }
             )
-        # Secondary, name-based signal for the same invariant.
-        elif any(h in name.lower() for h in NON_ADDITIVE_HINTS) and edge_kind == "additive":
-            result.edge_kind_failures.append(
-                {
-                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
-                    "reason": "name_suggests_non_additive_relationship_but_edge_kind_is_additive",
-                }
-            )
         # Invariant 5: additive child must not exceed 100% of parent - no
         # reconciliation-rule exception is currently declared/tested.
         if pct_of_parent is not None and pct_of_parent > 1.0 + 1e-9:
@@ -272,11 +249,24 @@ def _walk(
                 }
             )
 
-    label_defect = _label_smells_like_non_program(name)
-    if label_defect and fact_row and fact_row["source_key"] == "federal_pbs_programs_all":
-        result.label_quality_failures.append(
-            {"path": spec["label"], "fact_id": fact_id, "name": name[:160], "reason": label_defect}
-        )
+    # Use the same classifier that gates what gets published to the PBS
+    # crosswalk (scripts/ingest/pbs_label_classifier.py), not a separate,
+    # cruder duplicate regex set - a bare substring match on "EXPENSES" (or
+    # similar) previously flagged genuine component descriptions that
+    # legitimately mention "administered expenses" as ordinary phrasing
+    # (e.g. "1.5.6 - Component 6 (Carer Adjustment Payment) Annual
+    # administered expenses"), which the real classifier already knows to
+    # accept via its numbering-pattern precedence.
+    if fact_row and str(fact_row["source_key"] or "").startswith(PBS_SOURCE_KEY_PREFIX):
+        classification = classify_label(name)
+        if not classification.publishable:
+            result.label_quality_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "reason": classification.classification,
+                    "rejection_reason": classification.rejection_reason,
+                }
+            )
 
     is_leaf = not children
     material = value >= MIN_FLAG_AMOUNT or (pct_of_parent is not None and pct_of_parent >= MIN_FLAG_PCT_OF_PARENT)

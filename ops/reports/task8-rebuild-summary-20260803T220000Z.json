@@ -1,0 +1,131 @@
+{
+  "generated_at": "2026-08-03T22:00:05.161358+00:00",
+  "phase": "after_task8_rebuild_final",
+  "baseline_before": {
+    "facts": 321950,
+    "nodes": 230391,
+    "fact_nodes": 321950,
+    "breakdown_edges": 33756,
+    "pbs_facts": 53083,
+    "pbs_nodes": 9817,
+    "pbs_crosswalk_edges": 16365,
+    "pbs_samegroup_edges": 9791,
+    "quarantine_pending_attribution": 15,
+    "quarantine_pbs_pending": 0,
+    "non_pbs_facts": 268867
+  },
+  "reload_pbs_programs_all_pass1": {
+    "source_id": "federal_pbs_programs_all",
+    "input_rows": 103945,
+    "gate_1_6_quarantined": 0,
+    "label_quality_quarantined": 69799,
+    "label_quality_class_counts": {
+      "malformed_concatenated_row": 26775,
+      "program": 33492,
+      "subtotal": 5204,
+      "table_header": 20264,
+      "narrative_fragment": 6417,
+      "financial_statement_line": 10443,
+      "unknown": 696,
+      "outcome": 8,
+      "component": 646
+    },
+    "published": 34146,
+    "quarantined": 69799,
+    "replaced_existing": 53083
+  },
+  "cleanup_pbs_programs_all_pass1": {
+    "before_fact_bearing_count": 9779,
+    "after_fact_bearing_count": 2964,
+    "newly_orphaned_nodes": 6815,
+    "stale_edges_removed": 18053,
+    "stale_nodes_removed": 6815,
+    "nodes_kept_with_remaining_edges": 0
+  },
+  "crosswalk_regen_pass1": {
+    "same_group_inserted": 0,
+    "related_breakdown_inserted": 0,
+    "skipped_no_target": 0
+  },
+  "reload_pbs_programs_all_pass2_idempotency_proof": {
+    "source_id": "federal_pbs_programs_all",
+    "input_rows": 103945,
+    "gate_1_6_quarantined": 0,
+    "label_quality_quarantined": 69799,
+    "label_quality_class_counts": {
+      "malformed_concatenated_row": 26775,
+      "program": 33492,
+      "subtotal": 5204,
+      "table_header": 20264,
+      "narrative_fragment": 6417,
+      "financial_statement_line": 10443,
+      "unknown": 696,
+      "outcome": 8,
+      "component": 646
+    },
+    "published": 34146,
+    "quarantined": 69799,
+    "replaced_existing": 17525
+  },
+  "cleanup_pbs_programs_all_pass2_idempotency_proof": {
+    "before_fact_bearing_count": 2964,
+    "after_fact_bearing_count": 2964,
+    "newly_orphaned_nodes": 0,
+    "stale_edges_removed": 0,
+    "stale_nodes_removed": 0,
+    "nodes_kept_with_remaining_edges": 0
+  },
+  "crosswalk_regen_pass2_idempotency_proof": {
+    "same_group_inserted": 0,
+    "related_breakdown_inserted": 0,
+    "skipped_no_target": 0
+  },
+  "bridge_cleanup_pass1": {
+    "source_key": "federal_pbs_programs_s6_bridge",
+    "input_facts": 1273,
+    "quarantined": 801,
+    "published": 472,
+    "label_quality_class_counts": {
+      "table_header": 164,
+      "program": 472,
+      "malformed_concatenated_row": 539,
+      "financial_statement_line": 45,
+      "subtotal": 17,
+      "unknown": 9,
+      "narrative_fragment": 27
+    },
+    "before_fact_bearing_count": 1230,
+    "after_fact_bearing_count": 459,
+    "newly_orphaned_nodes": 771,
+    "stale_edges_removed": 1509,
+    "stale_nodes_removed": 771,
+    "nodes_kept_with_remaining_edges": 0
+  },
+  "bridge_cleanup_pass2_idempotency_proof": {
+    "source_key": "federal_pbs_programs_s6_bridge",
+    "input_facts": 472,
+    "quarantined": 0,
+    "published": 472,
+    "label_quality_class_counts": {
+      "program": 472
+    },
+    "before_fact_bearing_count": 459,
+    "after_fact_bearing_count": 459,
+    "newly_orphaned_nodes": 0,
+    "stale_edges_removed": 0,
+    "stale_nodes_removed": 0,
+    "nodes_kept_with_remaining_edges": 0
+  },
+  "final_counts": {
+    "facts": 285591,
+    "nodes": 222805,
+    "fact_nodes": 285591,
+    "breakdown_edges": 14194,
+    "pbs_all_facts": 17525,
+    "pbs_all_nodes": 3002,
+    "pbs_bridge_facts": 472,
+    "pbs_crosswalk_edges": 5127,
+    "quarantine_pending_attribution": 36374,
+    "truly_unrelated_facts": 267594
+  }
+}
