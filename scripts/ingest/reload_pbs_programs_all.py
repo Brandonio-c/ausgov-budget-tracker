@@ -33,12 +33,31 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from duckdb_etl import extract_rows, load_mapping  # noqa: E402
 from load_facts import load_decisions  # noqa: E402
 from pbs_label_classifier import classify_label  # noqa: E402
-from pbs_s6_crosswalk import parse_portfolio_and_label  # noqa: E402
 from schema_migrate import migrate  # noqa: E402
 from validate import RowDecision, validate_batch  # noqa: E402
 
 DEFAULT_DB = REPO_ROOT / "data" / "facts.db"
 MAPPING_PATH = REPO_ROOT / "config" / "mappings" / "federal_pbs_programs_all.yaml"
+
+
+def _label_for_classification(node_name: str) -> str:
+    """The final path segment - what display_name() in
+    src/backend/breakdown_graph.py actually shows a user, via the same
+    rsplit-on-last-" / " rule - not just the portfolio-stripped remainder.
+    A node_name can carry more than one " / " (e.g. "Defence / Key cost
+    category / workforce", or "Portfolio / Retained surplus / (accumulated
+    deficit)"); classifying the first-split remainder ("Key cost category /
+    workforce", "Retained surplus / (accumulated deficit)") let both of
+    those slip through this gate as `program` via the default clean-shape
+    rule, while what a user actually sees drilled down to a bare, lowercase
+    "workfoce" or a dangling "(accumulated deficit)" - both correctly
+    rejected once classified on the same final segment that gets
+    displayed and, for the "workforce"/"operating" case, attached directly
+    to a live PBS -> Statement 6 crosswalk edge (found via the Task 9 SQL
+    integrity check for exactly this)."""
+    if " / " in node_name:
+        return node_name.rsplit(" / ", 1)[-1]
+    return node_name
 
 
 def _apply_label_quality_gate(
@@ -54,7 +73,7 @@ def _apply_label_quality_gate(
             out.append(decision)
             continue
         node_name = decision.row.get("node_name") or decision.row.get("category") or ""
-        _, label = parse_portfolio_and_label(str(node_name))
+        label = _label_for_classification(str(node_name))
         result = classify_label(label)
         label_quality_counts[result.classification] = (
             label_quality_counts.get(result.classification, 0) + 1

@@ -83,3 +83,33 @@ def test_mixed_batch_only_downgrades_the_bad_rows():
     result, counts = _apply_label_quality_gate(decisions)
     publishable_flags = [d.publishable for d in result]
     assert publishable_flags == [True, False, True]
+
+
+def test_multi_slash_label_classified_on_final_displayed_segment_not_first_split():
+    """Regression for a real bug found via Task 9's SQL integrity check: a
+    node_name can carry more than one " / " (e.g. "Defence / Key cost
+    category / workforce"). Classifying the first-split remainder ("Key
+    cost category / workforce") let it through as `program`, while what a
+    user actually sees once drilled down (the bare word "workforce", via
+    display_name()'s rsplit-on-last-" / ") is a lowercase fragment that
+    should be rejected - and this exact node was reachable via a live
+    PBS -> Statement 6 crosswalk edge."""
+    decisions = [_decision("Defence / Key cost category / workforce")]
+    result, counts = _apply_label_quality_gate(decisions)
+    assert result[0].publishable is False
+    assert result[0].quarantine_reason is not None
+    assert "narrative_fragment" in result[0].quarantine_reason
+
+    decisions2 = [
+        _decision(
+            "Climate Change Energy the Environment and Water / Retained surplus / (accumulated deficit)"
+        )
+    ]
+    result2, _ = _apply_label_quality_gate(decisions2)
+    assert result2[0].publishable is False
+
+    # A real "Key cost category / <Real Program Title>" entry must still
+    # be accepted - only the bare/dangling final segments are rejected.
+    decisions3 = [_decision("Defence / Key cost category / Capability Acquisition Program")]
+    result3, _ = _apply_label_quality_gate(decisions3)
+    assert result3[0].publishable is True

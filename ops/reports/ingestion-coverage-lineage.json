@@ -35,7 +35,7 @@
     {
       "canonical_dataset_id": "federal_pbs_programs",
       "coverage_status": "partially_ingested",
-      "fact_count": 54431,
+      "fact_count": 18072,
       "fact_source_keys": [
         "federal_pbs_programs_all",
         "federal_dss_pbs_programs",
