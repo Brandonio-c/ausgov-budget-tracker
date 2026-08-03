@@ -1,21 +1,38 @@
 #!/usr/bin/env python3
-"""Automated dashboard/API traversal audit (Task 8).
+"""Automated dashboard/API traversal audit — semantic, not just structural.
 
 Drives the real backend (must already be running, e.g. `uvicorn
 src.backend.main:app`) against the current data/facts.db over a curated set
-of mode x level x year combinations - not a manual click-through - and
-records, for every visited node: path, fact-node id, amount, unit,
-percent-of-parent, depth, whether it has additive children, citation
-completeness (evidence endpoint responds, has_source_file), and flags any
-leaf >= $1M or >= 1% of its parent with no deeper breakdown and no children.
+of mode x level x year combinations - not a manual click-through - and for
+every visited node cross-references facts.db directly (this is the part a
+purely-API-level audit cannot do: the TreeNode response does not expose
+source_key/government_level/jurisdiction/measure_type at all) to check:
 
-Read-only against the API; does not touch facts.db directly.
+- scope: an additive node's own government_level/jurisdiction must match
+  what was requested (a federal/state/local traversal must never silently
+  include a fact from a different level or jurisdiction);
+- edge kind: a related_breakdown (non-additive) child must never be
+  evaluated as if it were part of an additive decomposition (percent-of-
+  parent, "missing depth" flags, etc. do not apply to it);
+- additive reconciliation: an additive child must not exceed 100% of its
+  parent's amount unless an explicit, tested reconciliation rule allows it
+  (none currently declared - every case is a hard failure);
+- cross-year: an additive (same_group) child must not silently carry a
+  different financial year than its parent, and in particular must never
+  be a *later* year than an earlier-year parent (a real bug found in this
+  milestone, not hypothetical);
+- citation: presence of a citation is checked, but is never sufficient by
+  itself to mark a row as semantically valid - it is one of several
+  checks, not a substitute for the others.
+
+Read-only against the API and facts.db; never writes to either.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sqlite3
 import sys
 from dataclasses import dataclass, field
@@ -50,30 +67,72 @@ PBS_S6_VERIFICATION_TARGETS: list[dict[str, str]] = [
 # jurisdiction crawl (state alone has 184k+ facts) - a bounded, named set
 # that maps directly to what a human would click through to verify.
 REQUIRED_PATHS: list[dict[str, str]] = [
-    {"label": "federal_actuals_2024_25", "mode": "actuals", "level": "federal", "year": "2024-25"},
-    {"label": "federal_budget_latest", "mode": "budget", "level": "federal", "year": None},
-    {"label": "qld_state_actuals_2024_25", "mode": "actuals", "level": "state", "year": "2024-25", "jurisdiction": "Queensland"},
-    {"label": "local_government_actuals_2024_25", "mode": "actuals", "level": "local", "year": None},
-    {"label": "federal_debt_latest", "mode": "debt", "level": "federal", "year": None},
-    {"label": "federal_gdp_ratios_latest", "mode": "ratios", "level": "federal", "year": None},
+    {"label": "federal_actuals_2024_25", "mode": "actuals", "level": "federal", "year": "2024-25", "jurisdiction": None},
+    {"label": "federal_budget_latest", "mode": "budget", "level": "federal", "year": None, "jurisdiction": None},
+    {"label": "qld_state_actuals_2024_25", "mode": "actuals", "level": "state", "year": "2024-25", "jurisdiction": "QLD"},
+    {"label": "local_government_actuals_2024_25", "mode": "actuals", "level": "local", "year": None, "jurisdiction": None},
+    {"label": "federal_debt_latest", "mode": "debt", "level": "federal", "year": None, "jurisdiction": None},
+    {"label": "federal_gdp_ratios_latest", "mode": "ratios", "level": "federal", "year": None, "jurisdiction": None},
 ]
 
 MIN_FLAG_AMOUNT = 1_000_000
 MIN_FLAG_PCT_OF_PARENT = 0.01
 # Node names that are navigation/related-detail branches, not additive GFS
 # expense decomposition - must never be flagged as "missing additive depth"
-# the same way a real expense branch would be.
+# the same way a real expense branch would be. Kept as a secondary,
+# name-based signal alongside the primary, DB-driven compatibility_group
+# check (edge_kind_failures) below.
 NON_ADDITIVE_HINTS = ("grant", "contract", "invoice", "recipient", "payment", "award")
+
+# First-pass label-quality smell test used by this audit's own hard-failure
+# gate. The authoritative, more thorough classifier lives in
+# scripts/ingest/pbs_label_classifier.py (Task 5) and is what actually
+# gates what gets published to the crosswalk in the first place; this is a
+# cheaper, redundant safety net so the audit itself also catches a
+# regression if a header/fragment ever reaches a live citation again.
+HEADER_SMELL = re.compile(
+    r"\$['’]?000|\$m\b|\$b\b|\bEXPENSES\b|\bASSETS\b|\bLIABILITIES\b|\bREVENUE\b|"
+    r"\bCASH FLOW\b|\bEQUITY\b|\bEMPLOYEE BENEFITS\b",
+    re.I,
+)
+NUMERIC_SEQUENCE = re.compile(r"(-?\(?\d[\d,]{2,}\)?\s*){3,}")
+
+LEVEL_ALIASES = {"federal": {"federal", "national"}}
+
+FAILURE_BUCKETS = (
+    "scope_failures",
+    "jurisdiction_failures",
+    "edge_kind_failures",
+    "additive_reconciliation_failures",
+    "cross_year_failures",
+    "label_quality_failures",
+    "citation_failures",
+    "transport_errors",
+)
 
 
 @dataclass
 class AuditResult:
     path_label: str
+    requested_mode: str
+    requested_level: str
+    requested_jurisdiction: str | None
+    requested_year: str | None
     visited_nodes: int = 0
     flagged_leaves: list[dict[str, Any]] = field(default_factory=list)
     citation_checks: int = 0
     citation_failures: list[dict[str, Any]] = field(default_factory=list)
+    scope_failures: list[dict[str, Any]] = field(default_factory=list)
+    jurisdiction_failures: list[dict[str, Any]] = field(default_factory=list)
+    edge_kind_failures: list[dict[str, Any]] = field(default_factory=list)
+    additive_reconciliation_failures: list[dict[str, Any]] = field(default_factory=list)
+    cross_year_failures: list[dict[str, Any]] = field(default_factory=list)
+    label_quality_failures: list[dict[str, Any]] = field(default_factory=list)
+    transport_errors: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+
+    def hard_failure_count(self) -> int:
+        return sum(len(getattr(self, b)) for b in FAILURE_BUCKETS)
 
 
 def _get(base_url: str, path: str, **params) -> Any:
@@ -82,25 +141,146 @@ def _get(base_url: str, path: str, **params) -> Any:
     return resp.json()
 
 
+def _fact_row(conn: sqlite3.Connection, fact_id: int) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT f.id, f.financial_year, f.estimate_status, f.measure_type, m.compatibility_group,
+               d.source_key, d.government_level, d.jurisdiction
+        FROM facts f
+        JOIN source_documents d ON d.id = f.source_document_id
+        JOIN measure_definitions m ON m.measure_type = f.measure_type
+        WHERE f.id = ?
+        """,
+        (fact_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return {
+        "fact_id": row[0],
+        "financial_year": row[1],
+        "estimate_status": row[2],
+        "measure_type": row[3],
+        "compatibility_group": row[4],
+        "source_key": row[5],
+        "government_level": row[6],
+        "jurisdiction": row[7],
+    }
+
+
+def _label_smells_like_non_program(label: str) -> str | None:
+    if HEADER_SMELL.search(label or ""):
+        return "header_or_financial_statement_line"
+    if NUMERIC_SEQUENCE.search(label or ""):
+        return "concatenated_numeric_row"
+    if len(label or "") > 200:
+        return "excessive_length"
+    return None
+
+
 def _walk(
     base_url: str,
+    conn: sqlite3.Connection,
     node: dict[str, Any],
     *,
-    depth: int,
-    parent_value: float | None,
+    spec: dict[str, Any],
+    parent_fact: dict[str, Any] | None,
+    parent_amount: float | None,
+    parent_edge_kind: str,
     result: AuditResult,
+    depth: int,
     max_depth: int,
 ) -> None:
+    if depth > max_depth:
+        return
     result.visited_nodes += 1
     name = node.get("name") or ""
     value = float(node.get("value") or 0)
     children = node.get("children")
     fact_id = node.get("id")
-    pct_of_parent = (value / parent_value) if parent_value else None
+    breakdown = node.get("breakdown") or {}
+    edge_kind = breakdown.get("kind") or parent_edge_kind
+    is_additive_edge = edge_kind not in ("related_breakdown",)
+    fact_row = _fact_row(conn, fact_id) if fact_id else None
+    pct_of_parent = (value / parent_amount) if parent_amount else None
 
-    is_non_additive_area = any(h in name.lower() for h in NON_ADDITIVE_HINTS)
+    requested_level = spec["level"]
+    expected_levels = LEVEL_ALIASES.get(requested_level, {requested_level})
+    requested_jur = spec.get("jurisdiction")
+
+    if fact_row and is_additive_edge:
+        # Invariant 1/3: an additive path must not silently contain a fact
+        # from a different government level (federal facts under
+        # local/state, or vice versa).
+        if fact_row["government_level"] not in expected_levels:
+            result.scope_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "requested_level": requested_level, "fact_government_level": fact_row["government_level"],
+                    "fact_source_key": fact_row["source_key"],
+                }
+            )
+        # Invariant 2: a state/local traversal scoped to one jurisdiction
+        # must not contain another jurisdiction's fact.
+        if requested_jur and fact_row["jurisdiction"] and requested_jur.lower() not in fact_row["jurisdiction"].lower():
+            result.jurisdiction_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "requested_jurisdiction": requested_jur, "fact_jurisdiction": fact_row["jurisdiction"],
+                }
+            )
+        # Invariant 4 (DB-driven): additive edges must stay within one
+        # compatibility_group. Mixing (e.g. a commitment/count/cash_outflow
+        # measure appearing as an additive child of an actual_expense
+        # parent) is a real semantic defect, not just a naming smell.
+        if parent_fact and fact_row["compatibility_group"] != parent_fact.get("compatibility_group"):
+            result.edge_kind_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "parent_compatibility_group": parent_fact.get("compatibility_group"),
+                    "child_compatibility_group": fact_row["compatibility_group"],
+                }
+            )
+        # Secondary, name-based signal for the same invariant.
+        elif any(h in name.lower() for h in NON_ADDITIVE_HINTS) and edge_kind == "additive":
+            result.edge_kind_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "reason": "name_suggests_non_additive_relationship_but_edge_kind_is_additive",
+                }
+            )
+        # Invariant 5: additive child must not exceed 100% of parent - no
+        # reconciliation-rule exception is currently declared/tested.
+        if pct_of_parent is not None and pct_of_parent > 1.0 + 1e-9:
+            result.additive_reconciliation_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "percent_of_parent": pct_of_parent, "parent_amount": parent_amount, "child_amount": value,
+                }
+            )
+        # Invariant 6 (partial - full explicit fallback metadata is Task 7):
+        # an additive child must not silently carry a different year than
+        # its parent, and must never be a *later* year than an earlier
+        # parent year.
+        if parent_fact and fact_row.get("financial_year") != parent_fact.get("financial_year"):
+            is_future = _fy_start(fact_row.get("financial_year")) > _fy_start(parent_fact.get("financial_year"))
+            result.cross_year_failures.append(
+                {
+                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                    "parent_financial_year": parent_fact.get("financial_year"),
+                    "child_financial_year": fact_row.get("financial_year"),
+                    "is_future_year_fallback": is_future,
+                }
+            )
+
+    label_defect = _label_smells_like_non_program(name)
+    if label_defect and fact_row and fact_row["source_key"] == "federal_pbs_programs_all":
+        result.label_quality_failures.append(
+            {"path": spec["label"], "fact_id": fact_id, "name": name[:160], "reason": label_defect}
+        )
+
     is_leaf = not children
     material = value >= MIN_FLAG_AMOUNT or (pct_of_parent is not None and pct_of_parent >= MIN_FLAG_PCT_OF_PARENT)
+    is_non_additive_area = any(h in name.lower() for h in NON_ADDITIVE_HINTS)
 
     if is_leaf and material and not is_non_additive_area and fact_id is not None:
         result.citation_checks += 1
@@ -108,28 +288,39 @@ def _walk(
             evidence = _get(base_url, f"/v2/dashboard/item/{fact_id}/evidence")
             if not evidence.get("has_source_file") and not evidence.get("locator"):
                 result.citation_failures.append(
-                    {"fact_id": fact_id, "name": name, "reason": "no_source_file_and_no_locator"}
+                    {"path": spec["label"], "fact_id": fact_id, "name": name[:160], "reason": "no_source_file_and_no_locator"}
                 )
         except Exception as exc:  # noqa: BLE001
-            result.citation_failures.append({"fact_id": fact_id, "name": name, "reason": f"evidence_error:{exc}"})
+            result.transport_errors.append(f"{spec['label']} evidence fetch fact_id={fact_id}: {exc}")
 
         result.flagged_leaves.append(
-            {
-                "fact_id": fact_id,
-                "name": name,
-                "amount": value,
-                "pct_of_parent": pct_of_parent,
-                "depth": depth,
-            }
+            {"fact_id": fact_id, "name": name, "amount": value, "pct_of_parent": pct_of_parent, "depth": depth}
         )
 
     if children and depth < max_depth:
         for child in children:
-            _walk(base_url, child, depth=depth + 1, parent_value=value, result=result, max_depth=max_depth)
+            _walk(
+                base_url, conn, child, spec=spec, parent_fact=fact_row or parent_fact,
+                parent_amount=value, parent_edge_kind=edge_kind, result=result,
+                depth=depth + 1, max_depth=max_depth,
+            )
 
 
-def audit_path(base_url: str, spec: dict[str, str], max_depth: int) -> AuditResult:
-    result = AuditResult(path_label=spec["label"])
+def _fy_start(fy: str | None) -> int:
+    if not fy:
+        return -1
+    try:
+        return int(str(fy).split("-", 1)[0])
+    except (TypeError, ValueError):
+        return -1
+
+
+def audit_path(base_url: str, spec: dict[str, Any], max_depth: int, db_path: Path = DB_PATH) -> AuditResult:
+    result = AuditResult(
+        path_label=spec["label"], requested_mode=spec["mode"], requested_level=spec["level"],
+        requested_jurisdiction=spec.get("jurisdiction"), requested_year=spec.get("year"),
+    )
+    conn = sqlite3.connect(str(db_path))
     try:
         levels = _get(base_url, "/v2/dashboard/levels", mode=spec["mode"])
         level_names = {row["level"] for row in levels}
@@ -144,11 +335,27 @@ def audit_path(base_url: str, spec: dict[str, str], max_depth: int) -> AuditResu
                 result.errors.append(f"no years available for mode={spec['mode']} level={spec['level']}")
                 return result
             year = years[-1]
+        result.requested_year = year
 
         tree = _get(base_url, "/v2/dashboard/tree", mode=spec["mode"], level=spec["level"], year=year)
-        _walk(base_url, tree, depth=0, parent_value=None, result=result, max_depth=max_depth)
+        # /dashboard/tree for level=state/local returns every jurisdiction
+        # as a top-level sibling in one response (by design). Scope the
+        # walk to the matching branch only when a jurisdiction was
+        # requested, so legitimate sibling jurisdictions are never flagged
+        # as if they leaked into the requested one.
+        roots = tree.get("children") or [tree]
+        req_jur = spec.get("jurisdiction")
+        if req_jur:
+            roots = [r for r in roots if req_jur.lower() in (r.get("name") or "").lower()] or roots
+        for root in roots:
+            _walk(
+                base_url, conn, root, spec=spec, parent_fact=None, parent_amount=None,
+                parent_edge_kind="additive", result=result, depth=0, max_depth=max_depth,
+            )
     except Exception as exc:  # noqa: BLE001
-        result.errors.append(str(exc))
+        result.transport_errors.append(str(exc))
+    finally:
+        conn.close()
     return result
 
 
@@ -266,27 +473,36 @@ def verify_pbs_s6_crosswalk(base_url: str, db_path: Path = DB_PATH) -> list[dict
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://127.0.0.1:8811")
-    parser.add_argument("--max-depth", type=int, default=4)
+    parser.add_argument("--max-depth", type=int, default=6)
+    parser.add_argument("--db", type=Path, default=DB_PATH)
     parser.add_argument("--skip-traversal", action="store_true", help="only run the PBS->S6 crosswalk verification")
     args = parser.parse_args()
 
     results = [] if args.skip_traversal else [
-        audit_path(args.base_url, spec, args.max_depth) for spec in REQUIRED_PATHS
+        audit_path(args.base_url, spec, args.max_depth, args.db) for spec in REQUIRED_PATHS
     ]
-    crosswalk_results = verify_pbs_s6_crosswalk(args.base_url)
+    crosswalk_results = verify_pbs_s6_crosswalk(args.base_url, args.db)
 
     out_json = REPO_ROOT / f"ops/reports/dashboard-api-audit-{STAMP}.json"
     out_md = REPO_ROOT / f"ops/reports/dashboard-api-audit-{STAMP}.md"
 
+    total_hard_failures = sum(r.hard_failure_count() for r in results)
+
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "base_url": args.base_url,
+        "total_hard_failures": total_hard_failures,
         "results": [
             {
                 "path_label": r.path_label,
+                "requested_mode": r.requested_mode,
+                "requested_level": r.requested_level,
+                "requested_jurisdiction": r.requested_jurisdiction,
+                "requested_year": r.requested_year,
                 "visited_nodes": r.visited_nodes,
                 "citation_checks": r.citation_checks,
-                "citation_failures": r.citation_failures,
+                "hard_failure_count": r.hard_failure_count(),
+                **{b: getattr(r, b) for b in FAILURE_BUCKETS},
                 "flagged_leaves_count": len(r.flagged_leaves),
                 "flagged_leaves_sample": r.flagged_leaves[:10],
                 "errors": r.errors,
@@ -300,22 +516,28 @@ def main() -> int:
     with out_md.open("w", encoding="utf-8") as fh:
         fh.write(f"# Dashboard API traversal audit — {STAMP}\n\n")
         fh.write(f"Base URL: `{args.base_url}` (real backend against `data/facts.db`)\n\n")
+        fh.write(f"**Total hard failures across all paths: {total_hard_failures}**\n\n")
         if results:
-            fh.write("| path | visited_nodes | material_leaves | citation_checks | citation_failures | errors |\n")
-            fh.write("|---|---:|---:|---:|---:|---|\n")
+            fh.write(
+                "| path | visited_nodes | scope | jurisdiction | edge_kind | additive>100% | cross_year | label_quality | citation | transport |\n"
+            )
+            fh.write("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
             for r in results:
                 fh.write(
-                    f"| {r.path_label} | {r.visited_nodes} | {len(r.flagged_leaves)} | {r.citation_checks} | "
-                    f"{len(r.citation_failures)} | {'; '.join(r.errors) or '-'} |\n"
+                    f"| {r.path_label} | {r.visited_nodes} | {len(r.scope_failures)} | "
+                    f"{len(r.jurisdiction_failures)} | {len(r.edge_kind_failures)} | "
+                    f"{len(r.additive_reconciliation_failures)} | {len(r.cross_year_failures)} | "
+                    f"{len(r.label_quality_failures)} | {len(r.citation_failures)} | {len(r.transport_errors)} |\n"
                 )
-            fh.write("\n## Citation failures\n\n")
-            any_failures = False
-            for r in results:
-                for f in r.citation_failures:
-                    any_failures = True
-                    fh.write(f"- `{r.path_label}` fact_id={f['fact_id']} ({f['name']}): {f['reason']}\n")
-            if not any_failures:
-                fh.write("None.\n")
+            for bucket in FAILURE_BUCKETS:
+                fh.write(f"\n## {bucket}\n\n")
+                any_rows = False
+                for r in results:
+                    for item in getattr(r, bucket):
+                        any_rows = True
+                        fh.write(f"- `{r.path_label}`: {json.dumps(item)}\n")
+                if not any_rows:
+                    fh.write("None.\n")
 
         fh.write("\n## PBS -> Statement 6 crosswalk reachability\n\n")
         fh.write(
@@ -334,8 +556,8 @@ def main() -> int:
             fh.write(f"```json\n{json.dumps(r, indent=2)}\n```\n\n")
 
     print(json.dumps({"json": str(out_json), "md": str(out_md), "paths": len(results),
-                       "crosswalk_cases": len(crosswalk_results)}))
-    return 0
+                       "crosswalk_cases": len(crosswalk_results), "total_hard_failures": total_hard_failures}))
+    return 1 if total_hard_failures > 0 else 0
 
 
 if __name__ == "__main__":
