@@ -315,6 +315,72 @@ def build_same_group_subtree(
     return out, None
 
 
+def _mark_related_descendants(
+    node: dict[str, Any],
+    *,
+    source_key: str | None,
+    compat: str | None,
+    quality: str,
+    tree_year: str,
+    mismatch_years: set[str],
+) -> str | None:
+    """Force every descendant beneath a related_breakdown attach point to
+    carry its own explicit non-additive tag, regardless of depth. Returns
+    the effective fact year shown at this node (its own, or the nearest
+    mismatched year found among its descendants) so a parent with no year
+    fallback of its own can still surface an accurate banner.
+
+    build_same_group_subtree() is the additive-tree builder; when its
+    output is nested under a related_breakdown parent (Statement 6 →
+    component → PBS program, or ABS purpose → Statement 6 subfunction),
+    those nested nodes previously kept whatever `breakdown` same_group
+    assigned them (None unless that specific node had its own year
+    fallback) — the only thing marking the subtree non-additive was the
+    immediate parent's own `breakdown`. Since each node is serialized
+    independently (both within one /dashboard/tree walk and, separately,
+    on every standalone /item/{fact_id}/children drill-down call, which
+    has no parent context to inherit from), a descendant with
+    breakdown=None is indistinguishable from a real additive fact —
+    this is the concrete mechanism behind children reading >100% of an
+    unrelated parent and cross-government facts reading as if additive.
+    """
+    existing = node.get("breakdown") or {}
+    own_fy = existing.get("fact_financial_year")
+
+    child_fys: list[str] = []
+    for child in (node.get("children") or {}).values():
+        child_fy = _mark_related_descendants(
+            child,
+            source_key=source_key,
+            compat=compat,
+            quality=quality,
+            tree_year=tree_year,
+            mismatch_years=mismatch_years,
+        )
+        if child_fy:
+            child_fys.append(child_fy)
+
+    effective_fy = own_fy or (sorted(child_fys)[0] if child_fys else None)
+    if effective_fy:
+        mismatch_years.add(str(effective_fy))
+        banner = (
+            f"{FY_MISMATCH_BANNER} Selected year {tree_year}; showing {effective_fy}. "
+            f"{RELATED_BANNER}"
+        )
+    else:
+        banner = existing.get("banner") or RELATED_BANNER
+    node["breakdown"] = {
+        "kind": "related_breakdown",
+        "source_key": existing.get("source_key") or source_key,
+        "compatibility_group": existing.get("compatibility_group") or compat,
+        "match_quality": existing.get("match_quality") or quality,
+        "fact_financial_year": effective_fy,
+        "banner": banner,
+    }
+    node["preserve_amount"] = True
+    return effective_fy
+
+
 def build_related_subtree(
     conn,
     parent_node_id: int,
@@ -356,6 +422,7 @@ def build_related_subtree(
         if fact is None:
             continue
         label = display_name(edge["child_name"], parent_name)
+        edge_quality = match_quality_from_notes(edge.get("notes"))
         node: dict[str, Any] = {
             "children": {},
             "amount": fact["amount_aud"],
@@ -365,13 +432,7 @@ def build_related_subtree(
             "compatibility_group": fact["compatibility_group"],
         }
         if fact.get("fy_fallback"):
-            mismatch_years.add(str(fact["financial_year"]))
-            node["breakdown"] = _child_meta_from_fact(
-                fact, tree_year=financial_year, kind="related_breakdown"
-            )
-        # Keep A.6.1 sub-function amount on the related pie slice; nest
-        # components/programs for further drill without re-totalling the slice.
-        node["preserve_amount"] = True
+            node["breakdown"] = {"fact_financial_year": fact["financial_year"]}
         sg_kids, _ = build_same_group_subtree(
             conn,
             edge["child_node_id"],
@@ -383,28 +444,24 @@ def build_related_subtree(
         )
         if sg_kids:
             node["children"] = {c["name"]: c["node"] for c in sg_kids}
-            nested_mismatch: set[str] = set()
-            for item in sg_kids:
-                item["node"]["preserve_amount"] = True
-                nested_bd = item["node"].get("breakdown") or {}
-                fy_child = nested_bd.get("fact_financial_year")
-                if fy_child and str(fy_child) != financial_year:
-                    nested_mismatch.add(str(fy_child))
-                    mismatch_years.add(str(fy_child))
-            # Stamp sub-function so deeper drill shows an accurate FY banner
-            if nested_mismatch and not node.get("breakdown"):
-                child_fy = sorted(nested_mismatch)[0]
-                node["breakdown"] = {
-                    "kind": "same_group",
-                    "source_key": "federal_budget_statement_6_components",
-                    "compatibility_group": "budget_expense",
-                    "match_quality": None,
-                    "fact_financial_year": child_fy,
-                    "banner": (
-                        f"{FY_MISMATCH_BANNER} Selected year {financial_year}; "
-                        f"component figures shown are {child_fy}."
-                    ),
-                }
+        # Every node beneath (and including) this related attach point -
+        # regardless of depth, and regardless of whether it has its own
+        # year fallback - must self-declare non-additive. Stamping only the
+        # immediate container left deeper same_group-shaped nodes (Statement
+        # 6 component -> PBS program) indistinguishable from a real additive
+        # fact once serialized on their own - the mechanism behind children
+        # reading >100% of an unrelated parent and cross-government facts
+        # appearing to be additive. A node with no year fallback of its own
+        # still bubbles up its nested descendants' mismatch year so the
+        # banner stays accurate at every level a consumer might render it.
+        _mark_related_descendants(
+            node,
+            source_key=fact["source_key"],
+            compat=fact["compatibility_group"],
+            quality=edge_quality,
+            tree_year=financial_year,
+            mismatch_years=mismatch_years,
+        )
         children[label] = node
         meta_source = fact["source_key"] or meta_source
         quality = match_quality_from_notes(edge.get("notes"))
