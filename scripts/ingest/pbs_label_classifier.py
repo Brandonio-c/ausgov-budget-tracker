@@ -50,6 +50,13 @@ VALUE_TOKEN = re.compile(
 
 UNIT_TOKEN = re.compile(r"\$'?\s?000\b|\$m\b|\$b\b|\('000\)|\(\$'000\)|^000$", re.I)
 
+# Three or more consecutive bare (no thousands-separator) small numbers -
+# e.g. "150 150 100" - a flattened row of $'000-denominated values too
+# small to trip VALUE_TOKEN's thousands-separator requirement. Excludes a
+# lone dotted program number like "1.1" by requiring at least three tokens
+# in an unbroken run.
+BARE_NUMERIC_RUN = re.compile(r"(?<![\d.])-?\d{1,4}(?:\s+-?\d{1,4}){2,}(?![\d.])")
+
 # Whole-table-section headings only - "Employee benefits", "Suppliers" etc.
 # are real line items *within* an EXPENSES section, not headings themselves,
 # and are matched separately via FINANCIAL_STATEMENT_LINE_ITEMS below so a
@@ -162,6 +169,10 @@ def classify_label(raw_label: str) -> Classification:
     if len(value_tokens) >= 3:
         return Classification(
             "malformed_concatenated_row", False, "three_or_more_embedded_value_tokens", signals
+        )
+    if BARE_NUMERIC_RUN.search(label):
+        return Classification(
+            "malformed_concatenated_row", False, "embedded_bare_numeric_run", signals
         )
     if year_tokens and ACCOUNTING_HEADINGS.search(label):
         return Classification(

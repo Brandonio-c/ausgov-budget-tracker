@@ -121,6 +121,18 @@ def test_truncated_trailing_numeric_token_rejected():
     assert not r.publishable
 
 
+def test_embedded_bare_numeric_run_rejected():
+    """Small $'000 values under 1,000 have no thousands separator (e.g.
+    "150 150 100") and would otherwise slip past the value-token count -
+    found while manually reviewing NDIA rows during Task 6's corpus audit."""
+    r = classify_label(
+        "National Disability Insurance Scheme - Getting the NDIS back on "
+        "track (l) 2.1 Departmental payment - 150 150 100 - National"
+    )
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "embedded_bare_numeric_run"
+
+
 def test_excessive_length_rejected():
     label = "A " + ("very " * 60) + "long label"
     r = classify_label(label)
