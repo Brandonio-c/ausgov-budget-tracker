@@ -32,6 +32,7 @@ export default function HomeClient() {
   const [ringDepth, setRingDepth] = useState(2);
   const [drillPath, setDrillPath] = useState<TreeNode[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [highlightName, setHighlightName] = useState<string | null>(null);
   const [sourcePrompt, setSourcePrompt] = useState(
     "Hover a leaf item to preview its source citation",
@@ -160,6 +161,7 @@ export default function HomeClient() {
     if (path.length) setDrillPath(path);
     if (leaf?.id != null) {
       setSelectedItemId(leaf.id);
+      setSelectedNode(leaf);
       setSourcePrompt("Opened from search — citation for the matched item.");
     } else if (factId != null) {
       setSelectedItemId(factId);
@@ -209,6 +211,7 @@ export default function HomeClient() {
     drillPath.length > 0;
 
   function handleNodeClick(node: TreeNode) {
+    setSelectedNode(node);
     if (node.children && node.children.length > 0) {
       setSelectedItemId(node.id);
       setSourcePrompt(
@@ -228,6 +231,7 @@ export default function HomeClient() {
   }
 
   function handleNodeHover(node: TreeNode) {
+    setSelectedNode(node);
     if (node.id !== null) {
       setSelectedItemId(node.id);
       return;
@@ -239,6 +243,21 @@ export default function HomeClient() {
         : "Drill into this segment to reach its source citation",
     );
   }
+
+  // Task 7 (semantic-defect milestone): the actual child year and fallback
+  // reason must be disclosed at the child itself, not only via a
+  // folder-level banner shown several levels up the drill path - a mixed-
+  // year subtree must never present with only the topmost node disclosing
+  // the real year in use.
+  const selectedNodeYearDisclosure = useMemo(() => {
+    const bd = selectedNode?.breakdown;
+    if (!bd?.is_year_fallback || !bd.fact_financial_year) return null;
+    const requested = bd.requested_financial_year ?? year;
+    const sourceLabel = (bd.source_key ?? "").startsWith("federal_pbs")
+      ? "PBS detail"
+      : "Detail";
+    return `${sourceLabel} shown for ${bd.fact_financial_year}; no ${requested} table was published for “${selectedNode?.name}”.`;
+  }, [selectedNode, year]);
 
   function handleModeChange(next: DashboardMode) {
     setMode(next);
@@ -458,6 +477,14 @@ export default function HomeClient() {
             className="min-w-0 rounded-lg border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-zinc-900"
             aria-label="Source citation"
           >
+            {selectedNodeYearDisclosure && (
+              <p
+                className="mb-3 rounded-md border border-amber-300/80 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100"
+                role="status"
+              >
+                {selectedNodeYearDisclosure}
+              </p>
+            )}
             <FactCitationViewer factId={selectedItemId} emptyMessage={sourcePrompt} />
           </aside>
         }

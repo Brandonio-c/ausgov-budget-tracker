@@ -150,6 +150,24 @@ def fixture_db(tmp_path):
     local_nsw_econ_fact = add_fact(local_nsw_doc, local_nsw_econ, "2024-25", 1_050_000_000)
     add_related_edge(local_nsw_econ, s6_immigration, None, "Economic affairs→Immigration|approx")
 
+    # Task 7 regression fixture: a related node with an EXACT match at its
+    # own level, whose nested same_group child only has data for an
+    # *earlier* year - reproduces the real bug found against production
+    # (fact_id 257713 "Defence"): the top node's own fallback_reason must
+    # not claim "exact_year_match" for the whole subtree just because ITS
+    # OWN fact matched exactly, when a descendant genuinely needed a
+    # fallback.
+    s6_defence = add_node(s6_doc, "Defence", "s6|node|Defence", "federal", "Commonwealth")
+    s6_defence_fact = add_fact(s6_doc, s6_defence, "2024-25", 50_000_000_000)
+    defence_component = add_node(
+        s6_doc, "Defence / Contracts", "s6|node|Defence Contracts", "federal", "Commonwealth"
+    )
+    add_fact(s6_doc, defence_component, "2019-20", 30_000_000_000)
+    add_same_group_edge(s6_defence, defence_component)
+    local_qld_defence = add_node(local_qld_doc, "Defence", "local_qld|node|Defence", "local", "QLD")
+    local_qld_defence_fact = add_fact(local_qld_doc, local_qld_defence, "2024-25", 500_000)
+    add_related_edge(local_qld_defence, s6_defence, None, "Defence→Defence|exact")
+
     conn.commit()
     conn.close()
 
@@ -159,6 +177,7 @@ def fixture_db(tmp_path):
         "s6_health_fact": s6_health_fact,
         "local_qld_econ_fact": local_qld_econ_fact,
         "local_nsw_econ_fact": local_nsw_econ_fact,
+        "local_qld_defence_fact": local_qld_defence_fact,
     }
 
 
@@ -291,3 +310,31 @@ def test_related_nodes_are_excluded_from_a_naive_additive_reconciliation(fixture
         if (item["node"].get("breakdown") or {}).get("kind") != "related_breakdown"
     ]
     assert additive_children == []
+
+
+def test_exact_match_parent_reports_nested_mismatch_not_its_own_reason(fixture_db):
+    """Regression for a real bug found while implementing Task 7: a related
+    node whose OWN fact matches the requested year exactly must not report
+    fallback_reason="exact_year_match" for the whole subtree when a nested
+    same_group descendant needed a genuine earlier-year fallback - that
+    would misrepresent where the mismatch actually lives. The top node
+    reports "nested_child_year_mismatch"; the descendant itself reports its
+    own real fallback reason."""
+    conn = _conn(fixture_db)
+    nid = primary_node_id(conn, fixture_db["local_qld_defence_fact"])
+    related_list, _ = build_related_subtree(conn, nid, "2024-25")
+    conn.close()
+
+    defence_node = next(item["node"] for item in related_list if item["name"] == "Defence")
+    bd = defence_node["breakdown"]
+    assert bd["fallback_reason"] == "nested_child_year_mismatch"
+    assert bd["is_year_fallback"] is True
+    assert bd["fact_financial_year"] == "2019-20"
+
+    nested = next(iter(defence_node["children"].values()))
+    nested_bd = nested["breakdown"]
+    assert nested_bd["fallback_reason"] in (
+        "nearest_earlier_year_same_edition",
+        "nearest_earlier_year_other_edition",
+    )
+    assert nested_bd["fact_financial_year"] == "2019-20"

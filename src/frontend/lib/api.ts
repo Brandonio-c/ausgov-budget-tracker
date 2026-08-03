@@ -1,0 +1,306 @@
+import { BreakdownMeta, LevelSummary, SourceContext, SpendingItem, TreeNode } from "./types";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+
+async function getJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) {
+    let detail = `${path} -> HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) {
+        detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+      }
+    } catch {
+      /* ignore non-JSON error bodies */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function getArrayBuffer(path: string, signal?: AbortSignal): Promise<ArrayBuffer> {
+  const res = await fetch(`${API_BASE}${path}`, { signal });
+  if (!res.ok) {
+    throw new Error(`${path} -> HTTP ${res.status}`);
+  }
+  return res.arrayBuffer();
+}
+
+export const api = {
+  levels: () => getJson<LevelSummary[]>("/api/spending/levels"),
+  years: (level: string) => getJson<string[]>(`/api/spending/years?level=${encodeURIComponent(level)}`),
+  tree: (level: string, year: string) =>
+    getJson<TreeNode>(`/api/spending/tree?level=${encodeURIComponent(level)}&year=${encodeURIComponent(year)}`),
+  item: (id: number) => getJson<SpendingItem>(`/api/spending/item/${id}`),
+  itemContext: (id: number) => getJson<SourceContext>(`/api/spending/item/${id}/context`),
+  itemSourceFile: (id: number, signal?: AbortSignal) =>
+    getArrayBuffer(`/api/spending/item/${id}/source-file`, signal),
+};
+
+export type DashboardMode =
+  | "actuals"
+  | "budget"
+  | "debt"
+  | "revenue"
+  | "gdp"
+  | "gdp_current"
+  | "gdp_chain_volume"
+  | "gdp_expenditure"
+  | "gva_current"
+  | "gva_chain_volume"
+  | "gsp_current"
+  | "gsp_chain_volume"
+  | "ratios";
+
+export type Citation = {
+  fact_id: number;
+  fact_key: string;
+  landing_url: string;
+  original_resource_url: string;
+  cached_copy_url: string;
+  locator: string;
+  sha256?: string | null;
+  retrieved_at?: string | null;
+  amount_aud?: number | null;
+  financial_year?: string;
+  measure_type?: string;
+};
+
+export type DashboardItem = {
+  id: number;
+  financial_year: string;
+  level_of_government: string;
+  jurisdiction: string;
+  category: string | null;
+  amount_aud: number;
+  measure_type: string;
+  accounting_basis: string;
+  estimate_status: string;
+  source_document_name: string;
+  citation: Citation;
+};
+
+export type EvidenceHighlight = {
+  cell?: string | null;
+  row_index?: number | null;
+  column_index?: number | null;
+} | null;
+
+export type FactEvidence = {
+  fact_id: number;
+  media_type: "spreadsheet" | "pdf" | "text_chunk" | "unsupported";
+  file_name: string | null;
+  content_type: string | null;
+  has_source_file: boolean;
+  sheet_name: string | null;
+  cell: string | null;
+  cell_range: string | null;
+  page_number: number | null;
+  row_number: number | null;
+  text_anchor: string | null;
+  purpose: string | null;
+  financial_year_label: string | null;
+  unit: string | null;
+  amount_aud: number | null;
+  highlight: EvidenceHighlight;
+  columns: string[];
+  rows: (string | number | boolean | null)[][];
+  note: string | null;
+  locator: string | null;
+  breakdown_note?: string | null;
+  citation: Citation;
+  item: Omit<DashboardItem, "citation">;
+};
+
+export type V2Tree = {
+  name: string;
+  value: number;
+  children: Array<{ name: string; value: number; id: number; citation: Citation }>;
+};
+
+export type SeriesPoint = {
+  financial_year: string;
+  total_aud: number;
+  fact_id: number | null;
+};
+
+export type SeriesLevel = {
+  level: string;
+  points: SeriesPoint[];
+};
+
+export type DashboardSeries = {
+  mode: DashboardMode;
+  category: string | null;
+  years: string[];
+  series: SeriesLevel[];
+  note: string;
+  warning?: string | null;
+};
+
+export type SearchSort = "amount_desc" | "amount_asc" | "fy_desc" | "name";
+
+export type SearchParams = {
+  q?: string;
+  mode?: DashboardMode | "";
+  level?: string;
+  jurisdiction?: string;
+  fy_from?: string;
+  fy_to?: string;
+  amount_min?: number | null;
+  amount_max?: number | null;
+  limit?: number;
+  offset?: number;
+  sort?: SearchSort;
+};
+
+export type SearchHit = {
+  id: number;
+  node_name: string;
+  amount_aud: number;
+  financial_year: string;
+  jurisdiction: string | null;
+  level: string;
+  measure_type: string;
+  accounting_basis: string;
+  estimate_status: string;
+  source_title: string | null;
+};
+
+export type SearchResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  items: SearchHit[];
+};
+
+export type UnifiedSearchHit = {
+  kind: "spending" | "document";
+  score: number;
+  method: string;
+  href?: string;
+  fact_id?: number | null;
+  node_name?: string;
+  display_title?: string;
+  matched_label?: string;
+  matched_terms?: string[];
+  source_title?: string | null;
+  jurisdiction?: string | null;
+  level?: string | null;
+  financial_year?: string | null;
+  measure_type?: string;
+  accounting_basis?: string;
+  estimate_status?: string;
+  amount_aud?: number;
+  mode?: DashboardMode | string | null;
+  source_document_id?: number;
+  source_key?: string;
+  title?: string;
+  publisher?: string | null;
+  government_level?: string | null;
+  landing_url?: string | null;
+  local_path?: string | null;
+  chunk_index?: number;
+  snippet?: string | null;
+};
+
+export type UnifiedSearchResponse = {
+  q: string;
+  scope: string;
+  index_ready: boolean;
+  embed_model?: string | null;
+  spending: UnifiedSearchHit[];
+  documents: UnifiedSearchHit[];
+  note?: string;
+};
+
+export const apiSearch = {
+  unified: (q: string, scope: "all" | "spending" | "documents" = "all", limit = 20) => {
+    const params = new URLSearchParams({
+      q,
+      scope,
+      limit: String(limit),
+    });
+    return getJson<UnifiedSearchResponse>(`/v2/search?${params.toString()}`);
+  },
+  status: () => getJson<{ index_ready: boolean }>("/v2/search/status"),
+};
+
+export const apiDashboard = {
+  levels: (mode: DashboardMode) =>
+    getJson<LevelSummary[]>(`/v2/dashboard/levels?mode=${encodeURIComponent(mode)}`),
+  years: (mode: DashboardMode, level: string) =>
+    getJson<string[]>(
+      `/v2/dashboard/years?mode=${encodeURIComponent(mode)}&level=${encodeURIComponent(level)}`,
+    ),
+  tree: (mode: DashboardMode, level: string, year: string) =>
+    getJson<TreeNode>(
+      `/v2/dashboard/tree?mode=${encodeURIComponent(mode)}&level=${encodeURIComponent(level)}&year=${encodeURIComponent(year)}`,
+    ),
+  series: (mode: DashboardMode, levels: string[], category?: string | null) => {
+    const q = new URLSearchParams({
+      mode,
+      levels: levels.join(","),
+    });
+    if (category) q.set("category", category);
+    return getJson<DashboardSeries>(`/v2/dashboard/series?${q.toString()}`);
+  },
+  item: (id: number) => getJson<DashboardItem>(`/v2/dashboard/item/${id}`),
+  itemChildren: (id: number, year?: string) =>
+    getJson<{
+      fact_id: number;
+      financial_year: string;
+      kind: string;
+      children: TreeNode[];
+      breakdown: BreakdownMeta | null;
+      breakdown_note?: string | null;
+      parent_amount_aud?: number;
+    }>(
+      `/v2/dashboard/item/${id}/children${
+        year ? `?year=${encodeURIComponent(year)}` : ""
+      }`,
+    ),
+  itemEvidence: (id: number) => getJson<FactEvidence>(`/v2/dashboard/item/${id}/evidence`),
+  itemSourceFile: (id: number, signal?: AbortSignal) =>
+    getArrayBuffer(`/v2/dashboard/item/${id}/source-file`, signal),
+};
+
+export const apiV2 = {
+  citation: (id: number) => getJson<Citation>(`/v2/facts/${id}/citation`),
+  search: (params: SearchParams) => {
+    const q = new URLSearchParams();
+    if (params.q?.trim()) q.set("q", params.q.trim());
+    if (params.mode) q.set("mode", params.mode);
+    if (params.level) q.set("level", params.level);
+    if (params.jurisdiction?.trim()) q.set("jurisdiction", params.jurisdiction.trim());
+    if (params.fy_from?.trim()) q.set("fy_from", params.fy_from.trim());
+    if (params.fy_to?.trim()) q.set("fy_to", params.fy_to.trim());
+    if (params.amount_min != null && Number.isFinite(params.amount_min)) {
+      q.set("amount_min", String(params.amount_min));
+    }
+    if (params.amount_max != null && Number.isFinite(params.amount_max)) {
+      q.set("amount_max", String(params.amount_max));
+    }
+    q.set("limit", String(params.limit ?? 50));
+    q.set("offset", String(params.offset ?? 0));
+    q.set("sort", params.sort ?? "amount_desc");
+    return getJson<SearchResponse>(`/v2/facts/search?${q.toString()}`);
+  },
+  tree: (params: {
+    compatibility_group: string;
+    accounting_basis: string;
+    estimate_status: string;
+    financial_year: string;
+    limit?: number;
+  }) => {
+    const q = new URLSearchParams({
+      compatibility_group: params.compatibility_group,
+      accounting_basis: params.accounting_basis,
+      estimate_status: params.estimate_status,
+      financial_year: params.financial_year,
+      limit: String(params.limit ?? 50),
+    });
+    return getJson<V2Tree>(`/v2/tree?${q.toString()}`);
+  },
+};

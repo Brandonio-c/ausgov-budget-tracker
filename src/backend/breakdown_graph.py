@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 RELATED_BANNER = (
@@ -87,13 +88,25 @@ def fact_for_node_year(
     *,
     allow_nearest: bool = False,
 ) -> dict[str, Any] | None:
-    """Best fact for a node in a given FY (prefer budget_expense then any)."""
+    """Best fact for a node in a given FY (prefer budget_expense then any).
+
+    Fallback policy (Task 7 of the semantic-defect milestone): (1) exact
+    requested year; (2) nearest EARLIER year - never later/future, since a
+    later year is not a legitimate stand-in for an earlier parent's figure;
+    (3) no result if no earlier year exists at all. Among earlier
+    candidates, one corroborated by another fact from the same source
+    edition is preferred over a lone fact from a different edition, and
+    fallback_reason/is_year_fallback/source_budget_edition are always
+    returned so the API and UI can disclose the actual source year rather
+    than silently substituting it.
+    """
     row = conn.execute(
         """
         SELECT
             f.id AS fact_id,
             f.amount_aud,
             f.financial_year,
+            f.estimate_status,
             d.source_key,
             m.compatibility_group,
             n.name AS node_name
@@ -130,14 +143,16 @@ def fact_for_node_year(
             "financial_year": row["financial_year"],
             "source_key": row["source_key"],
             "compatibility_group": row["compatibility_group"],
+            "estimate_status": row["estimate_status"],
             "node_name": row["node_name"],
             "node_id": node_id,
             "fy_fallback": False,
+            "requested_financial_year": financial_year,
+            "fallback_reason": "exact_year_match",
         }
     if not allow_nearest:
         return None
 
-    # Prefer same or later estimate years, then earlier.
     target = _fy_sort_key(financial_year)[0]
     candidates = conn.execute(
         """
@@ -145,6 +160,7 @@ def fact_for_node_year(
             f.id AS fact_id,
             f.amount_aud,
             f.financial_year,
+            f.estimate_status,
             d.source_key,
             m.compatibility_group,
             n.name AS node_name
@@ -165,27 +181,40 @@ def fact_for_node_year(
         """,
         (node_id,),
     ).fetchall()
-    if not candidates:
+    earlier = [r for r in candidates if _fy_sort_key(str(r["financial_year"]))[0] < target]
+    if not earlier:
         return None
 
-    def rank(r) -> tuple[int, int, int]:
-        fy = str(r["financial_year"])
-        start = _fy_sort_key(fy)[0]
-        # 0 = exact (unreachable here), 1 = later, 2 = earlier
-        bucket = 1 if start >= target else 2
-        distance = abs(start - target)
-        return (bucket, distance, start)
+    def _distance(r) -> int:
+        return target - _fy_sort_key(str(r["financial_year"]))[0]
 
-    best = min(candidates, key=rank)
+    min_distance = min(_distance(r) for r in earlier)
+    nearest = [r for r in earlier if _distance(r) == min_distance]
+    source_key_counts = Counter(str(r["source_key"]) for r in earlier)
+    # Prefer a nearest candidate corroborated by another fact from the same
+    # edition over a lone fact from a different edition; ties keep the
+    # pre-sorted (compatibility_group priority, then id) order.
+    best = min(
+        nearest,
+        key=lambda r: 0 if source_key_counts[str(r["source_key"])] > 1 else 1,
+    )
+    same_edition = source_key_counts[str(best["source_key"])] > 1
     return {
         "fact_id": int(best["fact_id"]),
         "amount_aud": float(best["amount_aud"] or 0),
         "financial_year": best["financial_year"],
         "source_key": best["source_key"],
         "compatibility_group": best["compatibility_group"],
+        "estimate_status": best["estimate_status"],
         "node_name": best["node_name"],
         "node_id": node_id,
-        "fy_fallback": str(best["financial_year"]) != financial_year,
+        "fy_fallback": True,
+        "requested_financial_year": financial_year,
+        "fallback_reason": (
+            "nearest_earlier_year_same_edition"
+            if same_edition
+            else "nearest_earlier_year_other_edition"
+        ),
     }
 
 
@@ -258,6 +287,11 @@ def _child_meta_from_fact(
         "compatibility_group": fact.get("compatibility_group"),
         "match_quality": None,
         "fact_financial_year": fact.get("financial_year"),
+        "requested_financial_year": tree_year,
+        "is_year_fallback": True,
+        "fallback_reason": fact.get("fallback_reason"),
+        "source_budget_edition": fact.get("source_key"),
+        "estimate_status": fact.get("estimate_status"),
         "banner": (
             f"{FY_MISMATCH_BANNER} Selected year {tree_year}; "
             f"showing {fact.get('financial_year')}."
@@ -325,10 +359,14 @@ def _mark_related_descendants(
     mismatch_years: set[str],
 ) -> str | None:
     """Force every descendant beneath a related_breakdown attach point to
-    carry its own explicit non-additive tag, regardless of depth. Returns
-    the effective fact year shown at this node (its own, or the nearest
-    mismatched year found among its descendants) so a parent with no year
-    fallback of its own can still surface an accurate banner.
+    carry its own explicit non-additive tag AND its own explicit year-
+    fallback disclosure (Task 7: requested_financial_year, is_year_fallback,
+    fallback_reason, source_budget_edition, estimate_status), regardless of
+    depth. Returns the effective fact year shown at this node (its own, or
+    the nearest mismatched year found among its descendants) so a parent
+    with no year fallback of its own can still surface an accurate banner -
+    never leaving a mixed-year subtree with only the topmost node
+    disclosing the actual year.
 
     build_same_group_subtree() is the additive-tree builder; when its
     output is nested under a related_breakdown parent (Statement 6 →
@@ -346,6 +384,10 @@ def _mark_related_descendants(
     """
     existing = node.get("breakdown") or {}
     own_fy = existing.get("fact_financial_year")
+    own_is_fallback = bool(existing.get("is_year_fallback"))
+    own_reason = existing.get("fallback_reason")
+    own_edition = existing.get("source_budget_edition") or existing.get("source_key")
+    own_estimate_status = existing.get("estimate_status")
 
     child_fys: list[str] = []
     for child in (node.get("children") or {}).values():
@@ -361,6 +403,7 @@ def _mark_related_descendants(
             child_fys.append(child_fy)
 
     effective_fy = own_fy or (sorted(child_fys)[0] if child_fys else None)
+    is_fallback = own_is_fallback or (effective_fy is not None and effective_fy != own_fy)
     if effective_fy:
         mismatch_years.add(str(effective_fy))
         banner = (
@@ -375,6 +418,20 @@ def _mark_related_descendants(
         "compatibility_group": existing.get("compatibility_group") or compat,
         "match_quality": existing.get("match_quality") or quality,
         "fact_financial_year": effective_fy,
+        "requested_financial_year": tree_year,
+        "is_year_fallback": is_fallback,
+        # own_reason only genuinely describes a fallback when own_fy is set
+        # (this node's own fact needed one) - a node with an exact match at
+        # its own level (own_reason=="exact_year_match") must not report
+        # that label for the whole subtree when a *descendant's* mismatch
+        # bubbled up into effective_fy; that case is its own distinct
+        # reason so the disclosure stays honest about where the mismatch
+        # actually lives.
+        "fallback_reason": (
+            own_reason if own_fy else ("nested_child_year_mismatch" if effective_fy else own_reason)
+        ),
+        "source_budget_edition": own_edition or existing.get("source_key") or source_key,
+        "estimate_status": own_estimate_status,
         "banner": banner,
     }
     node["preserve_amount"] = True
@@ -431,8 +488,14 @@ def build_related_subtree(
             "source_key": fact["source_key"],
             "compatibility_group": fact["compatibility_group"],
         }
-        if fact.get("fy_fallback"):
-            node["breakdown"] = {"fact_financial_year": fact["financial_year"]}
+        node["breakdown"] = {
+            "fact_financial_year": fact["financial_year"] if fact.get("fy_fallback") else None,
+            "is_year_fallback": bool(fact.get("fy_fallback")),
+            "fallback_reason": fact.get("fallback_reason"),
+            "source_budget_edition": fact.get("source_key"),
+            "estimate_status": fact.get("estimate_status"),
+            "source_key": fact.get("source_key"),
+        }
         sg_kids, _ = build_same_group_subtree(
             conn,
             edge["child_node_id"],

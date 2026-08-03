@@ -11,7 +11,18 @@ class BreakdownMeta(BaseModel):
     compatibility_group: Optional[str] = None
     match_quality: Optional[str] = None
     banner: Optional[str] = None
+    # source_financial_year in mission terms - the actual year this node's
+    # fact was published for, populated whenever it differs from the
+    # requested year (None means "matches the requested year exactly").
     fact_financial_year: Optional[str] = None
+    # Task 7 (semantic-defect milestone): explicit, per-node year-fallback
+    # disclosure - never rely on a folder-level banner alone to convey a
+    # child's actual year.
+    requested_financial_year: Optional[str] = None
+    is_year_fallback: Optional[bool] = None
+    fallback_reason: Optional[str] = None
+    source_budget_edition: Optional[str] = None
+    estimate_status: Optional[str] = None
 
 
 class TreeNode(BaseModel):

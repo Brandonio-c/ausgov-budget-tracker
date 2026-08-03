@@ -74,22 +74,25 @@ def test_social_protection_subfunction_amounts_sane(client: TestClient) -> None:
         assert abs(aged["value"] - child_sum) > 1.0 or child_sum == 0
 
 
-def test_aged_component_drill_stamps_fy_mismatch(client: TestClient) -> None:
+def test_aged_component_drill_never_substitutes_a_future_year(client: TestClient) -> None:
     tree = client.get(
         "/v2/dashboard/tree",
         params={"mode": "actuals", "level": "federal", "year": "2024-25"},
     ).json()
     aged = _find_named(tree, "Assistance to the aged")
     assert aged is not None
-    assert aged.get("breakdown", {}).get("fact_financial_year") == "2025-26"
-    assert "2025-26" in (aged.get("breakdown", {}).get("banner") or "")
-    kids = aged.get("children") or []
-    assert kids
-    assert all(
-        (c.get("breakdown") or {}).get("fact_financial_year") == "2025-26" for c in kids
-    )
-    # Parent A.6.1 amount for 2024-25 must not equal 2025-26 component sum
-    assert abs(aged["value"] - sum(c["value"] for c in kids)) > 1e9
+    # Task 7 (semantic-defect milestone): the fallback policy forbids
+    # selecting a *later* year than requested - this A.6.1 slice itself has
+    # an exact 2024-25 figure, so no fallback disclosure is needed here.
+    bd = aged.get("breakdown") or {}
+    assert bd.get("fallback_reason") == "exact_year_match"
+    assert bd.get("is_year_fallback") is False
+    assert bd.get("requested_financial_year") == "2024-25"
+    # Its nested same_group components only have 2025-26+ data published -
+    # since that is a *future* year relative to the 2024-25 request, they
+    # must NOT be silently substituted in (this was the actual bug: the
+    # old fallback preferred a later year over no result at all).
+    assert not aged.get("children")
 
 
 def test_dss_pbs_program_amounts_not_double_scaled(client: TestClient) -> None:
@@ -164,8 +167,11 @@ def test_item_children_related_endpoint(client: TestClient) -> None:
     assert body.get("parent_amount_aud")
     child_sum = sum(c["value"] for c in body["children"])
     assert abs(body["parent_amount_aud"] - child_sum) > 1_000_000
-    # Cascade: at least one related child should itself have children
-    assert any(c.get("children") for c in body["children"])
+    # Task 7: nested same_group components under these 2024-25 related
+    # children only have budget-year (2025-26+) data published. A future
+    # year is never a legitimate substitute for an earlier requested year,
+    # so none of them may show a nested cascade for this request.
+    assert not any(c.get("children") for c in body["children"])
 
 
 def test_commonwealth_pie_excludes_related_from_top_total(client: TestClient) -> None:
@@ -196,10 +202,15 @@ def test_thin_purposes_have_related_depth(client: TestClient) -> None:
         assert _max_depth(node) > 1, f"{purpose} should expose related depth"
 
     defence = _find_named(tree, "Defence")
-    assert any(
-        "Program" in c["name"] or "Total funded" in c["name"]
-        for c in _walk(defence)
-    ), "Defence related cascade should reach PBS program totals"
+    # Task 7: the PBS "Program ..." same_group cascade only has budget-year
+    # (2025-26+) data published, which is a *future* year relative to this
+    # 2024-25 actuals request and must not be silently substituted in - so
+    # it is correctly absent here. The AusTender contracts related cascade
+    # (a distinct, same-year-scoped related_breakdown link) still proves
+    # depth works: it reaches named supplier-level detail several levels down.
+    assert any("–" in c["name"] for c in _walk(defence)), (
+        "Defence related cascade should still reach named contract-level detail"
+    )
 
 
 def test_health_education_s6_folder_preserves_parent_amount(client: TestClient) -> None:

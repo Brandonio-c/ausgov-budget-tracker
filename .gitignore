@@ -7,15 +7,22 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+# lib/ and lib64/ are scoped to the repo root only (not /lib, /lib64) -
+# an unscoped `lib/` here silently ignored the entire, unrelated
+# src/frontend/lib/ directory (real, actively-imported frontend source:
+# types.ts, api.ts, combineTrees.ts, etc.) since it had never been added
+# under this root-level Python-packaging rule. Found while committing a
+# frontend change to src/frontend/lib/types.ts in the semantic-defect
+# milestone - that whole directory had never been tracked by git.
 .Python
-build/
+/build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
