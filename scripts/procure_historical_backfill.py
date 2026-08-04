@@ -32,7 +32,12 @@ from procure.discovery import filename_from_url, infer_financial_year  # noqa: E
 from procure.http_client import DownloadTooLarge, HTTPClient, HTTPFailure  # noqa: E402
 from procure.models import Asset, RunContext, Source  # noqa: E402
 from procure.registry import load_registry  # noqa: E402
-from procure.storage import DiskBudget, SnapshotStore, safe_filename, write_json_atomic  # noqa: E402
+from procure.storage import (  # noqa: E402
+    DiskBudget,
+    SnapshotStore,
+    safe_filename,
+    write_json_atomic,
+)
 
 GIB = 1024**3
 REPO_ROOT = Path(__file__).resolve().parents[1]

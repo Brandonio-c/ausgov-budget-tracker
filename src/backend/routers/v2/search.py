@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ...search_index import Scope, search_db_available, unified_search
+from ...search_index import search_db_available, unified_search
 
 router = APIRouter()
 

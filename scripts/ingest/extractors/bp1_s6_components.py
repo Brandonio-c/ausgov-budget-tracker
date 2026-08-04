@@ -174,7 +174,7 @@ def extract_summary_tables(pdf: Path) -> list[dict]:
         capturing = False
         for page_no, text in pages:
             if marker.lower() in text.lower() or (
-                table_id in text and f"Summary of expenses" in text
+                table_id in text and "Summary of expenses" in text
             ):
                 capturing = True
             if not capturing:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..models import Asset, Source
+from ..models import Source
 from .landing_page import LandingPageAdapter
 
 

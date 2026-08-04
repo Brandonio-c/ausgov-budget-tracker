@@ -23,8 +23,9 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -e . 2>/dev/null || true
           pip install fastapi uvicorn pydantic python-multipart
+          pip install pandas duckdb openpyxl requests pypdf beautifulsoup4 jsonschema
       - name: Ruff
-        run: python -m ruff check scripts src/backend tests/unit || true
+        run: python -m ruff check scripts src/backend tests/unit tests/ops tests/ingest
       - name: Build fixture DB
         run: python scripts/ingest/build_fixture_db.py
       - name: Unit tests
@@ -33,6 +34,16 @@ jobs:
         run: python -m pytest tests/integration -q
         env:
           FACTS_DB_PATH: data/test/facts_fixture.db
+      - name: SQL integrity + semantic dashboard-audit fixture tests
+        # tests/ops and tests/ingest build their own synthetic fixture
+        # databases per test (schema_migrate against a tmp_path db) - none
+        # of this needs the private production database or raw-data
+        # corpus. The handful of tests that DO genuinely need the real
+        # data/facts.db (ingest re-verification against production) are
+        # marked `full_data` (see pyproject.toml) and excluded here; they
+        # remain local-only checks, run as part of Task 8/9-style manual
+        # validation against the real database.
+        run: python -m pytest tests/ops tests/ingest -m "not full_data" -q
 
   frontend:
     runs-on: ubuntu-latest
@@ -47,6 +58,67 @@ jobs:
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
       - run: npm ci
-      - run: npm run lint || true
+      - name: ESLint (baseline-gated - see .eslint-baseline.json)
+        run: npm run lint:ci
       - run: npx tsc --noEmit
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e . 2>/dev/null || true
+          pip install fastapi uvicorn pydantic python-multipart
+      - name: Build e2e fixture DB (no production database or raw corpus)
+        run: python scripts/ingest/build_e2e_fixture_db.py
+      - name: Install frontend deps
+        working-directory: src/frontend
+        run: npm ci
+      - name: Install Playwright browsers
+        working-directory: src/frontend
+        run: npx playwright install --with-deps chromium
+      - name: Build static export (default localhost:8000 API base)
+        working-directory: src/frontend
+        run: npm run build
+      - name: Start backend against the e2e fixture DB
+        run: |
+          FACTS_DB_PATH=data/test/facts_e2e_fixture.db \
+          CORS_EXTRA_ORIGINS="http://127.0.0.1:3313,http://localhost:3313" \
+          python -m uvicorn src.backend.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 20); do
+            curl -sf "http://127.0.0.1:8000/v2/dashboard/levels?mode=actuals" && break
+            sleep 1
+          done
+      - name: Serve the static export under its real basePath
+        run: |
+          mkdir -p /tmp/static-serve-root/ausgov-budget-tracker
+          cp -r src/frontend/out/* /tmp/static-serve-root/ausgov-budget-tracker/
+          npx --yes serve -l 3313 /tmp/static-serve-root &
+          for i in $(seq 1 20); do
+            curl -sf "http://127.0.0.1:3313/ausgov-budget-tracker/" && break
+            sleep 1
+          done
+      - name: Playwright (fixture-compatible spec only)
+        working-directory: src/frontend
+        # dashboard.spec.ts deep-links purely by mode/level/year query
+        # params, so it runs cleanly against the synthetic e2e fixture DB.
+        # pbs-s6-crosswalk.spec.ts and pbs-year-fallback.spec.ts hardcode
+        # specific real fact_ids/node names resolved against the live
+        # production database (see their own docstrings) and are
+        # deliberately NOT run here - they remain local-only checks
+        # against the real data/facts.db (Task 8-style validation).
+        run: npx playwright test tests-e2e/dashboard.spec.ts

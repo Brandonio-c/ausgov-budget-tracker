@@ -12,7 +12,6 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from .models import AccessType, Source
 
-
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REGISTRY = ROOT / "config" / "procurement_sources.yaml"
 DEFAULT_SCHEMA = ROOT / "config" / "procurement_sources.schema.json"

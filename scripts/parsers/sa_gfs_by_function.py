@@ -40,7 +40,7 @@ def parse(raw_file, meta: dict) -> list[SpendingRow]:
         ]
 
         for source_row_index, row in enumerate(sheet_rows[4:], start=5):
-            gpc_code, gpc_description = row[0], row[1]
+            gpc_description = row[1]
             if not isinstance(gpc_description, str) or not gpc_description.strip():
                 continue
 

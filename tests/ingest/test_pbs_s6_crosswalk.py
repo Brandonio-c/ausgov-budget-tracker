@@ -26,11 +26,10 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 from pbs_s6_crosswalk import (  # noqa: E402
     CROSSWALK_ID,
     classify_program,
+    live_pbs_nodes,
     load_crosswalk,
     load_edges,
-    live_pbs_nodes,
     parse_portfolio_and_label,
-    resolve_s6_node_ids,
 )
 from schema_migrate import migrate  # noqa: E402
 
@@ -212,8 +211,8 @@ def fixture_db(tmp_path):
     s6_doc = add_source_document("federal_budget_statement_6_a61")
     pbs_doc = add_source_document("federal_pbs_programs_all")
 
-    s6_health = add_node(s6_doc, "Health", "federal_budget_statement_6_a61|node|Health")
-    s6_welfare = add_node(s6_doc, "Social security and welfare", "federal_budget_statement_6_a61|node|Social security and welfare")
+    add_node(s6_doc, "Health", "federal_budget_statement_6_a61|node|Health")
+    add_node(s6_doc, "Social security and welfare", "federal_budget_statement_6_a61|node|Social security and welfare")
 
     pbs_health_program = add_node(
         pbs_doc,

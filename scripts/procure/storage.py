@@ -14,7 +14,6 @@ from typing import Any
 
 from .models import Asset, RunContext, Source, ValidationResult
 
-
 GIB = 1024**3
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]+")
 

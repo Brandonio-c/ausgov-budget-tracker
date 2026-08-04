@@ -81,7 +81,7 @@ def fixture_db(tmp_path):
         )
 
     pbs_doc = add_source_document("federal_pbs_programs_all")
-    other_doc = add_source_document("some_other_source")
+    add_source_document("some_other_source")
 
     # Folder node - NEVER has a direct fact, by design (mirrors real
     # portfolio folders like "Defence"). Must never be touched even though

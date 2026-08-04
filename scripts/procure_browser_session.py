@@ -34,7 +34,12 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from procure.discovery import extract_assets, filename_from_url  # noqa: E402
-from procure.registry import DEFAULT_REGISTRY, RegistryError, filter_sources, load_registry  # noqa: E402
+from procure.registry import (  # noqa: E402
+    DEFAULT_REGISTRY,
+    RegistryError,
+    filter_sources,
+    load_registry,
+)
 from procure.storage import safe_filename  # noqa: E402
 from procure.validation import CHALLENGE_MARKERS  # noqa: E402
 from procure_acquisition_queue import DOMAIN_GROUPS  # noqa: E402

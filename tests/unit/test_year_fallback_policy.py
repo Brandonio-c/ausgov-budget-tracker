@@ -23,8 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 
-from backend.breakdown_graph import fact_for_node_year  # noqa: E402
 from schema_migrate import migrate  # noqa: E402
+
+from backend.breakdown_graph import fact_for_node_year  # noqa: E402
 
 
 @pytest.fixture
@@ -97,7 +98,7 @@ def fixture_db(tmp_path):
     add_fact(doc_a, future_only_node, "2025-26", 50.0)
     add_fact(doc_a, future_only_node, "2026-27", 55.0)
 
-    no_facts_node = add_node(doc_a, "No facts", "test|node|no_facts")
+    add_node(doc_a, "No facts", "test|node|no_facts")
 
     # Same node has an earlier-year fact from doc_a (corroborated by a
     # second doc_a fact elsewhere) and a lone earlier-year fact from doc_b.

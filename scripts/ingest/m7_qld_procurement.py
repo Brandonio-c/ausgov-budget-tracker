@@ -257,14 +257,12 @@ def write_and_run(meta: dict) -> dict:
 
 def seed_agency_entities(csv_path: Path) -> int:
     import sqlite3
-    from datetime import datetime, timezone
 
     df = pd.read_csv(csv_path, usecols=lambda c: c in {"agency", "fy"})
     if "agency" not in df.columns:
         return 0
     conn = sqlite3.connect(str(FACTS_DB))
     n = 0
-    now = datetime.now(timezone.utc).date().isoformat()
     for agency, g in df.groupby("agency"):
         years = sorted(set(str(y) for y in g["fy"].dropna()))
         if not years:

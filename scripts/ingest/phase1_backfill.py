@@ -13,8 +13,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from run import run_mapping  # noqa: E402
 from reconcile import reconcile_source  # noqa: E402
+from run import run_mapping  # noqa: E402
 
 SPENDING_DB = REPO_ROOT / "data" / "processed" / "spending.db"
 EXPORT_DIR = REPO_ROOT / "data" / "staging" / "phase1"
@@ -155,33 +155,6 @@ def write_mapping_yamls(export_paths: dict[str, Path]) -> list[Path]:
     written = []
     for sid, meta in SOURCE_META.items():
         rel_csv = export_paths[sid].relative_to(REPO_ROOT).as_posix()
-        yaml_text = f"""source_id: {sid}
-title: {meta['title']!r}
-publisher: {meta['publisher']!r}
-jurisdiction: {meta['jurisdiction']}
-government_level: {meta['government_level']}
-source_family: {meta['source_family']}
-measure_type: {meta['measure_type']}
-accounting_basis: {meta['accounting_basis']}
-estimate_status: {meta['estimate_status']}
-period_granularity: financial_year
-input:
-  path: {rel_csv}
-  format: csv
-columns:
-  financial_year: fy
-  amount_aud: amount
-  node_name: category
-  locator: locator
-  landing_url: landing_url
-  original_resource_url: resource_url
-attribution:
-  landing_url_column: landing_url
-  original_resource_url_column: resource_url
-  cached_copy_path: {meta['cached_copy_path']}
-fact_key_template: "{{source_id}}|{{financial_year}}|{{node_name}}|{{measure_type}}|{{estimate_status}}|{{legacy_id}}"
-"""
-        # fix quotes - use proper yaml
         import yaml
 
         doc = {

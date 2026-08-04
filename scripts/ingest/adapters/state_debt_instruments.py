@@ -241,7 +241,6 @@ def parse_sectioned_csv(
     for section, lines in _split_csv_sections(text):
         if len(lines) < 2:
             continue
-        header = [c.strip() for c in lines[0].split(",")]
         # handle quoted commas poorly — use pandas
         from io import StringIO
 
@@ -430,9 +429,6 @@ def parse_qtc_weekly_pdf(path: Path, source_url: str = "") -> list[InstrumentRow
         re.I,
     ):
         coupon, mat, amt = m.groups()
-        window_start = max(0, m.start() - 120)
-        window_end = min(len(text), m.end() + 40)
-        window = text[window_start:window_end].upper()
         if "TOTAL" in coupon.upper():
             continue
         amount = _parse_amount(amt)

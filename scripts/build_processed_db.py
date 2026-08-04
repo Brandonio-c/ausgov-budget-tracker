@@ -10,8 +10,6 @@ import sqlite3
 import sys
 from pathlib import Path
 
-import yaml
-
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from unified_registry import phase1_sources
 

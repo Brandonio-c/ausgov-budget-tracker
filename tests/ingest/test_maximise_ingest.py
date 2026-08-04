@@ -20,6 +20,7 @@ def facts_db() -> Path:
     return db
 
 
+@pytest.mark.full_data
 def test_observation_semantics_columns(facts_db: Path) -> None:
     conn = sqlite3.connect(str(facts_db))
     cols = {r[1] for r in conn.execute("PRAGMA table_info(facts)").fetchall()}
@@ -28,6 +29,7 @@ def test_observation_semantics_columns(facts_db: Path) -> None:
         assert col in cols
 
 
+@pytest.mark.full_data
 def test_new_measures_registered(facts_db: Path) -> None:
     conn = sqlite3.connect(str(facts_db))
     rows = {
@@ -44,6 +46,7 @@ def test_new_measures_registered(facts_db: Path) -> None:
     assert "gdp_chain_volume" in rows
 
 
+@pytest.mark.full_data
 def test_pbs_estimate_status_not_in_actuals(facts_db: Path) -> None:
     conn = sqlite3.connect(str(facts_db))
     n = conn.execute(
@@ -60,6 +63,7 @@ def test_pbs_estimate_status_not_in_actuals(facts_db: Path) -> None:
     assert n == 0
 
 
+@pytest.mark.full_data
 def test_borrowing_valuation_fields_present(facts_db: Path) -> None:
     conn = sqlite3.connect(str(facts_db))
     row = conn.execute(
@@ -78,6 +82,7 @@ def test_borrowing_valuation_fields_present(facts_db: Path) -> None:
     assert row[1] in {"individual_security", "instrument_type_aggregate"}
 
 
+@pytest.mark.full_data
 def test_debt_mode_rejects_budget_expense(monkeypatch: pytest.MonkeyPatch) -> None:
     from fastapi.testclient import TestClient
 

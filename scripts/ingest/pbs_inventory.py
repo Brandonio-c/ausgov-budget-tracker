@@ -18,7 +18,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 
-from extractors.pbs_programs_all import discover_pbs_pdfs, _budget_year_from_source  # noqa: E402
+from extractors.pbs_programs_all import _budget_year_from_source, discover_pbs_pdfs  # noqa: E402
 
 DB_PATH = REPO_ROOT / "data" / "facts.db"
 OUT_CSV = REPO_ROOT / "ops" / "reports" / "pbs-inventory-{stamp}.csv"

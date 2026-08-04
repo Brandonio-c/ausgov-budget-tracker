@@ -13,7 +13,6 @@ import openpyxl
 
 from .models import ValidationResult
 
-
 HTML_MARKERS = (
     b"<!doctype html", b"<html", b"<head", b"<body", b"<script",
 )

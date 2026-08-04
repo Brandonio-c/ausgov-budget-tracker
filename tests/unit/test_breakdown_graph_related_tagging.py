@@ -35,12 +35,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 
+from schema_migrate import migrate  # noqa: E402
+
 from backend.breakdown_graph import (  # noqa: E402
     attach_related_to_tree,
     build_related_subtree,
     primary_node_id,
 )
-from schema_migrate import migrate  # noqa: E402
 
 
 @pytest.fixture
@@ -158,7 +159,7 @@ def fixture_db(tmp_path):
     # OWN fact matched exactly, when a descendant genuinely needed a
     # fallback.
     s6_defence = add_node(s6_doc, "Defence", "s6|node|Defence", "federal", "Commonwealth")
-    s6_defence_fact = add_fact(s6_doc, s6_defence, "2024-25", 50_000_000_000)
+    add_fact(s6_doc, s6_defence, "2024-25", 50_000_000_000)
     defence_component = add_node(
         s6_doc, "Defence / Contracts", "s6|node|Defence Contracts", "federal", "Commonwealth"
     )

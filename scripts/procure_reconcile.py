@@ -200,7 +200,7 @@ def main() -> int:
     summary_lines = [
         f"# Procurement reconciliation — {run_id}",
         "",
-        f"Total sources: 76. Status counts:",
+        "Total sources: 76. Status counts:",
         "",
         "| Status | Count |",
         "|---|---|",

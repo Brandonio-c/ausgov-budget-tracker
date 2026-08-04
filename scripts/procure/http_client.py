@@ -12,7 +12,6 @@ from urllib.parse import urlparse
 
 import requests
 
-
 RETRY_CODES = {429, 500, 502, 503, 504}
 SAFE_HEADERS = {
     "content-type", "content-length", "content-disposition", "etag",

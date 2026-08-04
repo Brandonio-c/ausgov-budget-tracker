@@ -20,7 +20,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from procure.models import Asset, RunContext  # noqa: E402
-from procure.registry import DEFAULT_REGISTRY, RegistryError, filter_sources, load_registry  # noqa: E402
+from procure.registry import (  # noqa: E402
+    DEFAULT_REGISTRY,
+    RegistryError,
+    filter_sources,
+    load_registry,
+)
 from procure.storage import SnapshotStore, safe_filename  # noqa: E402
 from procure.validation import validate_file  # noqa: E402
 

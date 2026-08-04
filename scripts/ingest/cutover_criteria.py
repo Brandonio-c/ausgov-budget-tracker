@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import sqlite3
 import subprocess
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -74,10 +73,6 @@ def check() -> dict:
         capture_output=True,
         text=True,
     )
-    # After cutover, default page changes — run a cutover-aware check too
-    # For criteria pre-cutover we accept either legacy markers or cutover markers.
-    regression_ok = reg.returncode == 0 or "default_view_regression_ok" in reg.stdout
-
     top10_ok = all(v > 0 for v in published.values())
     gate6_ok = incomplete == 0
     result = {

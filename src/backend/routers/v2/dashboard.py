@@ -21,19 +21,18 @@ from ...abs_gfs_revenue_hierarchy import (
     abs_gfs_revenue_path,
     is_abs_gfs_revenue_source,
 )
-from ...compatibility import (
-    assert_compatible_or_raise,
-    display_value,
-    mode_to_view_family,
-    validate_fact_set,
-)
-from ...gdp_hierarchy import gdp_hierarchy_path
 from ...breakdown_graph import (
     apply_edge_cascade_to_budget_tree,
     attach_related_to_tree,
     build_related_subtree,
     build_same_group_subtree,
     primary_node_id,
+)
+from ...compatibility import (
+    assert_compatible_or_raise,
+    display_value,
+    mode_to_view_family,
+    validate_fact_set,
 )
 from ...evidence_locator import (
     build_reconstructed,
@@ -43,6 +42,7 @@ from ...evidence_locator import (
     resolve_fact_source_file,
 )
 from ...facts_db import get_facts_connection
+from ...gdp_hierarchy import gdp_hierarchy_path
 from ...schemas import BreakdownMeta, TreeNode
 from .citation import build_citation
 

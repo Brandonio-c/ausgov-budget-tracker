@@ -12,7 +12,6 @@ from bs4 import BeautifulSoup
 from .models import Asset, Source
 from .storage import safe_filename
 
-
 YEAR_PATTERN = re.compile(r"(?<!\d)(20\d{2})[-–_/](20)?(\d{2})(?!\d)")
 DOWNLOAD_WORDS = re.compile(r"download|data|table|appendix|budget|statement|report|export|workbook", re.I)
 # A single generic word like "export" or "report" also matches ordinary page titles
