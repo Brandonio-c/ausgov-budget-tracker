@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-08-04T03:58:26.834732+00:00",
+  "phase": "baseline_before_database_hygiene_milestone",
+  "git_head": "76af563",
+  "counts": {
+    "facts": 285574,
+    "nodes": 222798,
+    "fact_nodes": 285574,
+    "node_edges": 0,
+    "breakdown_edges": 14183,
+    "source_documents": 127,
+    "facts_pending_attribution": 36391
+  },
+  "duplicate_fact_groups": [
+    {
+      "node_id": 1044,
+      "financial_year": "2016-17",
+      "measure_type": "actual_accrual_expense",
+      "estimate_status": "audited_actual",
+      "amount_aud": 84180000,
+      "n": 2,
+      "fact_ids": "3030,3070"
+    },
+    {
+      "node_id": 67316,
+      "financial_year": "2024-25",
+      "measure_type": "actual_accrual_expense",
+      "estimate_status": "actual",
+      "amount_aud": 42750,
+      "n": 2,
+      "fact_ids": "81987,217525"
+    },
+    {
+      "node_id": 93316,
+      "financial_year": "2012-13",
+      "measure_type": "actual_accrual_expense",
+      "estimate_status": "actual",
+      "amount_aud": 0,
+      "n": 2,
+      "fact_ids": "108117,108168"
+    },
+    {
+      "node_id": 116100,
+      "financial_year": "2014-15",
+      "measure_type": "actual_accrual_expense",
+      "estimate_status": "actual",
+      "amount_aud": 2350000,
+      "n": 2,
+      "fact_ids": "132896,132897"
+    },
+    {
+      "node_id": 196635,
+      "financial_year": "2024-25",
+      "measure_type": "actual_accrual_expense",
+      "estimate_status": "actual",
+      "amount_aud": 42764,
+      "n": 2,
+      "fact_ids": "236933,237159"
+    }
+  ],
+  "orphan_nodes_by_source_key": {
+    "nsw_tcorp_bonds_on_issue": 64,
+    "qld_qtc_aud_bond_outstandings": 47,
+    "nsw_tcorp_weekly_bonds": 36,
+    "vic_tcv_amount_on_issue": 32,
+    "wa_watc_funding_sources": 23,
+    "qld_qtc_weekly_outstandings_2026_07_17": 19,
+    "sa_safa_weekly_funding_update": 18,
+    "nt_nttc_borrowing_strategy": 17,
+    "qld_qtc_benchmark_bonds": 14,
+    "tas_tascorp_annual_report_2024_25": 8
+  },
+  "orphan_nodes_total": 278,
+  "integrity_check_output": {
+    "hard_failures": 283,
+    "duplicate_facts": [
+      {
+        "node_id": 1044,
+        "financial_year": "2016-17",
+        "measure_type": "actual_accrual_expense",
+        "estimate_status": "audited_actual",
+        "amount_aud": 84180000,
+        "count": 2,
+        "fact_ids": "3030,3070"
+      },
+      {
+        "node_id": 67316,
+        "financial_year": "2024-25",
+        "measure_type": "actual_accrual_expense",
+        "estimate_status": "actual",
+        "amount_aud": 42750,
+        "count": 2,
+        "fact_ids": "81987,217525"
+      },
+      {
+        "node_id": 93316,
+        "financial_year": "2012-13",
+        "measure_type": "actual_accrual_expense",
+        "estimate_status": "actual",
+        "amount_aud": 0,
+        "count": 2,
+        "fact_ids": "108117,108168"
+      },
+      {
+        "node_id": 116100,
+        "financial_year": "2014-15",
+        "measure_type": "actual_accrual_expense",
+        "estimate_status": "actual",
+        "amount_aud": 2350000,
+        "count": 2,
+        "fact_ids": "132896,132897"
+      },
+      {
+        "node_id": 196635,
+        "financial_year": "2024-25",
+        "measure_type": "actual_accrual_expense",
+        "estimate_status": "actual",
+        "amount_aud": 42764,
+        "count": 2,
+        "fact_ids": "236933,237159"
+      }
+    ],
+    "duplicate_breakdown_edges": [],
+    "orphan_facts": 0,
+    "orphan_nodes": 278,
+    "orphan_edges": 0,
+    "dangling_source_documents": [],
+    "cross_government_additive_edges": [],
+    "cross_jurisdiction_additive_edges": [],
+    "pbs_crosswalk_children_with_rejected_labels": [],
+    "pbs_children_missing_source_year": 0
+  }
+}
