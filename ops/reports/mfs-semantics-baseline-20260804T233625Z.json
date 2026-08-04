@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-08-04T23:36:25Z",
+  "git_head_before_this_milestone": "d7bad6d",
+  "git_branch": "main",
+  "origin_main_matched_local_at_start": true,
+  "ci_status_found_on_d7bad6d": "failure (python job, Unit tests step)",
+  "ci_failure_root_cause": "tests/unit/test_registry_invariants.py: 3 tests manually did `conn = sqlite3.connect(...) if FACTS_DB.exists() else None` instead of using the file's own facts_conn fixture (which skips cleanly when facts.db is absent) - in CI, where facts.db never exists, this silently produced false-positive dangling-alias failures instead of skipping. Fixed in commit e5e93cd (verified locally by hiding data/facts.db to faithfully reproduce CI's environment: skips cleanly; restored, passes fully).",
+  "urgent_finding": {
+    "summary": "288 facts (measure_type='monthly_actuals', compatibility_group='actual_expense') from source_key='federal_monthly_financial_statements' were already loaded in the live data/facts.db from an earlier, incomplete/exploratory run, despite the mission's framing that the extractor had deliberately not been loaded.",
+    "live_contamination_confirmed": "For FY2025-26 federal actuals (the one year with no GFS-basis annual data yet, so src/backend/routers/v2/dashboard.py's _preferred_basis() falls back to 'accrual' instead of excluding it), 12 single-month '<label> | July' nodes were confirmed - via a direct query against the running production container on port 8010, bind-mounted to this same data/facts.db - to be silently summed into the federal actuals root total alongside real annual data. Root total dropped from 795,072,121,000 to 724,901,922,000 (the exact July contribution) after removal.",
+    "remediation": "scripts/ops/cleanup_stray_mfs_preload.py (dry-run verified safe: isolated single source_document, 22 nodes, zero breakdown_edges referencing them, no other measure_types under the source) removed all 288 facts + their fact_nodes + 22 nodes + the source_document. Idempotent (second --apply run reports already_clean). Backed up via scripts/ops/backup_facts_db.py first (facts-20260804T233110Z.db).",
+    "verified_after": "Live production API for FY2025-26 federal actuals no longer contains any '| July' node; task9_sql_integrity_checks.py still reports hard_failures: 0."
+  },
+  "counts_before_stray_mfs_cleanup": {
+    "facts": 285547,
+    "nodes": 222516,
+    "fact_nodes": 285547,
+    "node_edges": 0,
+    "breakdown_edges": 14167,
+    "source_documents": 127,
+    "measure_definitions": 25,
+    "facts_pending_attribution": 36417
+  },
+  "counts_after_stray_mfs_cleanup": {
+    "facts": 285259,
+    "nodes": 222494,
+    "fact_nodes": 285259,
+    "node_edges": 0,
+    "breakdown_edges": 14167,
+    "source_documents": 126,
+    "measure_definitions": 25,
+    "facts_pending_attribution": 36417
+  },
+  "full_pytest_suite": {
+    "command": "python -m pytest tests -q",
+    "result": "261 passed, 1 warning",
+    "note": "run before the stray-MFS cleanup; cleanup only removed data unrelated to any existing test's fixtures/assertions"
+  },
+  "task9_sql_integrity_checks": {
+    "before_stray_mfs_cleanup": {"hard_failures": 0},
+    "after_stray_mfs_cleanup": {"hard_failures": 0}
+  },
+  "existing_measure_definitions": [
+    {"measure_type": "actual_accrual_expense", "compatibility_group": "actual_expense"},
+    {"measure_type": "gfs_expense", "compatibility_group": "actual_expense"},
+    {"measure_type": "monthly_actuals", "compatibility_group": "actual_expense"},
+    {"measure_type": "appropriation_authority", "compatibility_group": "authority"},
+    {"measure_type": "budget_estimate", "compatibility_group": "budget_expense"},
+    {"measure_type": "revised_estimate", "compatibility_group": "budget_expense"},
+    {"measure_type": "cash_payment", "compatibility_group": "cash_outflow"},
+    {"measure_type": "invoice_paid", "compatibility_group": "cash_outflow"},
+    {"measure_type": "participant_payment", "compatibility_group": "cash_outflow"},
+    {"measure_type": "payment_timing_disclosure", "compatibility_group": "cash_outflow"},
+    {"measure_type": "contract_value", "compatibility_group": "commitment"},
+    {"measure_type": "grant_award", "compatibility_group": "commitment"},
+    {"measure_type": "recipient_count", "compatibility_group": "count"},
+    {"measure_type": "gdp_chain_volume", "compatibility_group": "gdp"},
+    {"measure_type": "gdp_current", "compatibility_group": "gdp"},
+    {"measure_type": "gsp_current", "compatibility_group": "gdp"},
+    {"measure_type": "tax_to_gdp_ratio", "compatibility_group": "gdp"},
+    {"measure_type": "aofm_cgs_outstanding", "compatibility_group": "gfs_liability"},
+    {"measure_type": "borrowing_authority_debt_outstanding", "compatibility_group": "gfs_liability"},
+    {"measure_type": "gfs_liability", "compatibility_group": "gfs_liability"},
+    {"measure_type": "gross_debt_face_value", "compatibility_group": "gfs_liability"},
+    {"measure_type": "net_debt", "compatibility_group": "gfs_liability"},
+    {"measure_type": "superannuation_liability", "compatibility_group": "gfs_liability"},
+    {"measure_type": "gfs_revenue", "compatibility_group": "gfs_revenue"},
+    {"measure_type": "tax_revenue", "compatibility_group": "gfs_revenue"}
+  ],
+  "critical_note_on_existing_measure_definitions": "measure_type='monthly_actuals' already existed in measure_definitions, mapped to compatibility_group='actual_expense' - the SAME additive group as annual GFS/PBS actuals. This mapping is itself unsafe for any future MFS load and must not be reused as-is; Task 3's semantic model defines dedicated MFS measure types in their own compatibility group(s), separate from annual actual_expense.",
+  "facts_schema_relevant_columns": [
+    "period_start", "period_end", "period_granularity", "measure_type", "accounting_basis",
+    "estimate_status", "amount_aud", "amount_value", "quantity", "unit", "observation_date",
+    "publication_date", "valuation_basis", "amount_granularity", "scale", "price_basis",
+    "source_budget_year", "quality_status", "quality_flags_json", "view_family"
+  ],
+  "distinct_period_granularity_before_mfs_load": ["financial_year", "month"],
+  "distinct_estimate_status_before_mfs_load": ["audited_actual", "estimated_actual", "actual", "invoice", "budget", "contract", "award", "forward_estimate"],
+  "distinct_accounting_basis_before_mfs_load": ["accrual", "gfs", "cash", "commitment", "not_applicable", "aasb", "count"],
+  "period_start_period_end_currently_populated": false
+}
