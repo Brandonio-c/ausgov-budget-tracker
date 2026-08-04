@@ -241,6 +241,102 @@ def test_related_child_over_100_percent_is_not_flagged(fixture_db, monkeypatch):
     assert result.additive_reconciliation_failures == []
 
 
+def _matching_residual_entry(**overrides):
+    from accepted_residuals import ResidualEntry
+
+    kwargs = dict(
+        source_key="abs_gfs_commonwealth_2024_25",
+        node_path="Capability",
+        financial_year="2024-25",
+        measure_type="gfs_expense",
+        estimate_status="actual",
+        expected_max_variance_pct=0.5,
+        actual_verified_variance_pct=0.5,
+        reason="Test fixture: verified source-document rounding.",
+        source_locator="pdf:test.pdf|page:1",
+        review_date="2026-08-04",
+    )
+    kwargs.update(overrides)
+    return ResidualEntry(**kwargs)
+
+
+def test_additive_over_100_percent_matching_accepted_residual_is_downgraded(fixture_db, monkeypatch):
+    """Task 2 (database-hygiene milestone): a >100%-of-parent additive
+    child that exactly matches a declarative accepted-residual entry
+    (same source_key, node path, financial_year, measure_type,
+    estimate_status, and within the entry's own declared variance) is
+    downgraded to an accepted_source_rounding_warning, not a hard
+    failure."""
+    _no_evidence(monkeypatch)
+    conn = sqlite3.connect(str(fixture_db["path"]))
+    spec = {"label": "federal_actuals_2024_25", "mode": "actuals", "level": "federal", "jurisdiction": None}
+    result = audit.AuditResult(path_label=spec["label"], requested_mode="actuals", requested_level="federal", requested_jurisdiction=None, requested_year="2024-25")
+    tree = _node(
+        fixture_db["federal_parent_fact"], "Defence", 100_000_000,
+        children=[_node(fixture_db["over_100_child_fact"], "Capability", 150_000_000)],
+    )
+    audit._walk(
+        "http://unused", conn, tree, spec=spec, parent_fact=None, parent_amount=None,
+        parent_edge_kind="additive", result=result, depth=0, max_depth=6,
+        residuals=[_matching_residual_entry()],
+    )
+    conn.close()
+    assert result.additive_reconciliation_failures == []
+    assert len(result.accepted_source_rounding_warnings) == 1
+    assert result.accepted_source_rounding_warnings[0]["fact_id"] == fixture_db["over_100_child_fact"]
+    # accepted_source_rounding_warnings is deliberately excluded from
+    # hard_failure_count() - it must never contribute to the audit's
+    # nonzero-exit-code condition (the unrelated citation_failure this
+    # fixture's shared _no_evidence() monkeypatch always produces for a
+    # material leaf is a separate, real hard failure this test isn't
+    # about; asserting the exact additive/accepted split above is the
+    # actual claim under test).
+
+
+def test_additive_over_100_percent_residual_with_different_year_still_fails(fixture_db, monkeypatch):
+    """A residual entry for a different financial_year must not match -
+    the exception never silently widens to cover a different year."""
+    _no_evidence(monkeypatch)
+    conn = sqlite3.connect(str(fixture_db["path"]))
+    spec = {"label": "federal_actuals_2024_25", "mode": "actuals", "level": "federal", "jurisdiction": None}
+    result = audit.AuditResult(path_label=spec["label"], requested_mode="actuals", requested_level="federal", requested_jurisdiction=None, requested_year="2024-25")
+    tree = _node(
+        fixture_db["federal_parent_fact"], "Defence", 100_000_000,
+        children=[_node(fixture_db["over_100_child_fact"], "Capability", 150_000_000)],
+    )
+    audit._walk(
+        "http://unused", conn, tree, spec=spec, parent_fact=None, parent_amount=None,
+        parent_edge_kind="additive", result=result, depth=0, max_depth=6,
+        residuals=[_matching_residual_entry(financial_year="2023-24")],
+    )
+    conn.close()
+    assert len(result.additive_reconciliation_failures) == 1
+    assert result.accepted_source_rounding_warnings == []
+
+
+def test_additive_over_100_percent_exceeding_declared_variance_still_fails(fixture_db, monkeypatch):
+    """A residual entry whose identity matches exactly but whose declared
+    expected_max_variance_pct is smaller than the live variance must not
+    match - the exception is scoped to the exact variance it was
+    verified against, not a blank cheque for a materially larger one."""
+    _no_evidence(monkeypatch)
+    conn = sqlite3.connect(str(fixture_db["path"]))
+    spec = {"label": "federal_actuals_2024_25", "mode": "actuals", "level": "federal", "jurisdiction": None}
+    result = audit.AuditResult(path_label=spec["label"], requested_mode="actuals", requested_level="federal", requested_jurisdiction=None, requested_year="2024-25")
+    tree = _node(
+        fixture_db["federal_parent_fact"], "Defence", 100_000_000,
+        children=[_node(fixture_db["over_100_child_fact"], "Capability", 150_000_000)],
+    )
+    audit._walk(
+        "http://unused", conn, tree, spec=spec, parent_fact=None, parent_amount=None,
+        parent_edge_kind="additive", result=result, depth=0, max_depth=6,
+        residuals=[_matching_residual_entry(expected_max_variance_pct=0.01, actual_verified_variance_pct=0.01)],
+    )
+    conn.close()
+    assert len(result.additive_reconciliation_failures) == 1
+    assert result.accepted_source_rounding_warnings == []
+
+
 def test_non_additive_measure_type_as_additive_child_flags_edge_kind_failure(fixture_db, monkeypatch):
     _no_evidence(monkeypatch)
     conn = sqlite3.connect(str(fixture_db["path"]))

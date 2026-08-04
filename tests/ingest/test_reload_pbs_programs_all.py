@@ -93,12 +93,20 @@ def test_multi_slash_label_classified_on_final_displayed_segment_not_first_split
     user actually sees once drilled down (the bare word "workforce", via
     display_name()'s rsplit-on-last-" / ") is a lowercase fragment that
     should be rejected - and this exact node was reachable via a live
-    PBS -> Statement 6 crosswalk edge."""
+    PBS -> Statement 6 crosswalk edge.
+
+    Since the database-hygiene milestone's Task 2, "Key cost category" is
+    special-cased to keep its last TWO segments together when classifying
+    (see reload_pbs_programs_all._label_for_classification), so this now
+    hits the more specific, corpus-verified
+    key_cost_category_not_in_verified_whitelist rejection rather than the
+    coincidental starts_lowercase one - a real improvement, not just a
+    different label for the same rejection."""
     decisions = [_decision("Defence / Key cost category / workforce")]
     result, counts = _apply_label_quality_gate(decisions)
     assert result[0].publishable is False
     assert result[0].quarantine_reason is not None
-    assert "narrative_fragment" in result[0].quarantine_reason
+    assert "key_cost_category_not_in_verified_whitelist" in result[0].quarantine_reason
 
     decisions2 = [
         _decision(

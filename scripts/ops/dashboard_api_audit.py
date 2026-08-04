@@ -15,8 +15,10 @@ source_key/government_level/jurisdiction/measure_type at all) to check:
   evaluated as if it were part of an additive decomposition (percent-of-
   parent, "missing depth" flags, etc. do not apply to it);
 - additive reconciliation: an additive child must not exceed 100% of its
-  parent's amount unless an explicit, tested reconciliation rule allows it
-  (none currently declared - every case is a hard failure);
+  parent's amount unless it exactly matches a declarative, evidence-backed
+  entry in config/audit/accepted_reconciliation_residuals.yaml (source_key
+  + node path + financial_year + measure_type + estimate_status, within
+  its own declared variance) - anything else is a hard failure;
 - cross-year: an additive (same_group) child must not silently carry a
   different financial year than its parent, and in particular must never
   be a *later* year than an earlier-year parent (a real bug found in this
@@ -47,6 +49,9 @@ STAMP = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 from pbs_label_classifier import classify_label  # noqa: E402
+
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "ops"))
+from accepted_residuals import load_accepted_residuals, match_residual  # noqa: E402
 
 # Representative test cases for the PBS -> Statement 6 crosswalk
 # (config/breakdowns/crosswalks/pbs_programs_all_under_s6.yaml), one per
@@ -121,6 +126,7 @@ class AuditResult:
     jurisdiction_failures: list[dict[str, Any]] = field(default_factory=list)
     edge_kind_failures: list[dict[str, Any]] = field(default_factory=list)
     additive_reconciliation_failures: list[dict[str, Any]] = field(default_factory=list)
+    accepted_source_rounding_warnings: list[dict[str, Any]] = field(default_factory=list)
     cross_year_failures: list[dict[str, Any]] = field(default_factory=list)
     label_quality_failures: list[dict[str, Any]] = field(default_factory=list)
     transport_errors: list[str] = field(default_factory=list)
@@ -140,10 +146,12 @@ def _fact_row(conn: sqlite3.Connection, fact_id: int) -> dict[str, Any] | None:
     row = conn.execute(
         """
         SELECT f.id, f.financial_year, f.estimate_status, f.measure_type, m.compatibility_group,
-               d.source_key, d.government_level, d.jurisdiction
+               d.source_key, d.government_level, d.jurisdiction, n.name AS node_name
         FROM facts f
         JOIN source_documents d ON d.id = f.source_document_id
         JOIN measure_definitions m ON m.measure_type = f.measure_type
+        JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+        JOIN nodes n ON n.id = fn.node_id
         WHERE f.id = ?
         """,
         (fact_id,),
@@ -159,6 +167,7 @@ def _fact_row(conn: sqlite3.Connection, fact_id: int) -> dict[str, Any] | None:
         "source_key": row[5],
         "government_level": row[6],
         "jurisdiction": row[7],
+        "node_name": row[8],
     }
 
 
@@ -174,6 +183,7 @@ def _walk(
     result: AuditResult,
     depth: int,
     max_depth: int,
+    residuals: list | None = None,
 ) -> None:
     if depth > max_depth:
         return
@@ -225,15 +235,37 @@ def _walk(
                     "child_compatibility_group": fact_row["compatibility_group"],
                 }
             )
-        # Invariant 5: additive child must not exceed 100% of parent - no
-        # reconciliation-rule exception is currently declared/tested.
+        # Invariant 5: additive child must not exceed 100% of parent unless
+        # it exactly matches a declarative, evidence-backed entry in
+        # config/audit/accepted_reconciliation_residuals.yaml - a changed
+        # year, source, label, amount, or materially larger variance never
+        # matches (see scripts/ops/accepted_residuals.py), so this can
+        # only narrow what is accepted, never silently widen it.
         if pct_of_parent is not None and pct_of_parent > 1.0 + 1e-9:
-            result.additive_reconciliation_failures.append(
-                {
-                    "path": spec["label"], "fact_id": fact_id, "name": name[:160],
-                    "percent_of_parent": pct_of_parent, "parent_amount": parent_amount, "child_amount": value,
-                }
+            variance_pct = pct_of_parent - 1.0
+            matched = (
+                match_residual(
+                    residuals or [],
+                    source_key=fact_row["source_key"],
+                    node_path=fact_row["node_name"],
+                    financial_year=fact_row["financial_year"],
+                    measure_type=fact_row["measure_type"],
+                    estimate_status=fact_row["estimate_status"],
+                    variance_pct=variance_pct,
+                )
+                if residuals
+                else None
             )
+            entry_dict = {
+                "path": spec["label"], "fact_id": fact_id, "name": name[:160],
+                "percent_of_parent": pct_of_parent, "parent_amount": parent_amount, "child_amount": value,
+            }
+            if matched:
+                entry_dict["accepted_reason"] = matched.reason
+                entry_dict["source_locator"] = matched.source_locator
+                result.accepted_source_rounding_warnings.append(entry_dict)
+            else:
+                result.additive_reconciliation_failures.append(entry_dict)
         # Invariant 6 (partial - full explicit fallback metadata is Task 7):
         # an additive child must not silently carry a different year than
         # its parent, and must never be a *later* year than an earlier
@@ -292,7 +324,7 @@ def _walk(
             _walk(
                 base_url, conn, child, spec=spec, parent_fact=fact_row or parent_fact,
                 parent_amount=value, parent_edge_kind=edge_kind, result=result,
-                depth=depth + 1, max_depth=max_depth,
+                depth=depth + 1, max_depth=max_depth, residuals=residuals,
             )
 
 
@@ -305,11 +337,19 @@ def _fy_start(fy: str | None) -> int:
         return -1
 
 
-def audit_path(base_url: str, spec: dict[str, Any], max_depth: int, db_path: Path = DB_PATH) -> AuditResult:
+def audit_path(
+    base_url: str,
+    spec: dict[str, Any],
+    max_depth: int,
+    db_path: Path = DB_PATH,
+    residuals: list | None = None,
+) -> AuditResult:
     result = AuditResult(
         path_label=spec["label"], requested_mode=spec["mode"], requested_level=spec["level"],
         requested_jurisdiction=spec.get("jurisdiction"), requested_year=spec.get("year"),
     )
+    if residuals is None:
+        residuals = load_accepted_residuals()
     conn = sqlite3.connect(str(db_path))
     try:
         levels = _get(base_url, "/v2/dashboard/levels", mode=spec["mode"])
@@ -341,6 +381,7 @@ def audit_path(base_url: str, spec: dict[str, Any], max_depth: int, db_path: Pat
             _walk(
                 base_url, conn, root, spec=spec, parent_fact=None, parent_amount=None,
                 parent_edge_kind="additive", result=result, depth=0, max_depth=max_depth,
+                residuals=residuals,
             )
     except Exception as exc:  # noqa: BLE001
         result.transport_errors.append(str(exc))
@@ -468,8 +509,10 @@ def main() -> int:
     parser.add_argument("--skip-traversal", action="store_true", help="only run the PBS->S6 crosswalk verification")
     args = parser.parse_args()
 
+    residuals = load_accepted_residuals()
     results = [] if args.skip_traversal else [
-        audit_path(args.base_url, spec, args.max_depth, args.db) for spec in REQUIRED_PATHS
+        audit_path(args.base_url, spec, args.max_depth, args.db, residuals=residuals)
+        for spec in REQUIRED_PATHS
     ]
     crosswalk_results = verify_pbs_s6_crosswalk(args.base_url, args.db)
 
@@ -477,11 +520,13 @@ def main() -> int:
     out_md = REPO_ROOT / f"ops/reports/dashboard-api-audit-{STAMP}.md"
 
     total_hard_failures = sum(r.hard_failure_count() for r in results)
+    total_accepted_warnings = sum(len(r.accepted_source_rounding_warnings) for r in results)
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "base_url": args.base_url,
         "total_hard_failures": total_hard_failures,
+        "total_accepted_source_rounding_warnings": total_accepted_warnings,
         "results": [
             {
                 "path_label": r.path_label,
@@ -493,6 +538,7 @@ def main() -> int:
                 "citation_checks": r.citation_checks,
                 "hard_failure_count": r.hard_failure_count(),
                 **{b: getattr(r, b) for b in FAILURE_BUCKETS},
+                "accepted_source_rounding_warnings": r.accepted_source_rounding_warnings,
                 "flagged_leaves_count": len(r.flagged_leaves),
                 "flagged_leaves_sample": r.flagged_leaves[:10],
                 "errors": r.errors,
@@ -507,6 +553,7 @@ def main() -> int:
         fh.write(f"# Dashboard API traversal audit — {STAMP}\n\n")
         fh.write(f"Base URL: `{args.base_url}` (real backend against `data/facts.db`)\n\n")
         fh.write(f"**Total hard failures across all paths: {total_hard_failures}**\n\n")
+        fh.write(f"**Total accepted source-rounding warnings: {total_accepted_warnings}**\n\n")
         if results:
             fh.write(
                 "| path | visited_nodes | scope | jurisdiction | edge_kind | additive>100% | cross_year | label_quality | citation | transport |\n"
@@ -519,7 +566,7 @@ def main() -> int:
                     f"{len(r.additive_reconciliation_failures)} | {len(r.cross_year_failures)} | "
                     f"{len(r.label_quality_failures)} | {len(r.citation_failures)} | {len(r.transport_errors)} |\n"
                 )
-            for bucket in FAILURE_BUCKETS:
+            for bucket in (*FAILURE_BUCKETS, "accepted_source_rounding_warnings"):
                 fh.write(f"\n## {bucket}\n\n")
                 any_rows = False
                 for r in results:
@@ -546,7 +593,8 @@ def main() -> int:
             fh.write(f"```json\n{json.dumps(r, indent=2)}\n```\n\n")
 
     print(json.dumps({"json": str(out_json), "md": str(out_md), "paths": len(results),
-                       "crosswalk_cases": len(crosswalk_results), "total_hard_failures": total_hard_failures}))
+                       "crosswalk_cases": len(crosswalk_results), "total_hard_failures": total_hard_failures,
+                       "total_accepted_source_rounding_warnings": total_accepted_warnings}))
     return 1 if total_hard_failures > 0 else 0
 
 

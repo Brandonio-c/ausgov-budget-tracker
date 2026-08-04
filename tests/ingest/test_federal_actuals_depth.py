@@ -32,6 +32,37 @@ def test_defence_clean_program_total_label() -> None:
     assert _clean_defence_program_label("Employees") is None
 
 
+def test_defence_key_cost_category_rejects_generic_single_word_matches() -> None:
+    """Regression for a real bug found in the database-hygiene milestone
+    (Task 2): "Workforce", "Operating", and "Operations" used to be bare
+    substring matches here, bucketing rows from completely unrelated
+    tables (a workforce headcount table, a facilities/property table, a
+    Statement of Cash Flows, a Program 1.1 resourcing table) under a
+    misleading "Key cost category / <word>" label - confirmed for every
+    one of the 26 real facts those three keywords ever matched (none came
+    from the genuine Key Cost Category table), and confirmed further by
+    the resulting "OPERATING" series jumping ~24x between adjacent
+    forward-estimate years, which no real cost category does. Only the
+    two multi-word, specific Table 4b category names are safe to bucket
+    via a bare substring match."""
+    from extractors.pbs_programs_all import _clean_defence_program_label
+
+    assert _clean_defence_program_label("(Workforce Requirement) ADF Permanent Force 16,193 Navy") is None
+    assert _clean_defence_program_label("18 -59,327 Expenditure (Operating and Capital) -76,682") is None
+    assert _clean_defence_program_label(
+        "Table 46: Budgeted Departmental Statement of Cash Flows OPERATING ACTIVITIES Cash received Appropriations"
+    ) is None
+    assert _clean_defence_program_label(
+        "30 June 2026 Facilities to Support LAND 3025 Phase 2 Deployable Special Operations Engineer Regiment"
+    ) is None
+
+    # The two genuine, specific Table 4b category names must still pass.
+    acquisition = _clean_defence_program_label("3 Capability Acquisition Program 17,702.7 18,")
+    assert acquisition == "Key cost category / Capability Acquisition Program"
+    sustainment = _clean_defence_program_label("4 Capability Sustainment Program 17,230.5 18,")
+    assert sustainment == "Key cost category / Capability Sustainment Program"
+
+
 def test_defence_extract_joins_label_and_numeric_line() -> None:
     from extractors import pbs_programs_all as mod
 

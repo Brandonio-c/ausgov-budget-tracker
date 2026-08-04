@@ -475,9 +475,21 @@ def _clean_defence_program_label(label: str) -> str | None:
         prog = re.sub(r"\s+", " ", m.group(1)).strip(" -")
         if len(prog) >= 8:
             return f"{prog} Total funded expenditure"
+    # Only the two multi-word, Defence-specific Table 4b category names are
+    # safe to bucket via a bare substring match - "Workforce", "Operating"
+    # and "Operations" used to be in this list too, but a corpus-wide check
+    # (database-hygiene milestone, Task 2) found every single one of the 26
+    # facts those three keywords ever matched came from a completely
+    # unrelated table (a workforce headcount table, a facilities/property
+    # table, a Statement of Cash Flows, or a Program 1.1 resourcing table),
+    # never the genuine Key Cost Category table - confirmed by tracing each
+    # fact's own locator back to its source page and by the "Operating"
+    # series jumping ~24x between adjacent forward-estimate years, which no
+    # real cost category does. Generic single words match too much of an
+    # unrelated document to be trusted; the two category names kept here
+    # are specific enough that a false match has never been observed.
     m = re.search(
-        r"\b(Workforce|Operations|Capability Acquisition Program|"
-        r"Capability Sustainment Program|Operating)\b",
+        r"\b(Capability Acquisition Program|Capability Sustainment Program)\b",
         label,
         re.I,
     )

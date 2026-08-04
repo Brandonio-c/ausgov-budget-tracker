@@ -1,0 +1,39 @@
+# Declarative registry of additive-reconciliation residuals that have
+# been individually investigated and confirmed as genuine source-document
+# rounding characteristics - never a parsing, scaling, duplicate-child,
+# mixed-year, or mixed-estimate-status defect. Matched by
+# scripts/ops/accepted_residuals.py; see scripts/ops/dashboard_api_audit.py
+# for how a match downgrades a candidate hard failure to an
+# accepted_source_rounding_warning instead.
+#
+# Matching is exact on every field below (source_key, node_path,
+# financial_year, measure_type, estimate_status) AND the live variance
+# must not exceed expected_max_variance_pct - a changed year, source,
+# label, amount, or a materially larger variance always falls through to
+# a hard failure. node_path must be the fact's own full node name (the
+# same value stored in nodes.name), not a mutable database ID, so the
+# entry keeps matching across a reload that reuses the same node.
+#
+# History: the Defence "Key cost category / OPERATING" 100.52%-of-parent
+# case (fact_id 337001 at the time of investigation) was carried into the
+# database-hygiene milestone (Task 2) as an assumed source-rounding
+# residual. Deeper investigation (required by this milestone's own
+# verification checklist - "confirm... rather than... a parsing defect")
+# found it was NOT rounding: all 26 facts under the four generic-word
+# "Key cost category" labels (Workforce, Operating, OPERATING, Operations)
+# traced back to four completely unrelated tables/pages in the Defence
+# PBS PDF (a workforce headcount table, a facilities/property table, a
+# Statement of Cash Flows, and a Program 1.1 resourcing table), never the
+# genuine Key Cost Category table - confirmed further by the "OPERATING"
+# series jumping ~24x between adjacent forward-estimate years, which no
+# real cost category does. This was a real extraction defect and was
+# fixed at the root (scripts/ingest/extractors/pbs_programs_all.py's
+# _clean_defence_program_label(), scripts/ingest/pbs_label_classifier.py's
+# KEY_COST_CATEGORY whitelist, and scripts/ingest/
+# reload_pbs_programs_all.py's Key-cost-category-aware label extraction),
+# not accepted as a residual. See
+# ops/reports/database-hygiene-and-ci-hardening-final-*.md for the full
+# evidence trail. This registry is therefore empty by default - it is
+# general-purpose, tested infrastructure for a genuine future rounding
+# case, not a home for that one.
+residuals: []

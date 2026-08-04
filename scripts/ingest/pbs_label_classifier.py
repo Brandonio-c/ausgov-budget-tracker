@@ -105,7 +105,16 @@ BARE_ACT_CITATION = re.compile(
 OUTCOME_NUM = re.compile(r"(?:^|\s)Outcome\s+\d{1,2}\s*[:\-–—]", re.I)
 PROGRAM_NUM = re.compile(r"(?:^|\s)Program\s+\d{1,2}(?:\.\d{1,2})?\s*[:\-–—]", re.I)
 COMPONENT_NUM = re.compile(r"\d{1,2}\.\d{1,2}\.\d{1,2}\s*[\-–—]\s*Component", re.I)
-KEY_COST_CATEGORY = re.compile(r"^Key cost category\s*/", re.I)
+# Only the two specific, verified-safe Defence Table 4b category names -
+# matches scripts/ingest/extractors/pbs_programs_all.py's
+# _clean_defence_program_label() after the database-hygiene milestone
+# (Task 2) found every one of 26 real facts under the generic "Workforce"/
+# "Operating"/"OPERATING"/"Operations" bare-keyword matches came from a
+# completely unrelated table (never the genuine Key Cost Category table).
+KEY_COST_CATEGORY = re.compile(
+    r"^Key cost category\s*/\s*(Capability Acquisition Program|Capability Sustainment Program)\s*$",
+    re.I,
+)
 
 MAX_JUSTIFIED_LENGTH = 180
 
@@ -211,6 +220,15 @@ def classify_label(raw_label: str) -> Classification:
         return Classification("component", True, None, signals)
     if PROGRAM_NUM.search(label) or KEY_COST_CATEGORY.match(label):
         return Classification("program", True, None, signals)
+    # A "Key cost category / X" label whose X is not one of the two
+    # whitelisted names must be rejected explicitly here - falling through
+    # to the generic default-accept rule below would silently re-accept it
+    # (a bare capitalised word like "Workforce" or "Operating" passes that
+    # rule easily), which is exactly the bug this check exists to close.
+    if re.match(r"^Key cost category\s*/", label, re.I):
+        return Classification(
+            "unknown", False, "key_cost_category_not_in_verified_whitelist", signals
+        )
 
     # 4. Narrative fragments: lowercase-led continuations, or a bare
     #    legislative Act citation with nothing else attached. Checked ahead

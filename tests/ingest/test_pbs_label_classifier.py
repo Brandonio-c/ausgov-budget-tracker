@@ -155,7 +155,37 @@ def test_program_outcome_component_numbering_accepted():
         ).classification
         == "component"
     )
-    assert classify_label("Key cost category / Operations").classification == "program"
+    assert classify_label("Key cost category / Capability Acquisition Program").classification == "program"
+
+
+def test_key_cost_category_only_accepts_the_two_verified_safe_names():
+    """Regression for a real bug found in the database-hygiene milestone
+    (Task 2): "Key cost category / Operations" (and Workforce/Operating/
+    OPERATING) used to be accepted here, but a corpus-wide check found
+    every one of the 26 real facts under those four generic-word labels
+    came from a completely unrelated table (a workforce headcount table,
+    a facilities/property table, a Statement of Cash Flows, a Program 1.1
+    resourcing table) - never the genuine Key Cost Category table. Only
+    the two multi-word, specific Table 4b category names are verified
+    safe; anything else with this prefix must be explicitly rejected, not
+    silently re-accepted via the generic default clean-shape rule."""
+    for bad in (
+        "Key cost category / Operations",
+        "Key cost category / Workforce",
+        "Key cost category / Operating",
+        "Key cost category / OPERATING",
+    ):
+        r = classify_label(bad)
+        assert r.publishable is False, bad
+        assert r.rejection_reason == "key_cost_category_not_in_verified_whitelist"
+
+    for good in (
+        "Key cost category / Capability Acquisition Program",
+        "Key cost category / Capability Sustainment Program",
+    ):
+        r = classify_label(good)
+        assert r.classification == "program"
+        assert r.publishable is True
 
 
 def test_component_numbering_beats_accounting_heading_false_positive():

@@ -54,10 +54,22 @@ def _label_for_classification(node_name: str) -> str:
     rejected once classified on the same final segment that gets
     displayed and, for the "workforce"/"operating" case, attached directly
     to a live PBS -> Statement 6 crosswalk edge (found via the Task 9 SQL
-    integrity check for exactly this)."""
-    if " / " in node_name:
-        return node_name.rsplit(" / ", 1)[-1]
-    return node_name
+    integrity check for exactly this).
+
+    Special case: "Key cost category" (the Defence Table 4b bucket, see
+    scripts/ingest/extractors/pbs_programs_all.py's
+    _clean_defence_program_label()) is not itself a displayed leaf name -
+    the segment after it is - so the last TWO segments are kept together
+    ("Key cost category / X") when that is the second-to-last segment.
+    Otherwise "X" alone (e.g. a bare "Workforce") loses the very context
+    pbs_label_classifier.classify_label() needs to reject it; see the
+    database-hygiene milestone's Task 2 for the real bug this closes."""
+    if " / " not in node_name:
+        return node_name
+    parts = node_name.split(" / ")
+    if len(parts) >= 2 and parts[-2].strip().lower() == "key cost category":
+        return " / ".join(parts[-2:])
+    return parts[-1]
 
 
 def _apply_label_quality_gate(
