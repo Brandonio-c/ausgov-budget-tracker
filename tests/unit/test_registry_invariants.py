@@ -48,20 +48,19 @@ def test_registry_source_ids_unique(registry_sources):
     assert not dupes, f"duplicate registry source_ids: {dupes}"
 
 
-def test_ingestion_audit_duplicate_alias_targets_exist(registry_sources):
+def test_ingestion_audit_duplicate_alias_targets_exist(registry_sources, facts_conn):
     """Every DUPLICATE_ALIASES canonical= target in the audit script must
     itself be a real registry source_id or a real facts.db source_key -
     otherwise the alias points nowhere and the audit's dedup accounting
-    is silently wrong."""
+    is silently wrong. Requires the real facts.db (via facts_conn) since a
+    target may legitimately be a facts.db-only source_key with no
+    registry entry - without it, every such target would be misreported
+    as dangling."""
     sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
     import ingestion_coverage_audit as audit
 
     registry_ids = {s.id for s in registry_sources}
-    conn = sqlite3.connect(str(FACTS_DB)) if FACTS_DB.exists() else None
-    source_keys = set()
-    if conn is not None:
-        source_keys = {r[0] for r in conn.execute("SELECT DISTINCT source_key FROM source_documents")}
-        conn.close()
+    source_keys = {r[0] for r in facts_conn.execute("SELECT DISTINCT source_key FROM source_documents")}
     dangling = {
         alias: target
         for alias, target in audit.DUPLICATE_ALIASES.items()
@@ -89,16 +88,13 @@ def test_canonical_datasets_fact_source_keys_reference_real_source_documents(fac
             assert keys, f"{ds['canonical_dataset_id']} claims {status} but declares no fact_source_keys"
 
 
-def test_status_buckets_sum_to_registry_total(registry_sources):
+def test_status_buckets_sum_to_registry_total(registry_sources, facts_conn):
     sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
     import ingestion_coverage_audit as audit
 
     mapping_ids = audit._mapping_ids()
     code_refs = audit._ingest_code_refs()
-    conn = sqlite3.connect(str(FACTS_DB)) if FACTS_DB.exists() else None
-    facts = audit._facts_by_source(conn)
-    if conn:
-        conn.close()
+    facts = audit._facts_by_source(facts_conn)
     canonical_datasets = audit._load_canonical_datasets()
 
     statuses = []
@@ -168,16 +164,13 @@ def test_latest_json_referenced_files_exist_on_disk():
     assert not missing, f"latest.json references missing files: {missing[:10]} (+{max(0, len(missing) - 10)} more)"
 
 
-def test_every_fully_ingested_source_has_nonzero_facts(registry_sources):
+def test_every_fully_ingested_source_has_nonzero_facts(registry_sources, facts_conn):
     sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
     import ingestion_coverage_audit as audit
 
     mapping_ids = audit._mapping_ids()
     code_refs = audit._ingest_code_refs()
-    conn = sqlite3.connect(str(FACTS_DB)) if FACTS_DB.exists() else None
-    facts = audit._facts_by_source(conn)
-    if conn:
-        conn.close()
+    facts = audit._facts_by_source(facts_conn)
     canonical_datasets = audit._load_canonical_datasets()
 
     violations = []
