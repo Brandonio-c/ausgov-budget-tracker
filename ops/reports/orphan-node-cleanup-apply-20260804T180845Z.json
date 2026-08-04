@@ -1,0 +1,2242 @@
+{
+  "mode": "apply",
+  "total": 278,
+  "by_source_key": {
+    "nsw_tcorp_bonds_on_issue": 64,
+    "nsw_tcorp_weekly_bonds": 36,
+    "nt_nttc_borrowing_strategy": 17,
+    "qld_qtc_aud_bond_outstandings": 47,
+    "qld_qtc_benchmark_bonds": 14,
+    "qld_qtc_weekly_outstandings_2026_07_17": 19,
+    "sa_safa_weekly_funding_update": 18,
+    "tas_tascorp_annual_report_2024_25": 8,
+    "vic_tcv_amount_on_issue": 32,
+    "wa_watc_funding_sources": 23
+  },
+  "nodes": [
+    {
+      "id": 217041,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217042,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments",
+      "name": "Debt securities / Other funding instruments",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217043,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 May 2027 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 May 2027 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217044,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 15 Nov 2028 3.00%",
+      "name": "Debt securities / Other funding instruments / 15 Nov 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217045,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Mar 2028 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217046,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 01 May 2030 6.00%",
+      "name": "Debt securities / Other funding instruments / 01 May 2030 6.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217047,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Apr 2029 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Apr 2029 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217048,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Nov 2030 1.25%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2030 1.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217049,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Feb 2030 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2030 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217050,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Mar 2034 3.50%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2034 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217051,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Mar 2031 2.00%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2031 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217052,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Nov 2035 2.50%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2035 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217053,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Feb 2032 1.50%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2032 1.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217054,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Nov 2040 2.25%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2040 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217055,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 22 Nov 2032 2.50%",
+      "name": "Debt securities / Other funding instruments / 22 Nov 2032 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217056,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 07 May 2041 2.25%",
+      "name": "Debt securities / Other funding instruments / 07 May 2041 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217057,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 08 Mar 2033 2.00%",
+      "name": "Debt securities / Other funding instruments / 08 Mar 2033 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217058,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 May 2042 2.25%",
+      "name": "Debt securities / Other funding instruments / 20 May 2042 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217059,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Mar 2034 1.75%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2034 1.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217060,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 24 Aug 2050 2.45%",
+      "name": "Debt securities / Other funding instruments / 24 Aug 2050 2.45%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217061,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 17 Oct 2034 5.25%",
+      "name": "Debt securities / Other funding instruments / 17 Oct 2034 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217062,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Other funding instruments / 20 Feb 2035 4.75%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217063,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Sep 2035 4.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Sep 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217064,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Feb 2036 4.25%",
+      "name": "Debt securities / Floating-rate notes / 20 Feb 2036 4.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217065,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Apr 2027 55 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Apr 2027 55 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217066,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 22 Oct 2036 5.50%",
+      "name": "Debt securities / Floating-rate notes / 22 Oct 2036 5.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217067,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 26 May 2028 19 bps",
+      "name": "Debt securities / Floating-rate notes / 26 May 2028 19 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217068,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Feb 2037 4.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Feb 2037 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217069,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 12 Jun 2029 39 bps",
+      "name": "Debt securities / Floating-rate notes / 12 Jun 2029 39 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217070,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Nov 2037 3.50%",
+      "name": "Debt securities / Floating-rate notes / 20 Nov 2037 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217071,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Sep 2029 8 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Sep 2029 8 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217072,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 24 Feb 2038 5.25%",
+      "name": "Debt securities / Floating-rate notes / 24 Feb 2038 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217073,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 16 Sep 2030 14 bps",
+      "name": "Debt securities / Floating-rate notes / 16 Sep 2030 14 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217074,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 22 Feb 2039 5.25%",
+      "name": "Debt securities / Floating-rate notes / 22 Feb 2039 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217075,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 20 Aug 2031 16 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Aug 2031 16 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217076,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Floating-rate notes / 16 Sep 2033 30 bps",
+      "name": "Debt securities / Floating-rate notes / 16 Sep 2033 30 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217249,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217250,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 May 2027 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 May 2027 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217251,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 15 Nov 2028 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 15 Nov 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217252,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Mar 2028 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Mar 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217253,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 01 May 2030 6.00%",
+      "name": "Debt securities / Fixed-rate bonds / 01 May 2030 6.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217254,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Apr 2029 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Apr 2029 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217255,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2030 1.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2030 1.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217256,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Feb 2030 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2030 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217257,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Mar 2034 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Mar 2034 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217258,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Mar 2031 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Mar 2031 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217259,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2035 2.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2035 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217260,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Feb 2032 1.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2032 1.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217261,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2040 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2040 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217262,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 22 Nov 2032 2.50%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Nov 2032 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217263,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 07 May 2041 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 07 May 2041 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217264,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 08 Mar 2033 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 08 Mar 2033 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217265,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 May 2042 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 May 2042 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217266,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Mar 2034 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Mar 2034 1.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217267,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 24 Aug 2050 2.45%",
+      "name": "Debt securities / Fixed-rate bonds / 24 Aug 2050 2.45%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217268,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 17 Oct 2034 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 17 Oct 2034 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217269,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Feb 2035 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217280,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Sep 2035 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Sep 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217281,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Feb 2036 4.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2036 4.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217282,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 22 Oct 2036 5.50%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Oct 2036 5.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217283,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Feb 2037 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2037 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217284,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2037 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2037 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217285,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 24 Feb 2038 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 24 Feb 2038 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217286,
+      "canonical_key": "nsw_tcorp_bonds_on_issue|node|Debt securities / Fixed-rate bonds / 22 Feb 2039 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Feb 2039 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_bonds_on_issue"
+    },
+    {
+      "id": 217077,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217078,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments",
+      "name": "Debt securities / Other funding instruments",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217079,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 May 2027 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 May 2027 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217080,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 15 Nov 2028 3.00%",
+      "name": "Debt securities / Other funding instruments / 15 Nov 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217081,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Mar 2028 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2028 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217082,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 01 May 2030 6.00%",
+      "name": "Debt securities / Other funding instruments / 01 May 2030 6.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217083,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Apr 2029 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Apr 2029 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217084,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Nov 2030 1.25%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2030 1.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217085,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Feb 2030 3.00%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2030 3.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217086,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Mar 2034 3.50%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2034 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217087,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Mar 2031 2.00%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2031 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217088,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Nov 2035 2.50%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2035 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217089,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Feb 2032 1.50%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2032 1.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217090,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Nov 2040 2.25%",
+      "name": "Debt securities / Other funding instruments / 20 Nov 2040 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217091,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 22 Nov 2032 2.50%",
+      "name": "Debt securities / Other funding instruments / 22 Nov 2032 2.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217092,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 07 May 2041 2.25%",
+      "name": "Debt securities / Other funding instruments / 07 May 2041 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217093,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 08 Mar 2033 2.00%",
+      "name": "Debt securities / Other funding instruments / 08 Mar 2033 2.00%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217094,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 May 2042 2.25%",
+      "name": "Debt securities / Other funding instruments / 20 May 2042 2.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217095,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Mar 2034 1.75%",
+      "name": "Debt securities / Other funding instruments / 20 Mar 2034 1.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217096,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 24 Aug 2050 2.45%",
+      "name": "Debt securities / Other funding instruments / 24 Aug 2050 2.45%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217097,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 17 Oct 2034 5.25%",
+      "name": "Debt securities / Other funding instruments / 17 Oct 2034 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217098,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Other funding instruments / 20 Feb 2035 4.75%",
+      "name": "Debt securities / Other funding instruments / 20 Feb 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217099,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Sep 2035 4.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Sep 2035 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217100,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Feb 2036 4.25%",
+      "name": "Debt securities / Floating-rate notes / 20 Feb 2036 4.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217101,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Apr 2027 55 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Apr 2027 55 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217102,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 22 Oct 2036 5.50%",
+      "name": "Debt securities / Floating-rate notes / 22 Oct 2036 5.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217103,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 26 May 2028 19 bps",
+      "name": "Debt securities / Floating-rate notes / 26 May 2028 19 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217104,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Feb 2037 4.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Feb 2037 4.75%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217105,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 12 Jun 2029 39 bps",
+      "name": "Debt securities / Floating-rate notes / 12 Jun 2029 39 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217106,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Nov 2037 3.50%",
+      "name": "Debt securities / Floating-rate notes / 20 Nov 2037 3.50%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217107,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Sep 2029 8 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Sep 2029 8 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217108,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 24 Feb 2038 5.25%",
+      "name": "Debt securities / Floating-rate notes / 24 Feb 2038 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217109,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 16 Sep 2030 14 bps",
+      "name": "Debt securities / Floating-rate notes / 16 Sep 2030 14 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217110,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 22 Feb 2039 5.25%",
+      "name": "Debt securities / Floating-rate notes / 22 Feb 2039 5.25%",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217111,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 20 Aug 2031 16 bps",
+      "name": "Debt securities / Floating-rate notes / 20 Aug 2031 16 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217112,
+      "canonical_key": "nsw_tcorp_weekly_bonds|node|Debt securities / Floating-rate notes / 16 Sep 2033 30 bps",
+      "name": "Debt securities / Floating-rate notes / 16 Sep 2033 30 bps",
+      "jurisdiction": "NSW",
+      "government_level": "state",
+      "source_key": "nsw_tcorp_weekly_bonds"
+    },
+    {
+      "id": 217206,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217207,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2027 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2027 2.75%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217208,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2028 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2028 3.50%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217209,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 May 2029 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 May 2029 2.00%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217210,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 May 2030 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 May 2030 3.50%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217211,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2031 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2031 2.00%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217212,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 May 2032 2.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 May 2032 2.50%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217213,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2033 3.75%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2033 3.75%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217214,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Mar 2034 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Mar 2034 5.25%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217215,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Mar 2035 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Mar 2035 4.50%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217216,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Mar 2036 5.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Mar 2036 5.50%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217217,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2037 5.75%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2037 5.75%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217218,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 May 2038 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 May 2038 5.25%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217219,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Apr 2039 6.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Apr 2039 6.00%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217220,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Mar 2041 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Mar 2041 2.75%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217221,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Nov 2042 4.10%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Nov 2042 4.10%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217222,
+      "canonical_key": "nt_nttc_borrowing_strategy|node|Debt securities / Fixed-rate bonds / 21 Mar 2051 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Mar 2051 3.00%",
+      "jurisdiction": "NT",
+      "government_level": "territory",
+      "source_key": "nt_nttc_borrowing_strategy"
+    },
+    {
+      "id": 217113,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Indexed bonds",
+      "name": "Debt securities / Indexed bonds",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217114,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217115,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217116,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Jul 2026 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2026 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217117,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Aug 2027 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Aug 2027 2.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217118,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Jul 2028 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2028 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217119,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Aug 2029 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Aug 2029 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217120,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Aug 2030 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Aug 2030 3.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217121,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Aug 2032 1.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Aug 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217122,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 22 Aug 2033 2.00%",
+      "name": "Debt securities / Floating-rate notes / 22 Aug 2033 2.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217123,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 20 Jul 2034 1.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Jul 2034 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217124,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 21 Jul 2036 5.25%",
+      "name": "Debt securities / Floating-rate notes / 21 Jul 2036 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217125,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 21 Jul 2037 5.00%",
+      "name": "Debt securities / Floating-rate notes / 21 Jul 2037 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217126,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 13 Aug 2038 5.25%",
+      "name": "Debt securities / Floating-rate notes / 13 Aug 2038 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217127,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 08 Nov 2029 3m BBSW+42",
+      "name": "Debt securities / Floating-rate notes / 08 Nov 2029 3m BBSW+42",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217128,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 10 Mar 2031 1.25%",
+      "name": "Debt securities / Fixed-rate bonds / 10 Mar 2031 1.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217129,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Indexed bonds / 02 Mar 2032 1.50%",
+      "name": "Debt securities / Indexed bonds / 02 Mar 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217130,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Indexed bonds / 09 Mar 2033 4.50%",
+      "name": "Debt securities / Indexed bonds / 09 Mar 2033 4.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217131,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Indexed bonds / 10 Mar 2036 5.00%",
+      "name": "Debt securities / Indexed bonds / 10 Mar 2036 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217223,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 14 Mar 2033 6.50%",
+      "name": "Debt securities / Fixed-rate bonds / 14 Mar 2033 6.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217224,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 16 Apr 2040 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 16 Apr 2040 2.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217225,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Nov 2041 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2041 2.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217226,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Feb 2047 4.20%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Feb 2047 4.20%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217227,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 28 Oct 2050 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 28 Oct 2050 2.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217228,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Aug 2031 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Aug 2031 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217229,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 22 Aug 2033 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Aug 2033 2.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217230,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Jul 2034 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Jul 2034 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217231,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 22 Aug 2035 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Aug 2035 4.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217232,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Jul 2036 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2036 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217233,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 15 Apr 2027 3m BBSW+9",
+      "name": "Debt securities / Floating-rate notes / 15 Apr 2027 3m BBSW+9",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217234,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Jul 2037 5.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2037 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217235,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 25 Feb 2028 3m BBSW+2.5",
+      "name": "Debt securities / Floating-rate notes / 25 Feb 2028 3m BBSW+2.5",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217236,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 13 Aug 2038 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 13 Aug 2038 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217237,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 19 Sep 2028 3m BBSW+30",
+      "name": "Debt securities / Floating-rate notes / 19 Sep 2028 3m BBSW+30",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217238,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 10 May 2029 3m BBSW+40",
+      "name": "Debt securities / Floating-rate notes / 10 May 2029 3m BBSW+40",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217239,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 06 May 2030 3m BBSW+33",
+      "name": "Debt securities / Floating-rate notes / 06 May 2030 3m BBSW+33",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217240,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 20 Nov 2030 3m BBSW+36",
+      "name": "Debt securities / Floating-rate notes / 20 Nov 2030 3m BBSW+36",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217241,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 10 Nov 2031 3m BBSW+45",
+      "name": "Debt securities / Floating-rate notes / 10 Nov 2031 3m BBSW+45",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217242,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 06 Mar 2029 2.50%",
+      "name": "Debt securities / Fixed-rate bonds / 06 Mar 2029 2.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217243,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 02 Mar 2032 1.50%",
+      "name": "Debt securities / Fixed-rate bonds / 02 Mar 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217244,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 02 Feb 2034 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 02 Feb 2034 4.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217245,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 10 Mar 2036 5.00%",
+      "name": "Debt securities / Fixed-rate bonds / 10 Mar 2036 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217246,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 20 Aug 2030 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Aug 2030 2.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217247,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 21 Jul 2026 5.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2026 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217248,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Floating-rate notes / 06 Mar 2029 BBSW+45",
+      "name": "Debt securities / Floating-rate notes / 06 Mar 2029 BBSW+45",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217270,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Fixed-rate bonds / 09 Mar 2033 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 09 Mar 2033 4.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217271,
+      "canonical_key": "qld_qtc_aud_bond_outstandings|node|Debt securities / Indexed bonds / 20 Aug 2030 2.75%",
+      "name": "Debt securities / Indexed bonds / 20 Aug 2030 2.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_aud_bond_outstandings"
+    },
+    {
+      "id": 217151,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments",
+      "name": "Debt securities / Other funding instruments",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217152,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Jul 2026 3.25%",
+      "name": "Debt securities / Other funding instruments / 21 Jul 2026 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217153,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 20 Aug 2027 2.75%",
+      "name": "Debt securities / Other funding instruments / 20 Aug 2027 2.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217154,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Jul 2028 3.25%",
+      "name": "Debt securities / Other funding instruments / 21 Jul 2028 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217155,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Aug 2029 3.25%",
+      "name": "Debt securities / Other funding instruments / 21 Aug 2029 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217156,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Aug 2030 3.50%",
+      "name": "Debt securities / Other funding instruments / 21 Aug 2030 3.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217157,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Aug 2031 1.75%",
+      "name": "Debt securities / Other funding instruments / 21 Aug 2031 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217158,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 20 Aug 2032 1.50%",
+      "name": "Debt securities / Other funding instruments / 20 Aug 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217159,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 22 Aug 2033 2.00%",
+      "name": "Debt securities / Other funding instruments / 22 Aug 2033 2.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217160,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 20 Jul 2034 1.75%",
+      "name": "Debt securities / Other funding instruments / 20 Jul 2034 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217161,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 22 Aug 2035 4.50%",
+      "name": "Debt securities / Other funding instruments / 22 Aug 2035 4.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217162,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Jul 2036 5.25%",
+      "name": "Debt securities / Other funding instruments / 21 Jul 2036 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217163,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 21 Jul 2037 5.00%",
+      "name": "Debt securities / Other funding instruments / 21 Jul 2037 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217164,
+      "canonical_key": "qld_qtc_benchmark_bonds|node|Debt securities / Other funding instruments / 13 Aug 2038 5.25%",
+      "name": "Debt securities / Other funding instruments / 13 Aug 2038 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_benchmark_bonds"
+    },
+    {
+      "id": 217132,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Indexed bonds",
+      "name": "Debt securities / Indexed bonds",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217133,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217134,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217135,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 21 Jul 2026 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2026 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217136,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 20 Aug 2027 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Aug 2027 2.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217137,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 21 Jul 2028 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2028 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217138,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 21 Aug 2029 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Aug 2029 3.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217139,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 21 Aug 2030 3.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Aug 2030 3.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217140,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 20 Aug 2032 1.50%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Aug 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217141,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 22 Aug 2033 2.00%",
+      "name": "Debt securities / Floating-rate notes / 22 Aug 2033 2.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217142,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 20 Jul 2034 1.75%",
+      "name": "Debt securities / Floating-rate notes / 20 Jul 2034 1.75%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217143,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 21 Jul 2036 5.25%",
+      "name": "Debt securities / Floating-rate notes / 21 Jul 2036 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217144,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 21 Jul 2037 5.00%",
+      "name": "Debt securities / Floating-rate notes / 21 Jul 2037 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217145,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 13 Aug 2038 5.25%",
+      "name": "Debt securities / Floating-rate notes / 13 Aug 2038 5.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217146,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Floating-rate notes / 08 Nov 2029 3m BBSW+42",
+      "name": "Debt securities / Floating-rate notes / 08 Nov 2029 3m BBSW+42",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217147,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Fixed-rate bonds / 10 Mar 2031 1.25%",
+      "name": "Debt securities / Fixed-rate bonds / 10 Mar 2031 1.25%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217148,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Indexed bonds / 02 Mar 2032 1.50%",
+      "name": "Debt securities / Indexed bonds / 02 Mar 2032 1.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217149,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Indexed bonds / 09 Mar 2033 4.50%",
+      "name": "Debt securities / Indexed bonds / 09 Mar 2033 4.50%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217150,
+      "canonical_key": "qld_qtc_weekly_outstandings_2026_07_17|node|Debt securities / Indexed bonds / 10 Mar 2036 5.00%",
+      "name": "Debt securities / Indexed bonds / 10 Mar 2036 5.00%",
+      "jurisdiction": "QLD",
+      "government_level": "state",
+      "source_key": "qld_qtc_weekly_outstandings_2026_07_17"
+    },
+    {
+      "id": 217165,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217166,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217167,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 20 Jul 2026 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Jul 2026 3.00%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217168,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 20 Sep 2027 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Sep 2027 3.00%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217169,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2029 4.00%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2029 4.00%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217170,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Floating-rate notes / 22 Jun 2029 AONIA +36bps",
+      "name": "Debt securities / Floating-rate notes / 22 Jun 2029 AONIA +36bps",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217171,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Floating-rate notes / 23 Nov 2029 BBSW +42bps",
+      "name": "Debt securities / Floating-rate notes / 23 Nov 2029 BBSW +42bps",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217172,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2030 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2030 2.75%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217173,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Floating-rate notes / 25 Nov 2030 BBSW +33bps",
+      "name": "Debt securities / Floating-rate notes / 25 Nov 2030 BBSW +33bps",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217174,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 23 May 2031 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 23 May 2031 4.50%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217175,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Floating-rate notes / 24 Nov 2031 BBSW +44bps",
+      "name": "Debt securities / Floating-rate notes / 24 Nov 2031 BBSW +44bps",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217176,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2032 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2032 1.75%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217177,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2033 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2033 4.50%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217178,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2034 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2034 1.75%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217179,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2035 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2035 4.75%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217180,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 23 May 2036 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 23 May 2036 2.00%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217181,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2038 4.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2038 4.75%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217182,
+      "canonical_key": "sa_safa_weekly_funding_update|node|Debt securities / Fixed-rate bonds / 24 May 2040 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 24 May 2040 2.25%",
+      "jurisdiction": "SA",
+      "government_level": "state",
+      "source_key": "sa_safa_weekly_funding_update"
+    },
+    {
+      "id": 217272,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Short-term notes",
+      "name": "Debt securities / Short-term notes",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217273,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Other funding instruments",
+      "name": "Debt securities / Other funding instruments",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217274,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217275,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217276,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Fixed-rate bonds / Fixed-rate bonds (portfolio total)",
+      "name": "Debt securities / Fixed-rate bonds / Fixed-rate bonds (portfolio total)",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217277,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Floating-rate notes / Floating-rate notes (portfolio total)",
+      "name": "Debt securities / Floating-rate notes / Floating-rate notes (portfolio total)",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217278,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Other funding instruments / Other funding instruments (portfolio total)",
+      "name": "Debt securities / Other funding instruments / Other funding instruments (portfolio total)",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217279,
+      "canonical_key": "tas_tascorp_annual_report_2024_25|node|Debt securities / Short-term notes / Short-term notes (portfolio total)",
+      "name": "Debt securities / Short-term notes / Short-term notes (portfolio total)",
+      "jurisdiction": "TAS",
+      "government_level": "state",
+      "source_key": "tas_tascorp_annual_report_2024_25"
+    },
+    {
+      "id": 217009,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217010,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Indexed bonds",
+      "name": "Debt securities / Indexed bonds",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217011,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217012,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 17 Nov 2026 5.5",
+      "name": "Debt securities / Fixed-rate bonds / 17 Nov 2026 5.5",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217013,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 19 Nov 2027 1.25",
+      "name": "Debt securities / Fixed-rate bonds / 19 Nov 2027 1.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217014,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Oct 2028 3.0",
+      "name": "Debt securities / Fixed-rate bonds / 20 Oct 2028 3.0",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217015,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 22 Oct 2029 2.5",
+      "name": "Debt securities / Fixed-rate bonds / 22 Oct 2029 2.5",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217016,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2030 1.5",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2030 1.5",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217017,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2030 4.75",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2030 4.75",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217018,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 10 Sep 2031 1.5",
+      "name": "Debt securities / Fixed-rate bonds / 10 Sep 2031 1.5",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217019,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Dec 2032 4.25",
+      "name": "Debt securities / Fixed-rate bonds / 20 Dec 2032 4.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217020,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 15 Sep 2033 2.25",
+      "name": "Debt securities / Fixed-rate bonds / 15 Sep 2033 2.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217021,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2034 2.25",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2034 2.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217022,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 17 Sep 2035 2.0",
+      "name": "Debt securities / Fixed-rate bonds / 17 Sep 2035 2.0",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217023,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 15 Sep 2036 4.75",
+      "name": "Debt securities / Fixed-rate bonds / 15 Sep 2036 4.75",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217024,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2037 2.0",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2037 2.0",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217025,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 15 Sep 2038 5.25",
+      "name": "Debt securities / Fixed-rate bonds / 15 Sep 2038 5.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217026,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 15 Sep 2039 5.5",
+      "name": "Debt securities / Fixed-rate bonds / 15 Sep 2039 5.5",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217027,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2040 2.25",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2040 2.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217028,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2040 5.0",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2040 5.0",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217029,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2041 2.25",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2041 2.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217030,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 20 Nov 2042 2.25",
+      "name": "Debt securities / Fixed-rate bonds / 20 Nov 2042 2.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217031,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 15 Sep 2044 5.25",
+      "name": "Debt securities / Fixed-rate bonds / 15 Sep 2044 5.25",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217032,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 06 Nov 2047 4.0",
+      "name": "Debt securities / Fixed-rate bonds / 06 Nov 2047 4.0",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217033,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Fixed-rate bonds / 18 Aug 2050 2.4",
+      "name": "Debt securities / Fixed-rate bonds / 18 Aug 2050 2.4",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217034,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Indexed bonds / 15 Dec 2030",
+      "name": "Debt securities / Indexed bonds / 15 Dec 2030",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217035,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 15 Sep 2027 BBSW +10bp",
+      "name": "Debt securities / Floating-rate notes / 15 Sep 2027 BBSW +10bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217036,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 15 Mar 2028 BBSW + 6bp",
+      "name": "Debt securities / Floating-rate notes / 15 Mar 2028 BBSW + 6bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217037,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 15 Mar 2029 BBSW +11.5bp",
+      "name": "Debt securities / Floating-rate notes / 15 Mar 2029 BBSW +11.5bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217038,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 15 Mar 2030 BBSW + 12bp",
+      "name": "Debt securities / Floating-rate notes / 15 Mar 2030 BBSW + 12bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217039,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 17 Mar 2031 BBSW + 42bp",
+      "name": "Debt securities / Floating-rate notes / 17 Mar 2031 BBSW + 42bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217040,
+      "canonical_key": "vic_tcv_amount_on_issue|node|Debt securities / Floating-rate notes / 15 Mar 2032 BBSW + 52bp",
+      "name": "Debt securities / Floating-rate notes / 15 Mar 2032 BBSW + 52bp",
+      "jurisdiction": "VIC",
+      "government_level": "state",
+      "source_key": "vic_tcv_amount_on_issue"
+    },
+    {
+      "id": 217183,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes",
+      "name": "Debt securities / Floating-rate notes",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217184,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds",
+      "name": "Debt securities / Fixed-rate bonds",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217185,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 21 Oct 2026 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Oct 2026 3.00%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217186,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 21 Oct 2027 3.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Oct 2027 3.00%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217187,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 20 Jul 2028 3.25%",
+      "name": "Debt securities / Fixed-rate bonds / 20 Jul 2028 3.25%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217188,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 24 Jul 2029 2.75%",
+      "name": "Debt securities / Fixed-rate bonds / 24 Jul 2029 2.75%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217189,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 22 Oct 2030 1.50%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Oct 2030 1.50%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217190,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 22 Oct 2031 1.75%",
+      "name": "Debt securities / Fixed-rate bonds / 22 Oct 2031 1.75%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217191,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 21 Jul 2032 4.50%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Jul 2032 4.50%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217192,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 20 Jul 2033 4.25% (Green Bond)",
+      "name": "Debt securities / Fixed-rate bonds / 20 Jul 2033 4.25% (Green Bond)",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217193,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 24 Oct 2034 2.00%",
+      "name": "Debt securities / Fixed-rate bonds / 24 Oct 2034 2.00%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217194,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 24 Oct 2035 4.75% (Green Bond)",
+      "name": "Debt securities / Fixed-rate bonds / 24 Oct 2035 4.75% (Green Bond)",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217195,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 21 Oct 2037 5.00%",
+      "name": "Debt securities / Fixed-rate bonds / 21 Oct 2037 5.00%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217196,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 24 Oct 2039 5.75% (Green Bond)",
+      "name": "Debt securities / Fixed-rate bonds / 24 Oct 2039 5.75% (Green Bond)",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217197,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / 23 Jul 2041 2.25%",
+      "name": "Debt securities / Fixed-rate bonds / 23 Jul 2041 2.25%",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217198,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Fixed-rate bonds / Total",
+      "name": "Debt securities / Fixed-rate bonds / Total",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217199,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 23 Feb 2027 +2.00",
+      "name": "Debt securities / Floating-rate notes / 23 Feb 2027 +2.00",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217200,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 08 Mar 2028 +8.00",
+      "name": "Debt securities / Floating-rate notes / 08 Mar 2028 +8.00",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217201,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 21 Feb 2029 +9.5",
+      "name": "Debt securities / Floating-rate notes / 21 Feb 2029 +9.5",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217202,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 21 Feb 2031 +15.5",
+      "name": "Debt securities / Floating-rate notes / 21 Feb 2031 +15.5",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217203,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 19 Feb 2030 +36.00",
+      "name": "Debt securities / Floating-rate notes / 19 Feb 2030 +36.00",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217204,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / 10 Mar 2032 +33.00",
+      "name": "Debt securities / Floating-rate notes / 10 Mar 2032 +33.00",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    },
+    {
+      "id": 217205,
+      "canonical_key": "wa_watc_funding_sources|node|Debt securities / Floating-rate notes / Total",
+      "name": "Debt securities / Floating-rate notes / Total",
+      "jurisdiction": "WA",
+      "government_level": "state",
+      "source_key": "wa_watc_funding_sources"
+    }
+  ]
+}

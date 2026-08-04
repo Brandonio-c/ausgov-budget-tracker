@@ -13,9 +13,19 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from adapters.state_debt_instruments import SOURCE_PARSERS, parse_source, resolve_raw_file  # noqa: E402
+from adapters.state_debt_instruments import (  # noqa: E402
+    SOURCE_PARSERS,
+    parse_source,
+    resolve_raw_file,
+)
 from run import run_mapping  # noqa: E402
 from schema_migrate import migrate  # noqa: E402
+
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "ops"))
+from cleanup_orphan_nodes import (  # noqa: E402
+    delete_orphan_nodes,
+    orphan_node_ids_for_source_document,
+)
 
 FACTS_DB = REPO_ROOT / "data" / "facts.db"
 STAGING = REPO_ROOT / "data" / "staging" / "borrowing"
@@ -66,6 +76,15 @@ def main() -> int:
             for fid in fact_ids:
                 conn.execute("DELETE FROM fact_nodes WHERE fact_id = ?", (fid,))
             conn.execute("DELETE FROM facts WHERE source_document_id = ?", (doc_id,))
+            # This source's node identity is a flat one-node-per-category-string
+            # scheme (ensure_node() in load_facts.py) with no breakdown_edges/
+            # node_edges ever created for it, so any node that just lost its
+            # last fact above is permanently unreachable - clean it up now
+            # rather than leaving it to accumulate across every future reload
+            # (the root cause of the 278 orphan nodes found in this milestone;
+            # see ops/reports/orphan-node-investigation-*.md).
+            orphaned = orphan_node_ids_for_source_document(conn, doc_id)
+            delete_orphan_nodes(conn, orphaned)
         conn.commit()
         conn.close()
         fact_rows = [r.to_fact_dict() for r in instruments]
