@@ -1,0 +1,107 @@
+# Declarative registry of duplicate-fact candidate groups (as found by
+# scripts/ops/task9_sql_integrity_checks.py's duplicate_facts() - same
+# node + financial_year + measure_type + estimate_status + amount_aud
+# under more than one distinct fact_id) that have been individually
+# investigated and classified as something OTHER than a true duplicate.
+# Matched by scripts/ops/reviewed_duplicates.py; see that module and
+# scripts/ops/task9_sql_integrity_checks.py for how a match downgrades a
+# candidate hard failure to an informational
+# reviewed_duplicate_candidates entry instead.
+#
+# Matching is exact on every field below (source_key, node_path,
+# financial_year, measure_type, estimate_status, amount_aud) - a changed
+# year, source, node path, measure type, estimate status, or amount
+# always falls through to a hard failure, so this registry can never
+# silently widen to cover a new or different duplicate-look-alike group.
+# node_path must be the group's own full node name (the same value stored
+# in nodes.name), not a mutable database ID, so entries keep matching
+# across a reload that reuses the same node.
+#
+# History: the database-hygiene-and-CI-hardening milestone's Task 3 found
+# 5 candidate groups from the raw SQL check. Full per-fact evidence (raw
+# source CSV/XLSX rows, not just database metadata) is in
+# ops/reports/duplicate-fact-investigation-20260804T044328Z.md. Only ONE
+# group (QLD QGIP Goondiwindi "Black Spot") was a true duplicate; it was
+# deleted by scripts/ops/cleanup_duplicate_facts.py and therefore no
+# longer appears in the raw SQL grouping at all - it needs no registry
+# entry. The other 4 groups are genuinely distinct real-world records
+# that a shared, under-specified node (and, in two QLD cases, a
+# column-order-dependent amount-column-selection defect) made look
+# identical to the SQL group-by check; deleting any of them would have
+# discarded real, distinct, correctly-cited data. Those 4 are recorded
+# here so they are never again reported as hard failures, while any
+# genuinely NEW or unreviewed duplicate-look-alike group still is.
+reviewed_duplicate_facts:
+  - source_key: vic_local_govt_financial
+    node_path: "Total expenses / Employee benefits"
+    financial_year: "2016-17"
+    measure_type: actual_accrual_expense
+    estimate_status: audited_actual
+    amount_aud: 84180000
+    classification: query_false_positive
+    reason: >
+      Two different Victorian councils' own "Employee benefits" expense
+      rows (different spreadsheet cells: E6588 and E6938), both correctly
+      reporting the identical rounded dollar figure for FY2016-17. Node
+      1044 has 425 facts attached in total (one per council per year) with
+      zero per-council dimension - a separate, out-of-scope defect (see
+      evidence_report) - but the facts themselves are real and distinct.
+    evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-1-vic-local-government-vic_local_govt_financial
+    review_date: "2026-08-04"
+  - source_key: qld_qgip_expenditure
+    node_path: "various individuals / nan"
+    financial_year: "2012-13"
+    measure_type: actual_accrual_expense
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two completely different, unrelated funding programs ("Grant
+      Program - RentConnect Tenancy Assistance" and "Lending product -
+      Bond Loans") whose blank/NaN "Program title" field collapsed to the
+      same generic node text. Both also show $0 in this measure because
+      the amount-column auto-selection picked an unrelated always-zero
+      column instead of the real relevant figures ($108,476 and
+      $23,018,000 respectively) - a separate, out-of-scope amount-column
+      defect (see evidence_report), not a duplicate-creation one.
+    evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-3-qld-qgip-various-individuals--nan-qld_qgip_expenditure
+    review_date: "2026-08-04"
+  - source_key: qld_qgip_expenditure
+    node_path: "QLD MURRAY DARLING COMMITTEE INC / Queensland Regional Natural Resource Management Investment Progam"
+    financial_year: "2014-15"
+    measure_type: actual_accrual_expense
+    estimate_status: actual
+    amount_aud: 2350000
+    classification: query_false_positive
+    reason: >
+      Same funding agreement (same ABN, same funding title, same
+      agreement dates) but two genuinely different rows with different
+      real annual expenditure figures ($426,667 and $355,333) for
+      different years within a multi-year grant. Both show the same
+      static whole-of-agreement total in this measure because this file's
+      column order put "Total funding under this agreement" ahead of
+      "Financial year expenditure" in auto-detection - the same
+      out-of-scope amount-column defect as the "various individuals"
+      group above (see evidence_report), not a duplicate-creation one.
+    evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-4-qld-qgip-qld-murray-darling-committee-inc-qld_qgip_expenditure
+    review_date: "2026-08-04"
+  - source_key: qld_qgip_expenditure
+    node_path: "Palm Island Aboriginal Shire Council / Palm Island Community Behaviour Change Study Program"
+    financial_year: "2024-25"
+    measure_type: actual_accrual_expense
+    estimate_status: actual
+    amount_aud: 42764
+    classification: query_false_positive
+    reason: >
+      Two rows with different sub-program titles ("Vandalism-proof metal
+      litter bins" vs "Palm Island vandalism proof bins"), different
+      purposes, and different whole-of-agreement totals, which the
+      extractor's category field collapses because it only uses "Program
+      title" (identical modulo whitespace) and silently drops "Sub-program
+      title" - a separate, out-of-scope missing-dimension defect (see
+      evidence_report). Whether this is one disbursement reported under
+      two sub-program labels or two genuinely separate activities cannot
+      be determined from the data alone, so both are retained rather than
+      guessed away.
+    evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-5-qld-qgip-palm-island-aboriginal-shire-council-qld_qgip_expenditure
+    review_date: "2026-08-04"

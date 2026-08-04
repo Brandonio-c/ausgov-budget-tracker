@@ -1,0 +1,16 @@
+{
+  "mode": "dry_run",
+  "entries": [
+    {
+      "source_key": "qld_qgip_expenditure",
+      "node_path": "GOONDIWINDI REGIONAL COUNCIL / Black Spot",
+      "financial_year": "2024-25",
+      "retain_fact_key": "qld_qgip_expenditure|2024-25|GOONDIWINDI REGIONAL COUNCIL / Black Spot |actual_accrual_expense|actual",
+      "delete_fact_key": "qld_qgip_expenditure|2024-25|GOONDIWINDI REGIONAL COUNCIL / Black Spot|actual_accrual_expense|actual",
+      "status": "would_delete",
+      "delete_fact_id": 217525,
+      "retain_fact_id": 81987,
+      "shared_node_id": 67316
+    }
+  ]
+}

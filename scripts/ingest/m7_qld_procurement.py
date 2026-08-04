@@ -106,8 +106,10 @@ def export_qgip() -> dict:
                 amount = float(re.sub(r"[^0-9.-]", "", str(raw)))
             except ValueError:
                 continue
-            agency = str(r.get(agency_col) or "QLD") if agency_col else "QLD"
-            cat = str(r.get(cat_col) or "expenditure") if cat_col else "expenditure"
+            agency = str(r.get(agency_col) or "QLD").strip() if agency_col else "QLD"
+            cat = str(r.get(cat_col) or "expenditure").strip() if cat_col else "expenditure"
+            agency = re.sub(r"\s+", " ", agency)
+            cat = re.sub(r"\s+", " ", cat)
             fy = str(r.get(fy_col) or fy_guess or "2024-25")
             if re.match(r"20\d{2}$", fy):
                 y = int(fy)

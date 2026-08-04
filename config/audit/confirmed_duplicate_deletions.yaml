@@ -1,0 +1,47 @@
+# Declarative list of individually investigated, confirmed true-duplicate
+# fact pairs to resolve, consumed only by
+# scripts/ops/cleanup_duplicate_facts.py. This is deliberately NOT a
+# generic "delete every duplicate_facts() hit" tool - each entry here was
+# reached only after reading the actual raw source rows for every fact
+# involved (see evidence_report) and proving deletion will not lose unique
+# lineage, break a citation, orphan a node, change an authoritative total,
+# or remove a distinct source perspective. A newly discovered duplicate
+# candidate must go through the same investigation before an entry is
+# added here - it is never auto-resolved just because it matches the
+# duplicate_facts() shape.
+#
+# retain/delete identify facts by their own unique fact_key (immutable,
+# content-derived) rather than a mutable database ID, so an entry keeps
+# matching correctly across a reload that reassigns IDs. The cleanup
+# script re-verifies the live database state (node/financial_year/
+# measure_type/estimate_status/amount identity, zero lineage_edges and
+# zero reconciliations references) before deleting, and is a no-op
+# (idempotent) once the delete-fact no longer exists.
+confirmed_duplicate_deletions:
+  - source_key: qld_qgip_expenditure
+    node_path: "GOONDIWINDI REGIONAL COUNCIL / Black Spot"
+    financial_year: "2024-25"
+    measure_type: actual_accrual_expense
+    estimate_status: actual
+    amount_aud: 42750
+    retain_fact_key: "qld_qgip_expenditure|2024-25|GOONDIWINDI REGIONAL COUNCIL / Black Spot |actual_accrual_expense|actual"
+    delete_fact_key: "qld_qgip_expenditure|2024-25|GOONDIWINDI REGIONAL COUNCIL / Black Spot|actual_accrual_expense|actual"
+    reason: >
+      Same real-world QLD Transport and Main Roads "Black Spot" road-safety
+      grant to Goondiwindi Regional Council (identical ABN 79969846487,
+      legal entity, funding agency, program, purpose, "Multi-year"
+      agreement duration, and both the "Financial year expenditure" and
+      "Total funding under this agreement to date" dollar fields, all
+      verified by reading both raw rows directly) republished in two
+      overlapping QLD "consolidated" per-financial-year export files
+      (18-19-expenditure-data-consolidated.csv and
+      consolidated-expenditure-data-17-18.csv), differing only by
+      whitespace on "Legal entity suburb/locality" casing and a trailing
+      space on "Program title". The retained record (from the "18-19"
+      file) is chosen under precedence rule 3 (correct canonical source):
+      it is the later of the two overlapping disclosures of this now-
+      completed multi-year grant, and no earlier precedence rule
+      (citation completeness, source-document provenance, locator
+      specificity) distinguished the pair.
+    evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-2-qld-qgip-goondiwindi-regional-council-black-spot-qld_qgip_expenditure
+    review_date: "2026-08-04"
