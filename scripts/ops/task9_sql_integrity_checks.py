@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Task 9 (semantic-defect milestone): direct SQL integrity checks against
-data/facts.db, run in addition to pytest/frontend/e2e/reconciliation.
-Read-only. Prints a JSON report and exits non-zero if any check finds a
-hit outside its documented, expected baseline.
+"""Task 9 (semantic-defect milestone) / Task 6 (database-hygiene-and-
+CI-hardening milestone): direct SQL integrity checks against data/facts.db,
+run in addition to pytest/frontend/e2e/reconciliation. Read-only. Prints a
+JSON report and exits non-zero if any check finds a hit outside its
+documented, expected baseline.
 """
 
 from __future__ import annotations
@@ -14,31 +15,91 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "ops"))
 
+from accepted_residuals import validate_config as validate_accepted_residuals  # noqa: E402
 from pbs_label_classifier import classify_label  # noqa: E402
+from reviewed_duplicates import (  # noqa: E402
+    load_reviewed_duplicates,
+    match_reviewed_duplicate,
+)
+from reviewed_duplicates import validate_config as validate_reviewed_duplicates  # noqa: E402
 
 DB_PATH = REPO_ROOT / "data" / "facts.db"
 
 
 def duplicate_facts(conn) -> list[dict]:
     """Same node + financial_year + measure_type + estimate_status + amount
-    appearing under more than one distinct fact_id - a true duplicate, not
-    just two different facts that happen to share a fact_key (impossible;
-    fact_key is UNIQUE)."""
+    appearing under more than one distinct fact_id - a true duplicate
+    candidate, not just two different facts that happen to share a
+    fact_key (impossible; fact_key is UNIQUE). Includes node_path and
+    source_key (not just the mutable node_id) so a reviewer - or
+    scripts/ops/reviewed_duplicates.py's declarative registry - can tell a
+    genuine true duplicate apart from two legitimately distinct records
+    that a shared, under-specified node made look identical."""
     rows = conn.execute(
         """
-        SELECT fn.node_id, f.financial_year, f.measure_type, f.estimate_status,
+        SELECT fn.node_id, n.name AS node_path, sd.source_key,
+               f.financial_year, f.measure_type, f.estimate_status,
                f.amount_aud, COUNT(DISTINCT f.id) AS n, GROUP_CONCAT(DISTINCT f.id) AS fact_ids
         FROM facts f
         JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+        JOIN nodes n ON n.id = fn.node_id
+        JOIN source_documents sd ON sd.id = f.source_document_id
         GROUP BY fn.node_id, f.financial_year, f.measure_type, f.estimate_status, f.amount_aud
         HAVING COUNT(DISTINCT f.id) > 1
         """
     ).fetchall()
     return [
-        {"node_id": r[0], "financial_year": r[1], "measure_type": r[2], "estimate_status": r[3], "amount_aud": r[4], "count": r[5], "fact_ids": r[6]}
+        {
+            "node_id": r[0],
+            "node_path": r[1],
+            "source_key": r[2],
+            "financial_year": r[3],
+            "measure_type": r[4],
+            "estimate_status": r[5],
+            "amount_aud": r[6],
+            "count": r[7],
+            "fact_ids": r[8],
+        }
         for r in rows
     ]
+
+
+def partition_duplicate_facts(
+    groups: list[dict], reviewed: list | None = None
+) -> tuple[list[dict], list[dict]]:
+    """Split duplicate_facts() groups into (unresolved, reviewed) using
+    scripts/ops/reviewed_duplicates.py's declarative registry. A group only
+    ever moves to "reviewed" by exact (source_key, node_path,
+    financial_year, measure_type, estimate_status, amount_aud) identity
+    match - a changed year, source, node path, measure type, estimate
+    status, or amount always falls through to "unresolved" (a hard
+    failure), so a stale or too-broad registry entry can never silently
+    swallow a new or different duplicate-look-alike group."""
+    if reviewed is None:
+        reviewed = load_reviewed_duplicates()
+    unresolved: list[dict] = []
+    matched: list[dict] = []
+    for group in groups:
+        entry = match_reviewed_duplicate(
+            reviewed,
+            source_key=group["source_key"],
+            node_path=group["node_path"],
+            financial_year=group["financial_year"],
+            measure_type=group["measure_type"],
+            estimate_status=group["estimate_status"],
+            amount_aud=float(group["amount_aud"]),
+        )
+        if entry is None:
+            unresolved.append(group)
+        else:
+            enriched = dict(group)
+            enriched["classification"] = entry.classification
+            enriched["reason"] = entry.reason
+            enriched["evidence_report"] = entry.evidence_report
+            matched.append(enriched)
+    return unresolved, matched
 
 
 def duplicate_breakdown_edges(conn) -> list[dict]:
@@ -170,8 +231,11 @@ def pbs_children_missing_source_year(conn) -> int:
 
 def main() -> int:
     conn = sqlite3.connect(str(DB_PATH))
+    all_duplicate_groups = duplicate_facts(conn)
+    unresolved_duplicates, reviewed_duplicates = partition_duplicate_facts(all_duplicate_groups)
     results = {
-        "duplicate_facts": duplicate_facts(conn),
+        "unresolved_duplicate_facts": unresolved_duplicates,
+        "reviewed_duplicate_facts": reviewed_duplicates,
         "duplicate_breakdown_edges": duplicate_breakdown_edges(conn),
         "orphan_facts": orphan_facts(conn),
         "orphan_nodes": orphan_nodes(conn),
@@ -181,11 +245,21 @@ def main() -> int:
         "cross_jurisdiction_additive_edges": cross_jurisdiction_additive_edges(conn),
         "pbs_crosswalk_children_with_rejected_labels": pbs_crosswalk_children_with_rejected_labels(conn),
         "pbs_children_missing_source_year": pbs_children_missing_source_year(conn),
+        "accepted_residual_config": validate_accepted_residuals(),
+        "reviewed_duplicate_config": validate_reviewed_duplicates(),
     }
     conn.close()
 
     hard_failures = 0
-    hard_failures += len(results["duplicate_facts"])
+    # Confirmed duplicate facts and unresolved duplicate candidates are
+    # both hard failures - the only way out of "unresolved" is either a
+    # declarative reviewed_duplicate_facts.yaml entry (proven, in this
+    # milestone, to be a query false positive / legitimate distinct
+    # record - see scripts/ops/reviewed_duplicates.py) or an actual
+    # deletion (scripts/ops/cleanup_duplicate_facts.py). A reviewed group
+    # is never a hard failure; it is also never silently dropped from the
+    # report (see "reviewed_duplicate_facts" above).
+    hard_failures += len(results["unresolved_duplicate_facts"])
     hard_failures += len(results["duplicate_breakdown_edges"])
     hard_failures += results["orphan_facts"]
     hard_failures += results["orphan_nodes"]
@@ -194,6 +268,10 @@ def main() -> int:
     hard_failures += len(results["cross_jurisdiction_additive_edges"])
     hard_failures += len(results["pbs_crosswalk_children_with_rejected_labels"])
     hard_failures += results["pbs_children_missing_source_year"]
+    if not results["accepted_residual_config"]["valid"]:
+        hard_failures += 1
+    if not results["reviewed_duplicate_config"]["valid"]:
+        hard_failures += 1
     # dangling_source_documents is informational only (unused reference
     # rows, not a graph-integrity hazard) - not counted as a hard failure.
 
