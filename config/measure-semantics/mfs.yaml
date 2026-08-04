@@ -1,0 +1,507 @@
+# Formal semantic model for Federal Monthly Financial Statements (MFS)
+# "Aggregates" workbook data (Task 3 of the MFS-aggregates milestone).
+#
+# This is the single declarative source of truth for MFS measure-type
+# semantics. scripts/ingest/load_mfs_aggregates.py (Task 5) reads this file
+# to populate measure_definitions and to validate every row before it is
+# published; nothing here is duplicated or re-decided in extractor/loader
+# code. src/backend/routers/v2/mfs.py (Task 8) reads flow_or_stock and the
+# forbidden_comparisons to enforce API-level safeguards.
+#
+# Evidence for every decision below is in
+# ops/reports/mfs-corpus-inventory-20260804T234455Z.md (Task 2) - label
+# variants, footnote-letter drift, and absent-year gaps were verified
+# directly against all 26 sheets of data/raw/federal/federal_mfs_aggregates,
+# not assumed.
+#
+# ---------------------------------------------------------------------------
+# Global rules (apply to every measure type below)
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: ytd_same_elapsed_period_only
+    text: >
+      A YTD flow fact may be compared only against another fact covering the
+      same elapsed fiscal period (same reporting_month, i.e. same number of
+      months since 1 July), unless the comparison is explicitly and
+      individually labelled as covering a different elapsed period (e.g. a
+      deliberate "YTD through May, prior year" comparison card). Comparing
+      "YTD through July" against "YTD through May" as if both were the same
+      kind of figure is forbidden.
+  - id: stocks_compatible_dates_only
+    text: >
+      A stock fact may be compared only against another stock fact whose
+      reporting date (period_end) is compatible for the comparison being
+      made (e.g. same calendar month-end across years, for a same-month
+      year-on-year comparison). Comparing stocks at different reporting
+      dates as if they were the same point in time is forbidden.
+  - id: balances_never_summed_with_flows
+    text: >
+      Net operating balance, fiscal balance, underlying cash balance, and
+      headline cash balance are themselves already derived balances (not
+      raw revenue/expense flows) and must never be summed with revenue or
+      expense totals, nor with each other, to produce a combined figure.
+      They may only be plotted as their own distinct series.
+  - id: mfs_never_in_annual_compatibility_group
+    text: >
+      No MFS measure type may share a compatibility_group with any annual
+      GFS/PBS actual or budget measure type. Every mfs_* measure type
+      defined below has its own dedicated compatibility_group (1:1 with its
+      measure_type name), so the existing dashboard's generic
+      compatibility_group-keyed queries (src/backend/routers/v2/dashboard.py
+      _mode_filters/_fact_rows) can never pull an MFS fact into an annual
+      additive tree, even by future accident - this was the exact
+      mechanism of the contamination bug found and fixed in Task 1.
+  - id: mfs_never_contributes_to_annual_root_totals
+    text: >
+      No mfs_* measure type is registered under any existing dashboard
+      mode_to_family mapping (config/compatibility/view_families.yaml).
+      MFS is exposed only through its own dedicated API
+      (src/backend/routers/v2/mfs.py, Task 8), never through
+      /v2/dashboard/tree or any other existing annual-total endpoint.
+  - id: unit_conversion_preserves_source_unit_metadata
+    text: >
+      Every fact stores both the converted amount_aud (in whole AUD) and
+      the original source unit token ($m or $b) in source_locator_json, so
+      the source's own stated unit is always recoverable, not just the
+      converted figure. $m -> x1_000_000, $b -> x1_000_000_000 (verified:
+      the corpus transitions from $m to $b starting FY2024-25, mid-corpus,
+      not at a file boundary - conversion must be applied per-column, not
+      per-file, exactly as the existing extractor's UNIT_SCALE already
+      does).
+  - id: bare_month_ambiguity_quarantined
+    text: >
+      A column header naming a month with no explicit "YTD" qualifier is
+      quarantined UNLESS that month is July (July's YTD figure is
+      mathematically identical to its own single-month figure, since there
+      is no prior month in the fiscal year to accumulate - verified this is
+      the only bare-month case in the corpus, in FY2000-01's header row).
+      Any other bare month found in a future edition is quarantined, not
+      guessed.
+  - id: label_synonyms_are_documented_not_silent
+    text: >
+      Every pre-2007-08 label wording (Income, Operating Result, Assets,
+      Liabilities, Net Assets, Underlying Cash Receipts/Payments, "less
+      Payments"/"less Net Future Fund earnings") is mapped explicitly, one
+      row per synonym, in each measure's `source_label_variants` list
+      below - never via a generic fuzzy-match or silent case-insensitive
+      substring rule. A label not present in any measure's
+      `source_label_variants` list is quarantined, never guessed into the
+      closest match.
+  - id: absent_year_is_absent_not_zero
+    text: >
+      Net debt (absent before FY2010-11), Net Future Fund earnings (only
+      FY2013-14..2019-20), and Net Assets/Net worth (absent for FY2005-06
+      specifically) must simply have no fact for the years/measure where
+      the source did not publish that row - never backfilled, defaulted,
+      or interpolated to zero or any other value.
+
+# ---------------------------------------------------------------------------
+# Per-measure-type semantic decisions
+# ---------------------------------------------------------------------------
+measures:
+  mfs_ytd_revenue:
+    economic_meaning: >
+      Total Australian Government general government sector revenue,
+      accrual basis, accumulated from 1 July of the financial year through
+      the end of the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start  # 1 July of the fact's financial_year
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_ytd_revenue
+    allowed_comparisons:
+      - mfs_ytd_revenue at the same reporting_month, a different financial_year (same-month year-on-year)
+      - mfs_ytd_expense at the same reporting_month, same financial_year (for a revenue-vs-expense YTD chart, plotted as two distinct series, never summed)
+    forbidden_comparisons:
+      - any annual GFS/PBS actual_expense or gfs_revenue compatibility_group fact
+      - mfs_ytd_revenue at a different reporting_month treated as the same elapsed period
+    dashboard_treatment: dedicated MFS timeline/comparison API only; never in an annual additive tree
+    source_label_variants: ["Revenue", "Revenue(a)", "Income", "Income (a)"]
+
+  mfs_ytd_expense:
+    economic_meaning: >
+      Total general government sector expenses, accrual basis, YTD through
+      the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_ytd_expense
+    allowed_comparisons:
+      - mfs_ytd_expense at the same reporting_month, a different financial_year
+      - mfs_ytd_revenue at the same reporting_month, same financial_year (distinct series)
+    forbidden_comparisons:
+      - any annual GFS/PBS actual_expense or budget_expense compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Expenses", "Expenses(a)", "Expenses (a)"]
+
+  mfs_ytd_net_operating_balance:
+    economic_meaning: >
+      Revenue minus expenses, YTD through the reporting month (accrual
+      basis). A derived balance, not a raw flow to be summed with others.
+    flow_or_stock: balance
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed  # can be negative (deficit)
+    compatibility_group: mfs_ytd_net_operating_balance
+    allowed_comparisons:
+      - mfs_ytd_net_operating_balance at the same reporting_month, a different financial_year
+      - mfs_ytd_fiscal_balance at the same reporting_month, same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_ytd_revenue or mfs_ytd_expense
+      - any annual GFS actual_expense/gfs_revenue compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only; plotted as its own line, never stacked into a revenue/expense bar
+    source_label_variants: ["Net operating balance", "Operating Result", "Operating Result (a)(c)"]
+
+  mfs_ytd_net_capital_investment:
+    economic_meaning: >
+      Net capital investment (capital expenditure less capital revenue/
+      depreciation adjustments feeding the fiscal balance calculation), YTD
+      through the reporting month. Not published before FY2007-08.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_ytd_net_capital_investment
+    allowed_comparisons:
+      - mfs_ytd_net_capital_investment at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - summed with mfs_ytd_revenue, mfs_ytd_expense, or mfs_ytd_net_operating_balance
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Net capital investment"]
+    not_published_before_financial_year: "2007-08"
+
+  mfs_ytd_fiscal_balance:
+    economic_meaning: >
+      Net operating balance minus net capital investment, YTD through the
+      reporting month - the GFS "fiscal balance" bottom line. A derived
+      balance.
+    flow_or_stock: balance
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_ytd_fiscal_balance
+    allowed_comparisons:
+      - mfs_ytd_fiscal_balance at the same reporting_month, a different financial_year
+      - mfs_ytd_underlying_cash_balance at the same reporting_month, same financial_year, plotted as a distinct series (fiscal balance vs cash balance is a standard, analytically valid pairing - never summed)
+    forbidden_comparisons:
+      - summed with revenue, expense, or any cash-balance measure
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Fiscal balance", "Fiscal Balance", "Fiscal Balance (b)(c)"]
+
+  mfs_ytd_receipts:
+    economic_meaning: >
+      Cash basis receipts (operating activities and sales of non-financial
+      assets), YTD through the reporting month - one input to the
+      underlying cash balance. Only disclosed as its own line from
+      FY2011-12 onward (FY2011-12/2012-13 as "Underlying Cash Receipts",
+      FY2013-14+ as "Receipts"); before that only the net Underlying Cash
+      Balance was published.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_ytd_receipts
+    allowed_comparisons:
+      - mfs_ytd_receipts at the same reporting_month, a different financial_year
+      - mfs_ytd_payments at the same reporting_month, same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_ytd_revenue/mfs_ytd_expense (different accounting basis: cash vs accrual)
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Receipts", "Receipts(a)", "Underlying Cash Receipts"]
+    not_published_before_financial_year: "2011-12"
+
+  mfs_ytd_payments:
+    economic_meaning: >
+      Cash basis payments (operating activities, purchases of non-financial
+      assets, net acquisition of assets under finance leases), YTD through
+      the reporting month. Wording varies across editions ("Underlying Cash
+      Payments" FY2011-12/12-13; "Payments" FY2013-14 and FY2020-21+; "less
+      Payments" FY2014-15..2019-20) - same concept, mapped explicitly.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_ytd_payments
+    allowed_comparisons:
+      - mfs_ytd_payments at the same reporting_month, a different financial_year
+      - mfs_ytd_receipts at the same reporting_month, same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_ytd_revenue/mfs_ytd_expense (different accounting basis)
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Payments", "Payments(b)", "Payments(c)", "less Payments(b)", "less Payments(c)", "Underlying Cash Payments"]
+    not_published_before_financial_year: "2011-12"
+
+  mfs_ytd_net_future_fund_earnings:
+    economic_meaning: >
+      Net Future Fund earnings, an adjustment component disclosed
+      separately between the raw receipts/payments and the published
+      Underlying Cash Balance bottom line. Only disclosed FY2013-14
+      through FY2019-20 (FY2013-14 as "Net Future Fund earnings",
+      FY2014-15..2019-20 as "less Net Future Fund earnings"); folded back
+      into the undisclosed cash-balance derivation from FY2020-21 onward
+      (no longer its own line).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_ytd_net_future_fund_earnings
+    allowed_comparisons:
+      - mfs_ytd_net_future_fund_earnings at the same reporting_month, a different financial_year (FY2013-14..2019-20 only - no data outside this range)
+    forbidden_comparisons:
+      - summed with mfs_ytd_receipts/mfs_ytd_payments to "reconstruct" underlying cash balance (the published Underlying cash balance line is authoritative; this component is disclosed for transparency only, not for re-derivation)
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years it exists
+    source_label_variants: ["Net Future Fund earnings", "less Net Future Fund earnings"]
+    only_published_financial_years: ["2013-14", "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20"]
+
+  mfs_ytd_underlying_cash_balance:
+    economic_meaning: >
+      The published "Underlying cash balance" bottom line - receipts minus
+      payments (and, in years it was separately disclosed, minus net
+      Future Fund earnings), YTD through the reporting month. Treated as
+      ONE continuous measure across its full history because the source
+      itself presents it as one continuously-named series year to year,
+      even though its exact component breakdown (whether Net Future Fund
+      earnings is shown separately) changed - see Task 2's inventory. A
+      derived balance.
+    flow_or_stock: balance
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_ytd_underlying_cash_balance
+    allowed_comparisons:
+      - mfs_ytd_underlying_cash_balance at the same reporting_month, a different financial_year
+      - mfs_ytd_fiscal_balance at the same reporting_month, same financial_year, plotted as a distinct series
+      - mfs_ytd_headline_cash_balance at the same reporting_month, same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_ytd_receipts/mfs_ytd_payments/mfs_ytd_net_future_fund_earnings (it already IS their combination; summing again double-counts)
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants:
+      - "Underlying cash balance"
+      - "Underlying Cash Balance"
+      - "Underlying Cash Balance (b)"
+      - "Underlying cash balance(a)"
+      - "Underlying cash balance(c)"
+      - "Underlying cash balance(d)"
+
+  mfs_ytd_headline_cash_balance:
+    economic_meaning: >
+      The published "Headline cash balance" bottom line (underlying cash
+      balance plus net Future Fund earnings and other headline-only
+      adjustments per the source's own methodology), YTD through the
+      reporting month. A derived balance, treated as one continuous
+      measure for the same reason as underlying cash balance above.
+    flow_or_stock: balance
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_ytd_headline_cash_balance
+    allowed_comparisons:
+      - mfs_ytd_headline_cash_balance at the same reporting_month, a different financial_year
+      - mfs_ytd_underlying_cash_balance at the same reporting_month, same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with any other MFS flow/balance measure
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Headline cash balance", "Headline Cash Balance", "Headline Cash Balance (b)"]
+
+  mfs_stock_total_assets:
+    economic_meaning: >
+      Total general government sector assets, as at the last calendar day
+      of the reporting month (a point-in-time balance-sheet stock, not a
+      YTD accumulation).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_stock_total_assets
+    allowed_comparisons:
+      - mfs_stock_total_assets at a compatible reporting date (e.g. same calendar month-end, different financial_year)
+      - mfs_stock_total_liabilities at the same reporting date, plotted as a distinct series (never summed)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_liabilities, mfs_ytd_revenue, mfs_ytd_expense, or any flow measure
+      - any annual GFS gfs_liability compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Total assets", "Assets"]
+
+  mfs_stock_total_liabilities:
+    economic_meaning: >
+      Total general government sector liabilities, as at the last calendar
+      day of the reporting month.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_stock_total_liabilities
+    allowed_comparisons:
+      - mfs_stock_total_liabilities at a compatible reporting date, a different financial_year
+      - mfs_stock_total_assets at the same reporting date, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets or any flow measure
+      - any annual GFS gfs_liability compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only
+    source_label_variants: ["Total liabilities", "Liabilities"]
+
+  mfs_stock_net_worth:
+    economic_meaning: >
+      Total assets minus total liabilities, as at the last calendar day of
+      the reporting month. A derived stock balance.
+    flow_or_stock: stock_balance
+    period_granularity: month
+    period_start: null
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_stock_net_worth
+    allowed_comparisons:
+      - mfs_stock_net_worth at a compatible reporting date, a different financial_year
+      - mfs_stock_net_debt at the same reporting date, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities (already their difference; summing again double-counts)
+      - any flow or annual-GFS measure
+    dashboard_treatment: dedicated MFS point-in-time stock series only
+    source_label_variants: ["Net worth", "Net Assets", "Net Assets(a)", "Net Assets (a)"]
+    known_gap_financial_years: ["2005-06"]  # row absent that year specifically; confirmed not a naming change
+
+  mfs_stock_net_debt:
+    economic_meaning: >
+      Net debt (deposits held, government securities, loans and other
+      borrowing, minus cash and deposits, advances paid, and investments/
+      loans/placements), as at the last calendar day of the reporting
+      month. Not published in this table before FY2010-11.
+    flow_or_stock: stock_balance
+    period_granularity: month
+    period_start: null
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_stock_net_debt
+    allowed_comparisons:
+      - mfs_stock_net_debt at a compatible reporting date, a different financial_year (FY2010-11 onward only)
+      - mfs_stock_net_worth at the same reporting date, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with any other stock or flow measure
+      - any annual GFS gfs_liability compatibility_group fact (net_debt already exists there for annual/other sources - MFS net debt must never be merged into that series; it is a monthly, GGS-only, differently-sourced figure)
+    dashboard_treatment: dedicated MFS point-in-time stock series only
+    source_label_variants: ["Net debt"]
+    not_published_before_financial_year: "2010-11"
+
+  mfs_stock_cash_and_deposits:
+    economic_meaning: >
+      Cash and deposits held, as at the last calendar day of the reporting
+      month. Defined for semantic completeness (named explicitly in this
+      milestone's brief) but reserved - it appears only in the Balance
+      Sheet workbook (federal_mfs_balance_sheet), which has no extractor
+      and is out of scope for this milestone's load (see Task 2's
+      inventory). Zero facts will exist under this measure_type until a
+      future milestone builds that extractor.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_stock_cash_and_deposits
+    allowed_comparisons:
+      - mfs_stock_cash_and_deposits at a compatible reporting date, a different financial_year
+    forbidden_comparisons:
+      - summed with any other stock or flow measure
+      - any annual GFS compatibility_group fact
+    dashboard_treatment: reserved - not loaded this milestone
+    source_label_variants: ["Cash and deposits"]
+    reserved_not_loaded_this_milestone: true
+
+# ---------------------------------------------------------------------------
+# Quarantine rules (applied by the Task 5 loader, in addition to the
+# per-measure gates above)
+# ---------------------------------------------------------------------------
+quarantine_rules:
+  - id: unrecognized_label
+    text: A row label (after stripping trailing footnote markers and normalizing whitespace) that matches no measure's source_label_variants is quarantined, not guessed.
+  - id: unrecognized_column_header
+    text: A column header that does not match the extractor's HEADER_RE shape (status/financial_year/optional-YTD/month/unit) is quarantined.
+  - id: ambiguous_bare_month
+    text: A bare (non-YTD-prefixed) month header other than July is quarantined.
+  - id: undetermined_unit
+    text: A column header whose unit token is not $m or $b is quarantined.
+  - id: missing_source_cell
+    text: A row/column intersection with no locatable source cell reference is quarantined (never loaded without a citation).
+  - id: title_and_footnote_rows_excluded
+    text: Row 0 (title) and any row whose label starts with "(<letter>)" (the footnote-explanation paragraph) are structural, not data, and are excluded before quarantine/publish classification even applies.
