@@ -168,7 +168,7 @@ measures:
       - summed with mfs_ytd_revenue or mfs_ytd_expense
       - any annual GFS actual_expense/gfs_revenue compatibility_group fact
     dashboard_treatment: dedicated MFS timeline/comparison API only; plotted as its own line, never stacked into a revenue/expense bar
-    source_label_variants: ["Net operating balance", "Operating Result", "Operating Result (a)(c)"]
+    source_label_variants: ["Net operating balance", "Operating Result", "Operating Result (a)", "Operating Result (a)(c)"]
 
   mfs_ytd_net_capital_investment:
     economic_meaning: >
@@ -216,7 +216,7 @@ measures:
       - summed with revenue, expense, or any cash-balance measure
       - any annual GFS compatibility_group fact
     dashboard_treatment: dedicated MFS timeline/comparison API only
-    source_label_variants: ["Fiscal balance", "Fiscal Balance", "Fiscal Balance (b)(c)"]
+    source_label_variants: ["Fiscal balance", "Fiscal Balance", "Fiscal Balance (b)", "Fiscal Balance (b)(c)"]
 
   mfs_ytd_receipts:
     economic_meaning: >
@@ -270,7 +270,7 @@ measures:
       - summed with mfs_ytd_revenue/mfs_ytd_expense (different accounting basis)
       - any annual GFS compatibility_group fact
     dashboard_treatment: dedicated MFS timeline/comparison API only
-    source_label_variants: ["Payments", "Payments(b)", "Payments(c)", "less Payments(b)", "less Payments(c)", "Underlying Cash Payments"]
+    source_label_variants: ["Payments", "Payments(b)", "Payments(c)", "less Payments", "less Payments(b)", "less Payments(c)", "Underlying Cash Payments"]
     not_published_before_financial_year: "2011-12"
 
   mfs_ytd_net_future_fund_earnings:
