@@ -1,0 +1,291 @@
+# Formal semantic model for the VIC DTF Budget Portfolio Outcomes
+# workbook's two deferred sheets - SOCE (Statement of Changes in
+# Equity) and Admin (Administered Items statement) - see
+# ops/reports/vic-soce-admin-scope-20260805T212053Z.md.
+#
+# This is the single declarative source of truth for these measure-type
+# semantics. scripts/ingest/reload_vic_bpo_soce_admin.py reads this file
+# to populate measure_definitions and to validate every row before it is
+# published; nothing here is duplicated or re-decided in extractor/
+# loader code.
+#
+# Evidence for every decision below was verified directly against
+# data/raw/state/vic_budget_portfolio_outcomes_2024_25/snapshots/20260724T190604Z/files/Budget-portfolio-outcomes-2024-25.xlsx
+# (source_id vic_budget_portfolio_outcomes_2024_25 - the same file
+# already used to load the OS/BS/CFS sheets in the prior milestone).
+#
+# Scope: Admin ("Administered items statement") is administered items -
+# payments made ON BEHALF OF THE STATE, a materially different concept
+# from the department's own controlled operations (the vic_bpo_*
+# measures already loaded from OS/BS/CFS), at a completely different
+# scale. SOCE contributes two genuinely new measures (opening equity
+# position, owner-capital transactions) not captured by OS/BS/CFS.
+# Never conflated with vic_bpo_*, vic_afs_*, or any whole-of-government
+# VIC GFS/state-actuals figure.
+#
+# ---------------------------------------------------------------------------
+# Global rules (apply to every measure type below)
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: administered_items_not_controlled_operations
+    text: >
+      Every vic_bpo_admin_* fact is an ADMINISTERED item (a transaction
+      the department processes on behalf of the State, e.g. payments
+      into the Consolidated Fund, Commonwealth grants passed through)
+      - not the department's own controlled operating result. The
+      source workbook reuses the SAME row-label text ("Net result",
+      "Net assets") for both concepts on different sheets (Admin vs
+      OS/BS) - these are never the same figure and must never be summed
+      or compared as if equivalent. Confirmed by direct value
+      comparison: Admin's Net result (FY2024-25 actual: -$16,443m) is
+      utterly different in scale and sign from OS's Net result (+$7m).
+  - id: admin_net_result_and_comprehensive_result_are_distinct
+    text: >
+      Unlike the department's own OS sheet (where "Net result" and
+      "Comprehensive result" are numerically identical, a duplicate-by-
+      design pair - only "Net result" is loaded there), Admin's "Net
+      result" and "Comprehensive result" are NOT identical (they differ
+      by administered items' own "other comprehensive income"
+      adjustment - confirmed directly: -$16,443m vs -$15,657m actual).
+      Both are loaded here as genuinely distinct measures.
+  - id: soce_opening_and_owner_transactions_are_new
+    text: >
+      vic_bpo_net_assets_opening and vic_bpo_owner_transactions are the
+      only two SOCE line items loaded. SOCE's "Balance at 30 June 2025"
+      (Total equity column) and "Comprehensive result" (Total equity
+      column) are NOT loaded - both are numerically identical to the
+      already-loaded vic_bpo_net_assets and vic_bpo_net_result
+      respectively (verified by direct value comparison: 83/87 both
+      ways, 7/0 both ways) - the same duplicate-by-design pattern found
+      throughout this family. Only the genuinely new information
+      (opening position, owner-capital movements) is loaded.
+  - id: soce_total_equity_column_only
+    text: >
+      SOCE's "Accumulated surplus" and "Contributions by owner"
+      sub-component columns are out of scope - only the "Total equity"
+      aggregate column is extracted, matching the level of aggregation
+      already used everywhere else in this family. A future milestone
+      could add the sub-component breakdown if there is dashboard value
+      in it.
+  - id: soce_variance_block_never_loaded
+    text: >
+      SOCE's "Variance" row-block (Actual minus Budget) is never
+      extracted or loaded, the same principle as the Actual/Budget/
+      Variance column tables elsewhere in this family - it is entirely
+      derivable from the actual and budget facts already published.
+  - id: vic_bpo_soce_admin_never_in_annual_compatibility_group
+    text: >
+      No measure type defined below may share a compatibility_group with
+      any annual GFS/PBS actual or budget measure type, any whole-of-
+      government VIC family, or the sibling vic_bpo_*/vic_afs_*
+      families. Every measure type defined below has its own dedicated
+      compatibility_group (1:1 with its measure_type name).
+  - id: vic_bpo_soce_admin_never_contributes_to_annual_root_totals
+    text: >
+      No measure type defined below is registered under any existing
+      dashboard mode_to_family mapping
+      (config/compatibility/view_families.yaml). This family is exposed
+      only through the existing GFS/jurisdiction explorer's own
+      citation-bearing query, never through the additive annual
+      dashboard tree.
+
+# ---------------------------------------------------------------------------
+# Measures
+# ---------------------------------------------------------------------------
+
+measures:
+  vic_bpo_admin_income:
+    economic_meaning: >
+      Total administered income for the Victorian Department of
+      Treasury and Finance (payments made on behalf of the State,
+      Commonwealth grants passed through, etc), accrual basis,
+      FY2024-25 - actual vs budget.
+    flow_or_stock: flow
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_admin_income
+    allowed_comparisons:
+      - vic_bpo_admin_income actual vs vic_bpo_admin_income budget, same financial_year
+      - vic_bpo_admin_expense in the same financial_year and estimate_status
+    forbidden_comparisons:
+      - vic_bpo_revenue (the department's own controlled-operations revenue - a completely different concept and scale)
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only (own compatibility_group); never in an annual additive tree
+    source_label_variants: ["Total administered income"]
+
+  vic_bpo_admin_expense:
+    economic_meaning: >
+      Total administered expenses, accrual basis, FY2024-25 - actual vs
+      budget.
+    flow_or_stock: flow
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_admin_expense
+    allowed_comparisons:
+      - vic_bpo_admin_expense actual vs vic_bpo_admin_expense budget, same financial_year
+      - vic_bpo_admin_income in the same financial_year and estimate_status
+    forbidden_comparisons:
+      - vic_bpo_expense (the department's own controlled-operations expense)
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total administered expenses"]
+
+  vic_bpo_admin_net_result:
+    economic_meaning: >
+      Administered net result (income less expenses, plus other
+      economic flows), FY2024-25 - actual vs budget. A derived balance,
+      genuinely distinct from vic_bpo_admin_comprehensive_result here
+      (unlike the department's own OS sheet).
+    flow_or_stock: balance
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_admin_net_result
+    allowed_comparisons:
+      - vic_bpo_admin_net_result actual vs budget, same financial_year
+      - vic_bpo_admin_comprehensive_result in the same financial_year and estimate_status, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_admin_income/vic_bpo_admin_expense (already their difference plus other flows)
+      - vic_bpo_net_result (the department's own controlled-operations net result)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net result"]
+
+  vic_bpo_admin_comprehensive_result:
+    economic_meaning: >
+      Administered comprehensive result (net result plus other
+      comprehensive income), FY2024-25 - actual vs budget. A derived
+      balance, genuinely distinct from vic_bpo_admin_net_result here.
+    flow_or_stock: balance
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_admin_comprehensive_result
+    allowed_comparisons:
+      - vic_bpo_admin_comprehensive_result actual vs budget, same financial_year
+      - vic_bpo_admin_net_result in the same financial_year and estimate_status
+    forbidden_comparisons:
+      - summed with any other measure in this family
+      - vic_bpo_net_result (the department's own controlled-operations comprehensive result, excluded there as a duplicate of net_result - not the same situation here)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Comprehensive result"]
+
+  vic_bpo_admin_total_assets:
+    economic_meaning: >
+      Total administered assets, as at 30 June 2025 - actual vs budget.
+    flow_or_stock: stock
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_admin_total_assets
+    allowed_comparisons:
+      - vic_bpo_admin_total_assets actual vs budget, same reporting date
+      - vic_bpo_admin_total_liabilities and vic_bpo_admin_net_assets at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - vic_bpo_total_assets (the department's own controlled-operations assets)
+      - any whole-of-government VIC GFS liability/asset compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total administered assets"]
+
+  vic_bpo_admin_total_liabilities:
+    economic_meaning: >
+      Total administered liabilities, as at 30 June 2025 - actual vs
+      budget.
+    flow_or_stock: stock
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_admin_total_liabilities
+    allowed_comparisons:
+      - vic_bpo_admin_total_liabilities actual vs budget, same reporting date
+      - vic_bpo_admin_total_assets and vic_bpo_admin_net_assets at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - vic_bpo_total_liabilities (the department's own controlled-operations liabilities)
+      - any whole-of-government VIC GFS liability compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total administered liabilities"]
+
+  vic_bpo_admin_net_assets:
+    economic_meaning: >
+      Administered total assets minus administered total liabilities,
+      as at 30 June 2025 - actual vs budget. A derived stock balance.
+    flow_or_stock: stock_balance
+    source_sheet: Admin
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_admin_net_assets
+    allowed_comparisons:
+      - vic_bpo_admin_net_assets actual vs budget, same reporting date
+      - vic_bpo_admin_total_assets and vic_bpo_admin_total_liabilities at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_admin_total_assets/vic_bpo_admin_total_liabilities (already their difference)
+      - vic_bpo_net_assets (the department's own controlled-operations net assets)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net assets"]
+
+  vic_bpo_net_assets_opening:
+    economic_meaning: >
+      Total equity as at 1 July 2024 (the opening position for
+      FY2024-25) - actual vs budget. From the Statement of Changes in
+      Equity - the Balance Sheet only reports the closing (30 June)
+      position, so this is genuinely new information.
+    flow_or_stock: stock
+    source_sheet: SOCE
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_assets_opening
+    allowed_comparisons:
+      - vic_bpo_net_assets_opening actual vs budget, same reporting date
+      - vic_bpo_net_assets at the same estimate_status, plotted as a distinct series (opening vs closing position)
+    forbidden_comparisons:
+      - summed with vic_bpo_owner_transactions or any flow measure
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Balance at 1 July 2024"]
+
+  vic_bpo_owner_transactions:
+    economic_meaning: >
+      Transactions with owners in their capacity as owners (capital
+      contributed by or returned to the State), FY2024-25 - actual vs
+      budget. A genuinely new concept, distinct from operating result.
+    flow_or_stock: flow
+    source_sheet: SOCE
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_owner_transactions
+    allowed_comparisons:
+      - vic_bpo_owner_transactions actual vs budget, same financial_year
+    forbidden_comparisons:
+      - summed with vic_bpo_net_result/vic_bpo_net_operating_balance (a different, non-operating concept)
+      - summed with vic_bpo_net_assets_opening (a stock, not a flow)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Transactions with owners in their capacity as owners"]
