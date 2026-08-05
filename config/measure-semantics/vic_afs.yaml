@@ -1,0 +1,325 @@
+# Formal semantic model for the Victorian Department of Treasury and
+# Finance (DTF) Annual Financial Statements workbook (Task 3 of the
+# adapter-repair-followup milestone).
+#
+# This is the single declarative source of truth for vic_afs_* measure-type
+# semantics. scripts/ingest/load_vic_afs.py reads this file to populate
+# measure_definitions and to validate every row before it is published;
+# nothing here is duplicated or re-decided in extractor/loader code.
+#
+# Evidence for every decision below was verified directly against
+# data/raw/state/vic_annual_financial_statements_2024_25/snapshots/20260724T190604Z/files/Annual-financial-statements-2024-25.xlsx
+# (source_id vic_annual_financial_statements_2024_25) - see
+# ops/reports/vic-afs-inventory-*.md.
+#
+# Scope: this is the VIC Department of Treasury and Finance's OWN
+# departmental financial statements - not whole-of-Victorian-government.
+# It is a genuinely new granularity level, distinct from any existing
+# GFS/state-actuals family, and must never be merged into one.
+#
+# ---------------------------------------------------------------------------
+# Global rules (apply to every measure type below)
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: department_level_not_whole_of_government
+    text: >
+      Every vic_afs_* fact is the Department of Treasury and Finance's own
+      departmental figure, not a whole-of-Victorian-government total. It
+      must never be summed with, compared against as if equivalent to, or
+      substituted for any whole-of-government VIC GFS/state-actuals figure.
+  - id: two_years_embedded_per_edition
+    text: >
+      Each acquired workbook edition embeds two financial years side by
+      side (the reporting year and one prior-year comparative). Loading a
+      later edition (e.g. a future 2025-26 annual report) will re-present
+      the prior year (2024-25) as its own comparative column - if that
+      restated figure differs from what this edition already published for
+      the same measure_type/financial_year, the new fact is quarantined for
+      explicit review (a revision conflict), never silently overwritten.
+      Government financial statements occasionally restate a comparative
+      year for a genuine accounting-policy reason - that must be surfaced,
+      not hidden.
+  - id: balances_never_summed_with_components
+    text: >
+      Net operating balance, net result, and net assets are themselves
+      already-derived balances (not raw revenue/expense/asset/liability
+      totals) and must never be summed with their own component measures,
+      nor with each other, to produce a combined figure. They may only be
+      plotted as their own distinct series.
+  - id: net_assets_vs_net_worth_duplicate
+    text: >
+      The Balance Sheet sheet states the identical total twice by design -
+      once as "Net assets" (immediately after the Liabilities section) and
+      again as "Net worth" (immediately after the Equity section, as an
+      AASB-style cross-check that total equity reconciles to net assets).
+      Only "Net assets" (the first occurrence) is extracted; "Net worth" is
+      intentionally skipped as a definitionally-guaranteed duplicate, not
+      loaded and separately reviewed as a false positive. The Operating
+      Statement has the identical pattern: "Net result" and "Comprehensive
+      result" are always numerically identical for this entity (no items
+      of other comprehensive income) - only "Net result" is loaded.
+  - id: vic_afs_never_in_annual_compatibility_group
+    text: >
+      No vic_afs_* measure type may share a compatibility_group with any
+      annual GFS/PBS actual or budget measure type, nor with any other VIC
+      state-level family. Every vic_afs_* measure type defined below has
+      its own dedicated compatibility_group (1:1 with its measure_type
+      name).
+  - id: vic_afs_never_contributes_to_annual_root_totals
+    text: >
+      No vic_afs_* measure type is registered under any existing dashboard
+      mode_to_family mapping (config/compatibility/view_families.yaml).
+      This family is exposed only through the existing GFS/jurisdiction
+      explorer's own citation-bearing tree query
+      (compatibility_group-scoped), never through the additive annual
+      dashboard tree.
+
+# ---------------------------------------------------------------------------
+# Measures
+# ---------------------------------------------------------------------------
+
+measures:
+  vic_afs_revenue:
+    economic_meaning: >
+      Total income from transactions for the Victorian Department of
+      Treasury and Finance, accrual basis, for the financial year (sum of
+      output appropriations and other income).
+    flow_or_stock: flow
+    source_sheet: Operating Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000  # source is "$ thousand"
+    sign_convention: positive
+    compatibility_group: vic_afs_revenue
+    allowed_comparisons:
+      - vic_afs_revenue in a different financial_year (year-on-year)
+      - vic_afs_expense in the same financial_year (revenue-vs-expense chart, plotted as two distinct series, never summed)
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only (own compatibility_group); never in an annual additive tree
+    source_label_variants: ["Total income from transactions"]
+
+  vic_afs_expense:
+    economic_meaning: >
+      Total expenses from transactions for the Victorian Department of
+      Treasury and Finance, accrual basis, for the financial year.
+    flow_or_stock: flow
+    source_sheet: Operating Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: negative  # source stores expenses as negative; preserved as-is, not sign-flipped
+    compatibility_group: vic_afs_expense
+    allowed_comparisons:
+      - vic_afs_expense in a different financial_year (year-on-year)
+      - vic_afs_revenue in the same financial_year (revenue-vs-expense chart)
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total expenses from transactions"]
+
+  vic_afs_net_operating_balance:
+    economic_meaning: >
+      Net result from transactions (net operating balance): revenue minus
+      expense for the financial year. A derived balance.
+    flow_or_stock: balance
+    source_sheet: Operating Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_operating_balance
+    allowed_comparisons:
+      - vic_afs_net_operating_balance in a different financial_year
+      - vic_afs_net_result in the same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with vic_afs_revenue/vic_afs_expense (already their difference)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net result from transactions (net operating balance)"]
+
+  vic_afs_net_result:
+    economic_meaning: >
+      Comprehensive net result for the financial year: net operating
+      balance plus other economic flows (asset revaluations, financial
+      instrument gains/losses, etc). A derived balance. The source
+      restates this identical figure a second time as "Comprehensive
+      result" (this entity has no items of other comprehensive income
+      distinct from net result, so the two rows are always numerically
+      identical) - only "Net result" (the first occurrence) is loaded,
+      the same duplicate-by-design pattern as net_assets_vs_net_worth.
+    flow_or_stock: balance
+    source_sheet: Operating Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_result
+    allowed_comparisons:
+      - vic_afs_net_result in a different financial_year
+      - vic_afs_net_operating_balance in the same financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with any other measure in this family
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net result"]
+    excluded_label_variants: ["Comprehensive result"]  # definitionally-identical duplicate row; never loaded
+
+  vic_afs_total_assets:
+    economic_meaning: >
+      Total assets (financial plus non-financial) for the Victorian
+      Department of Treasury and Finance, as at 30 June.
+    flow_or_stock: stock
+    source_sheet: Balance Sheet
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: positive
+    compatibility_group: vic_afs_total_assets
+    allowed_comparisons:
+      - vic_afs_total_assets in a different financial_year
+      - vic_afs_total_liabilities and vic_afs_net_assets at the same reporting date, plotted as distinct series
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS liability/asset compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total assets"]
+
+  vic_afs_total_liabilities:
+    economic_meaning: >
+      Total liabilities for the Victorian Department of Treasury and
+      Finance, as at 30 June.
+    flow_or_stock: stock
+    source_sheet: Balance Sheet
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: positive
+    compatibility_group: vic_afs_total_liabilities
+    allowed_comparisons:
+      - vic_afs_total_liabilities in a different financial_year
+      - vic_afs_total_assets and vic_afs_net_assets at the same reporting date, plotted as distinct series
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS liability compatibility_group fact (net_debt/liabilities already exist there for whole-of-government - must never be merged)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total liabilities"]
+
+  vic_afs_net_assets:
+    economic_meaning: >
+      Total assets minus total liabilities, as at 30 June. A derived stock
+      balance. The source restates this identical figure a second time as
+      "Net worth" after the Equity section - only this first occurrence is
+      loaded (see the net_assets_vs_net_worth_duplicate global rule).
+    flow_or_stock: stock_balance
+    source_sheet: Balance Sheet
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_assets
+    allowed_comparisons:
+      - vic_afs_net_assets in a different financial_year
+      - vic_afs_total_assets and vic_afs_total_liabilities at the same reporting date, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_afs_total_assets/vic_afs_total_liabilities (already their difference)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net assets"]
+    excluded_label_variants: ["Net worth"]  # definitionally-identical duplicate row; never loaded
+
+  vic_afs_net_cash_operating:
+    economic_meaning: >
+      Net cash flows from/(used in) operating activities, cash basis, for
+      the financial year.
+    flow_or_stock: flow
+    source_sheet: Cash Flow Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_cash_operating
+    allowed_comparisons:
+      - vic_afs_net_cash_operating in a different financial_year
+      - vic_afs_net_cash_investing and vic_afs_net_cash_financing in the same financial_year, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_afs_revenue/vic_afs_expense (different accounting basis - accrual vs cash)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from/(used in) operating activities"]
+
+  vic_afs_net_cash_investing:
+    economic_meaning: >
+      Net cash flows from/(used in) investing activities, cash basis, for
+      the financial year.
+    flow_or_stock: flow
+    source_sheet: Cash Flow Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_cash_investing
+    allowed_comparisons:
+      - vic_afs_net_cash_investing in a different financial_year
+      - vic_afs_net_cash_operating and vic_afs_net_cash_financing in the same financial_year, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_afs_revenue/vic_afs_expense
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from/(used in) investing activities"]
+
+  vic_afs_net_cash_financing:
+    economic_meaning: >
+      Net cash flows from/(used in) financing activities, cash basis, for
+      the financial year.
+    flow_or_stock: flow
+    source_sheet: Cash Flow Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: signed
+    compatibility_group: vic_afs_net_cash_financing
+    allowed_comparisons:
+      - vic_afs_net_cash_financing in a different financial_year
+      - vic_afs_net_cash_operating and vic_afs_net_cash_investing in the same financial_year, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_afs_revenue/vic_afs_expense
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from/(used in) financing activities"]
+
+  vic_afs_cash_end_of_year:
+    economic_meaning: >
+      Cash and cash equivalents at end of financial year, as at 30 June.
+      A stock figure, not a flow - do not sum with the three net-cash-flow
+      measures above (their sum plus the opening balance already equals
+      this figure by construction; summing it again would double-count).
+    flow_or_stock: stock
+    source_sheet: Cash Flow Statement
+    period_granularity: financial_year
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000
+    sign_convention: positive
+    compatibility_group: vic_afs_cash_end_of_year
+    allowed_comparisons:
+      - vic_afs_cash_end_of_year in a different financial_year
+    forbidden_comparisons:
+      - summed with vic_afs_net_cash_operating/investing/financing (already reconciles to this figure via the opening balance)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Cash and cash equivalents at end of financial year"]
