@@ -9,11 +9,9 @@ audit. Read-only - does not write to data/facts.db.
 from __future__ import annotations
 
 import csv
-import re
 import sys
 from pathlib import Path
 
-import pandas as pd
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
