@@ -237,6 +237,7 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 data/new/
+data/backups/
 
 .env
 venv/
