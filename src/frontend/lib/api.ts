@@ -304,3 +304,73 @@ export const apiV2 = {
     return getJson<V2Tree>(`/v2/tree?${q.toString()}`);
   },
 };
+
+export type MfsFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
+
+export type MfsMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  flow_or_stock: MfsFlowOrStock;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+  sign_convention: string;
+  dashboard_treatment: string;
+  not_published_before_financial_year?: string | null;
+  only_published_financial_years?: string[] | null;
+  reserved_not_loaded_this_milestone?: boolean | null;
+};
+
+export type MfsCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type MfsFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: MfsFlowOrStock;
+  amount_aud: number;
+  unit: string;
+  financial_year: string;
+  reporting_month: string;
+  elapsed_months: number;
+  period_start?: string | null;
+  period_end: string;
+  period_granularity: string;
+  accounting_basis: string;
+  estimate_status: string;
+  compatibility_group: string;
+  publication_date?: string | null;
+  vintage: string;
+  citation: MfsCitation;
+};
+
+export type MfsSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: MfsFlowOrStock;
+  facts: MfsFact[];
+};
+
+export type MfsCompareResponse = {
+  measure_types: string[];
+  series: MfsSeriesResponse[];
+  warning?: string | null;
+};
+
+export const apiMfs = {
+  measures: () => getJson<MfsMeasureInfo[]>("/v2/mfs/measures"),
+  years: (measureType: string) =>
+    getJson<string[]>(`/v2/mfs/years?measure_type=${encodeURIComponent(measureType)}`),
+  series: (measureType: string, financialYear?: string) => {
+    const q = new URLSearchParams({ measure_type: measureType });
+    if (financialYear) q.set("financial_year", financialYear);
+    return getJson<MfsSeriesResponse>(`/v2/mfs/series?${q.toString()}`);
+  },
+  compare: (measureTypes: string[], financialYear?: string) => {
+    const q = new URLSearchParams({ measure_types: measureTypes.join(",") });
+    if (financialYear) q.set("financial_year", financialYear);
+    return getJson<MfsCompareResponse>(`/v2/mfs/compare?${q.toString()}`);
+  },
+};

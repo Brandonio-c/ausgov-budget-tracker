@@ -16,6 +16,9 @@ export default function ExplorersIndex() {
           <Link href="/explorers/gfs">GFS / jurisdiction explorer</Link>
         </li>
         <li>
+          <Link href="/explorers/mfs">Monthly Financial Statements (MFS) explorer</Link>
+        </li>
+        <li>
           <Link href="/">Legacy default dashboard</Link>
         </li>
       </ul>
