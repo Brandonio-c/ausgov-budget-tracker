@@ -211,13 +211,17 @@ def test_validate_config_accepts_empty_registry(tmp_path):
     assert result["entry_count"] == 0
 
 
-def test_real_repo_config_has_the_four_reviewed_false_positive_groups():
+def test_real_repo_config_has_the_six_reviewed_false_positive_groups():
     """The real registry (config/audit/reviewed_duplicate_facts.yaml) has
-    exactly the 4 query-false-positive groups from the Task 3 duplicate-
-    fact investigation. The 5th group (QLD QGIP Goondiwindi "Black Spot")
-    was a genuine true duplicate, resolved by deletion rather than being
-    registered here - a true duplicate must never be reviewed into a
-    permanent pass."""
+    the 4 query-false-positive groups from the database-hygiene
+    milestone's Task 3 duplicate-fact investigation, plus 2 more from the
+    MFS-aggregates milestone's Task 7 load (two genuinely different
+    reporting months under mfs_ytd_net_capital_investment that happen to
+    report the identical cumulative YTD figure - see
+    ops/reports/mfs-duplicate-fact-investigation-*.md). The original 5th
+    group (QLD QGIP Goondiwindi "Black Spot") was a genuine true
+    duplicate, resolved by deletion rather than being registered here - a
+    true duplicate must never be reviewed into a permanent pass."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 4
+    assert result["entry_count"] == 6

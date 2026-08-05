@@ -432,14 +432,24 @@ measures:
       - any flow or annual-GFS measure
     dashboard_treatment: dedicated MFS point-in-time stock series only
     source_label_variants: ["Net worth", "Net Assets", "Net Assets(a)", "Net Assets (a)"]
-    known_gap_financial_years: ["2005-06"]  # row absent that year specifically; confirmed not a naming change
+    # No gap: present in all 26 years (2000-01..2025-26), verified via a
+    # full, unclipped row dump of every sheet - see Task 8's correction
+    # note. An earlier row-range bug in the Task 2 investigation script
+    # (not the extractor or loader, both unaffected) incorrectly reported
+    # FY2005-06 as missing this row by clipping the true last row on
+    # sheets with no trailing footnote paragraph.
 
   mfs_stock_net_debt:
     economic_meaning: >
       Net debt (deposits held, government securities, loans and other
       borrowing, minus cash and deposits, advances paid, and investments/
       loans/placements), as at the last calendar day of the reporting
-      month. Not published in this table before FY2010-11.
+      month. Not published in this table before FY2007-08 (verified via a
+      full, unclipped row dump of every sheet - see Task 8's correction
+      note; an earlier row-range bug in the Task 2 investigation script
+      undercounted this by clipping the true last row on the 3 sheets
+      with no trailing footnote paragraph, understating the true start
+      year as FY2010-11).
     flow_or_stock: stock_balance
     period_granularity: month
     period_start: null
@@ -451,14 +461,14 @@ measures:
     sign_convention: signed
     compatibility_group: mfs_stock_net_debt
     allowed_comparisons:
-      - mfs_stock_net_debt at a compatible reporting date, a different financial_year (FY2010-11 onward only)
+      - mfs_stock_net_debt at a compatible reporting date, a different financial_year (FY2007-08 onward only)
       - mfs_stock_net_worth at the same reporting date, plotted as a distinct series
     forbidden_comparisons:
       - summed with any other stock or flow measure
       - any annual GFS gfs_liability compatibility_group fact (net_debt already exists there for annual/other sources - MFS net debt must never be merged into that series; it is a monthly, GGS-only, differently-sourced figure)
     dashboard_treatment: dedicated MFS point-in-time stock series only
     source_label_variants: ["Net debt"]
-    not_published_before_financial_year: "2010-11"
+    not_published_before_financial_year: "2007-08"
 
   mfs_stock_cash_and_deposits:
     economic_meaning: >
