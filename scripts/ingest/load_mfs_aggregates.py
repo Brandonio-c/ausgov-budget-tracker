@@ -241,7 +241,7 @@ def ensure_measure_node(conn: sqlite3.Connection, doc_id: int, measure_type: str
     return cur.lastrowid
 
 
-def run(conn: sqlite3.Connection, *, apply: bool) -> dict:
+def run(conn: sqlite3.Connection, *, apply: bool, quarantine_path: Path = QUARANTINE_PATH) -> dict:
     semantics = load_semantics()
     label_index = build_label_index(semantics)
 
@@ -338,8 +338,8 @@ def run(conn: sqlite3.Connection, *, apply: bool) -> dict:
         conn.commit()
 
     if quarantine:
-        QUARANTINE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with QUARANTINE_PATH.open("w", encoding="utf-8") as fh:
+        quarantine_path.parent.mkdir(parents=True, exist_ok=True)
+        with quarantine_path.open("w", encoding="utf-8") as fh:
             for item in quarantine:
                 fh.write(json.dumps(item, ensure_ascii=False, default=str) + "\n")
 
