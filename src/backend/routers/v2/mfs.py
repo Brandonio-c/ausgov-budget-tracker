@@ -36,8 +36,33 @@ from pydantic import BaseModel
 
 from ...facts_db import get_facts_connection
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
-SEMANTICS_PATH = REPO_ROOT / "config" / "measure-semantics" / "mfs.yaml"
+_HERE = Path(__file__).resolve().parent
+
+
+def _default_semantics_path() -> Path:
+    """Resolve config in repo checkout or Docker (/app/config bind-mount).
+
+    Mirrors compatibility.py's _default_view_families_path() exactly - the
+    container's COPY . /app/backend (context: ./src/backend) makes this
+    file's on-disk depth one level shallower than the repo checkout
+    (.../ausgov-budget-tracker/src/backend/routers/v2/mfs.py locally vs
+    /app/backend/routers/v2/mfs.py in the container), so a single fixed
+    parents[N] cannot work in both places.
+    """
+    candidates: list[Path] = [
+        Path("/app/config/measure-semantics/mfs.yaml"),
+    ]
+    if len(_HERE.parents) >= 4:
+        candidates.append(_HERE.parents[3] / "config" / "measure-semantics" / "mfs.yaml")
+    if len(_HERE.parents) >= 3:
+        candidates.append(_HERE.parents[2] / "config" / "measure-semantics" / "mfs.yaml")
+    for path in candidates:
+        if path.is_file():
+            return path
+    return candidates[0]
+
+
+SEMANTICS_PATH = _default_semantics_path()
 
 router = APIRouter(prefix="/mfs", tags=["v2-mfs"])
 

@@ -205,6 +205,44 @@ def test_citation_present_on_every_fact(client: TestClient):
         assert f["citation"]["locator"]
 
 
+# ---- config path resolution: repo checkout vs Docker container ----------
+#
+# Found in Task 12 (production verification): the container's `COPY .
+# /app/backend` (context: ./src/backend) makes this file's on-disk depth
+# one level shallower than the repo checkout
+# (.../ausgov-budget-tracker/src/backend/routers/v2/mfs.py locally vs
+# /app/backend/routers/v2/mfs.py in the container) - a single fixed
+# `parents[4]` resolved to the wrong path in the container
+# (FileNotFoundError: /config/measure-semantics/mfs.yaml, missing /app),
+# which only surfaced as a real 500 once actually deployed. Fixed to
+# mirror compatibility.py's _default_view_families_path() multi-candidate
+# pattern exactly.
+
+
+def test_semantics_path_resolves_in_repo_checkout():
+    import backend.routers.v2.mfs as mfs_module
+
+    assert mfs_module.SEMANTICS_PATH.is_file()
+    assert mfs_module.SEMANTICS_PATH.name == "mfs.yaml"
+
+
+def test_semantics_path_candidates_cover_both_layouts(monkeypatch, tmp_path):
+    import backend.routers.v2.mfs as mfs_module
+
+    # Simulate the container layout: /app/backend/routers/v2 (one level
+    # shallower than the repo checkout's src/backend/routers/v2).
+    fake_app = tmp_path / "app"
+    fake_here = fake_app / "backend" / "routers" / "v2"
+    fake_here.mkdir(parents=True)
+    (fake_app / "config" / "measure-semantics").mkdir(parents=True)
+    (fake_app / "config" / "measure-semantics" / "mfs.yaml").write_text("measures: {}\n")
+
+    monkeypatch.setattr(mfs_module, "_HERE", fake_here)
+    resolved = mfs_module._default_semantics_path()
+    assert resolved == fake_app / "config" / "measure-semantics" / "mfs.yaml"
+    assert resolved.is_file()
+
+
 # ---- the core non-negotiable: annual totals unchanged -------------------
 
 
