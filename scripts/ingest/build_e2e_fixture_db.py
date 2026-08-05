@@ -9,8 +9,10 @@ dashboard UI through a real browser, so it needs at least one fact per
 mode/level combination that src/frontend/tests-e2e/dashboard.spec.ts
 deep-links to - federal actuals, federal budget, QLD state actuals,
 local government actuals, and GDP/ratios - plus a debt/liability fact so
-the always-on debt widget has something to load. No production database
-or raw-data corpus is used or required.
+the always-on debt widget has something to load, and (added by the
+MFS-aggregates milestone) a small MFS flow + stock series so
+tests-e2e/mfs-explorer.spec.ts can drive the real /explorers/mfs page. No
+production database or raw-data corpus is used or required.
 
 Note: src/frontend/tests-e2e/pbs-s6-crosswalk.spec.ts and
 pbs-year-fallback.spec.ts are NOT exercised by this fixture - both
@@ -143,6 +145,49 @@ def main() -> int:
     # amount_aud OR quantity, and the API reads amount_value for ratios).
     conn.execute(
         "UPDATE facts SET amount_aud = NULL WHERE fact_key = 'fixture|ratio|2024-25'"
+    )
+
+    # MFS (Monthly Financial Statements) - a small flow + a small stock
+    # series, FY2024-25, so tests-e2e/mfs-explorer.spec.ts (MFS-aggregates
+    # milestone) can drive the real /explorers/mfs page against a fixture
+    # backend. measure_definitions rows for mfs_ytd_revenue/
+    # mfs_stock_total_assets already exist (schema_migrate applies
+    # migrations/007_mfs_measures.sql unconditionally).
+    mfs_doc = add_doc("fixture_mfs_aggregates", "Commonwealth", "federal")
+    mfs_rev_node = add_node(mfs_doc, "fixture:mfs:revenue", "MFS YTD revenue", "Commonwealth", "federal")
+    mfs_assets_node = add_node(mfs_doc, "fixture:mfs:assets", "MFS total assets (stock)", "Commonwealth", "federal")
+    for month, period_end, amount in [("July", "2024-07-31", 50_000_000), ("August", "2024-08-31", 115_000_000)]:
+        cur = conn.execute(
+            """
+            INSERT INTO facts (
+                fact_key, financial_year, period_start, period_end, period_granularity,
+                measure_type, accounting_basis, estimate_status, amount_aud, unit, currency,
+                source_document_id, source_locator_json, retrieved_at
+            ) VALUES (?, '2024-25', '2024-07-01', ?, 'month', 'mfs_ytd_revenue', 'accrual', 'actual', ?, 'AUD', 'AUD', ?, '{"locator": "fixture"}', '2026-01-01T00:00:00Z')
+            """,
+            (f"fixture_mfs_aggregates|2024-25|{month}|mfs_ytd_revenue|accrual|actual|Commonwealth", period_end, amount, mfs_doc),
+        )
+        conn.execute(
+            "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')",
+            (cur.lastrowid, mfs_rev_node),
+        )
+    cur = conn.execute(
+        """
+        INSERT INTO facts (
+            fact_key, financial_year, period_start, period_end, period_granularity,
+            measure_type, accounting_basis, estimate_status, amount_aud, unit, currency,
+            source_document_id, source_locator_json, retrieved_at
+        ) VALUES (
+            'fixture_mfs_aggregates|2024-25|July|mfs_stock_total_assets|accrual|actual|Commonwealth',
+            '2024-25', NULL, '2024-07-31', 'month', 'mfs_stock_total_assets', 'accrual', 'actual',
+            900_000_000, 'AUD', 'AUD', ?, '{"locator": "fixture"}', '2026-01-01T00:00:00Z'
+        )
+        """,
+        (mfs_doc,),
+    )
+    conn.execute(
+        "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')",
+        (cur.lastrowid, mfs_assets_node),
     )
 
     conn.commit()

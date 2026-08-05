@@ -112,13 +112,14 @@ jobs:
             curl -sf "http://127.0.0.1:3313/ausgov-budget-tracker/" && break
             sleep 1
           done
-      - name: Playwright (fixture-compatible spec only)
+      - name: Playwright (fixture-compatible specs only)
         working-directory: src/frontend
-        # dashboard.spec.ts deep-links purely by mode/level/year query
-        # params, so it runs cleanly against the synthetic e2e fixture DB.
-        # pbs-s6-crosswalk.spec.ts and pbs-year-fallback.spec.ts hardcode
-        # specific real fact_ids/node names resolved against the live
-        # production database (see their own docstrings) and are
-        # deliberately NOT run here - they remain local-only checks
-        # against the real data/facts.db (Task 8-style validation).
-        run: npx playwright test tests-e2e/dashboard.spec.ts
+        # dashboard.spec.ts and mfs-explorer.spec.ts both deep-link/select
+        # purely by mode/level/year/measure_type against the synthetic e2e
+        # fixture DB (build_e2e_fixture_db.py). pbs-s6-crosswalk.spec.ts and
+        # pbs-year-fallback.spec.ts hardcode specific real fact_ids/node
+        # names resolved against the live production database (see their
+        # own docstrings) and are deliberately NOT run here - they remain
+        # local-only checks against the real data/facts.db (Task 8-style
+        # validation).
+        run: npx playwright test tests-e2e/dashboard.spec.ts tests-e2e/mfs-explorer.spec.ts
