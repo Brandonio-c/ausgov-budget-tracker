@@ -180,10 +180,10 @@ def main() -> int:
         ) VALUES (
             'fixture_mfs_aggregates|2024-25|July|mfs_stock_total_assets|accrual|actual|Commonwealth',
             '2024-25', NULL, '2024-07-31', 'month', 'mfs_stock_total_assets', 'accrual', 'actual',
-            900_000_000, 'AUD', 'AUD', ?, '{"locator": "fixture"}', '2026-01-01T00:00:00Z'
+            ?, 'AUD', 'AUD', ?, '{"locator": "fixture"}', '2026-01-01T00:00:00Z'
         )
         """,
-        (mfs_doc,),
+        (900_000_000, mfs_doc),
     )
     conn.execute(
         "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')",
