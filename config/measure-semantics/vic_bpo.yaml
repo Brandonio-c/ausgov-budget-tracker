@@ -1,0 +1,323 @@
+# Formal semantic model for the Victorian Department of Treasury and
+# Finance (DTF) Budget Portfolio Outcomes workbook (adapter-repair
+# followup milestone, second family - see
+# ops/reports/next-structured-pack-selection-20260805T182251Z.md).
+#
+# This is the single declarative source of truth for vic_bpo_* measure-type
+# semantics. scripts/ingest/reload_vic_bpo.py reads this file to populate
+# measure_definitions and to validate every row before it is published;
+# nothing here is duplicated or re-decided in extractor/loader code.
+#
+# Evidence for every decision below was verified directly against
+# data/raw/state/vic_budget_portfolio_outcomes_2024_25/snapshots/20260724T190604Z/files/Budget-portfolio-outcomes-2024-25.xlsx
+# (source_id vic_budget_portfolio_outcomes_2024_25).
+#
+# Scope: this is the VIC Department of Treasury and Finance's OWN
+# departmental Budget Portfolio Outcomes - an actual-vs-budget variance
+# comparison for FY2024-25 only (not a multi-year series like the
+# already-loaded vic_afs_* family). Genuinely different semantic shape
+# from vic_afs_*: every measure here carries two facts for the SAME
+# financial_year (estimate_status='actual' and estimate_status='budget'),
+# never a second financial_year. Never conflated with vic_afs_* or any
+# whole-of-government VIC GFS/state-actuals figure.
+#
+# ---------------------------------------------------------------------------
+# Global rules (apply to every measure type below)
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: department_level_not_whole_of_government
+    text: >
+      Every vic_bpo_* fact is the Department of Treasury and Finance's own
+      departmental figure, not a whole-of-Victorian-government total. It
+      must never be summed with, compared against as if equivalent to, or
+      substituted for any whole-of-government VIC GFS/state-actuals
+      figure, nor for the vic_afs_* family (a different statement shape
+      from the same department).
+  - id: actual_vs_budget_same_year_not_multi_year
+    text: >
+      Every vic_bpo_* measure_type is published with exactly two
+      estimate_status values (actual, budget) for the SAME financial_year
+      (2024-25) - this is an actual-vs-budget-variance comparison for one
+      year, never a multi-year comparative series like vic_afs_*. Do not
+      compare a vic_bpo_* actual fact against a vic_afs_* fact from a
+      different financial_year as if they were the same kind of
+      comparison.
+  - id: variance_column_never_loaded
+    text: >
+      The source workbook's "Variance" column (Actual minus Budget) is
+      never extracted or loaded as its own fact - it is entirely
+      derivable from the actual and budget facts already published, and
+      loading it separately would double-count exactly like the
+      Net assets/Net worth duplicate pattern found in the AFS family.
+      Compute variance client-side from the actual and budget facts if
+      needed for display.
+  - id: net_assets_vs_total_equity_duplicate
+    text: >
+      The Balance Sheet (BS) sheet states the identical total twice by
+      design - once as "Net assets" (immediately after the Liabilities
+      section) and again as "Total equity" (at the end of the Equity
+      section, as an AASB-style cross-check that total equity reconciles
+      to net assets). Only "Net assets" (the first occurrence) is
+      extracted; "Total equity" is intentionally skipped as a
+      definitionally-guaranteed duplicate, the same pattern as
+      vic_afs_net_assets vs "Net worth".
+  - id: net_result_vs_comprehensive_result_duplicate
+    text: >
+      The Operating Statement (OS) sheet has the identical duplicate
+      pattern found in vic_afs_net_result: "Net result" and
+      "Comprehensive result" are numerically identical in every column
+      for this entity (no items of other comprehensive income distinct
+      from net result). Only "Net result" is loaded.
+  - id: vic_bpo_never_in_annual_compatibility_group
+    text: >
+      No vic_bpo_* measure type may share a compatibility_group with any
+      annual GFS/PBS actual or budget measure type, nor with any other VIC
+      state-level family (including vic_afs_*). Every vic_bpo_* measure
+      type defined below has its own dedicated compatibility_group (1:1
+      with its measure_type name).
+  - id: vic_bpo_never_contributes_to_annual_root_totals
+    text: >
+      No vic_bpo_* measure type is registered under any existing dashboard
+      mode_to_family mapping (config/compatibility/view_families.yaml).
+      This family is exposed only through the existing GFS/jurisdiction
+      explorer's own citation-bearing query, never through the additive
+      annual dashboard tree.
+
+# ---------------------------------------------------------------------------
+# Measures
+# ---------------------------------------------------------------------------
+
+measures:
+  vic_bpo_revenue:
+    economic_meaning: >
+      Total revenue and income from transactions for the Victorian
+      Department of Treasury and Finance, accrual basis, FY2024-25 -
+      actual result vs the published budget.
+    flow_or_stock: flow
+    source_sheet: OS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_revenue
+    allowed_comparisons:
+      - vic_bpo_revenue actual vs vic_bpo_revenue budget, same financial_year (the core actual-vs-budget lens)
+      - vic_bpo_expense in the same financial_year and estimate_status (revenue-vs-expense chart, plotted as two distinct series, never summed)
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+      - vic_afs_revenue (a different statement shape, multi-year actuals not actual-vs-budget)
+    dashboard_treatment: GFS/jurisdiction explorer only (own compatibility_group); never in an annual additive tree
+    source_label_variants: ["Total revenue and income from transactions"]
+
+  vic_bpo_expense:
+    economic_meaning: >
+      Total expenses from transactions for the Victorian Department of
+      Treasury and Finance, accrual basis, FY2024-25 - actual vs budget.
+    flow_or_stock: flow
+    source_sheet: OS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_expense
+    allowed_comparisons:
+      - vic_bpo_expense actual vs vic_bpo_expense budget, same financial_year
+      - vic_bpo_revenue in the same financial_year and estimate_status
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS/state-actuals compatibility_group fact
+      - vic_afs_expense (different statement shape)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total expenses from transactions"]
+
+  vic_bpo_net_operating_balance:
+    economic_meaning: >
+      Net result from transactions (net operating balance): revenue minus
+      expense, FY2024-25 - actual vs budget. A derived balance.
+    flow_or_stock: balance
+    source_sheet: OS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_operating_balance
+    allowed_comparisons:
+      - vic_bpo_net_operating_balance actual vs budget, same financial_year
+      - vic_bpo_net_result in the same financial_year and estimate_status, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_revenue/vic_bpo_expense (already their difference)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net result from transactions (net operating balance)"]
+
+  vic_bpo_net_result:
+    economic_meaning: >
+      Comprehensive net result for FY2024-25 - actual vs budget. A
+      derived balance. The source restates this identical figure a
+      second time as "Comprehensive result" - only "Net result" is
+      loaded.
+    flow_or_stock: balance
+    source_sheet: OS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_result
+    allowed_comparisons:
+      - vic_bpo_net_result actual vs budget, same financial_year
+      - vic_bpo_net_operating_balance in the same financial_year and estimate_status
+    forbidden_comparisons:
+      - summed with any other measure in this family
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net result"]
+    excluded_label_variants: ["Comprehensive result"]
+
+  vic_bpo_total_assets:
+    economic_meaning: >
+      Total assets (financial plus non-financial) for the Victorian
+      Department of Treasury and Finance, as at 30 June 2025 - actual vs
+      budget.
+    flow_or_stock: stock
+    source_sheet: BS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_total_assets
+    allowed_comparisons:
+      - vic_bpo_total_assets actual vs budget, same reporting date
+      - vic_bpo_total_liabilities and vic_bpo_net_assets at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS liability/asset compatibility_group fact
+      - vic_afs_total_assets (different statement shape)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total assets"]
+
+  vic_bpo_total_liabilities:
+    economic_meaning: >
+      Total liabilities for the Victorian Department of Treasury and
+      Finance, as at 30 June 2025 - actual vs budget.
+    flow_or_stock: stock
+    source_sheet: BS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_total_liabilities
+    allowed_comparisons:
+      - vic_bpo_total_liabilities actual vs budget, same reporting date
+      - vic_bpo_total_assets and vic_bpo_net_assets at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - any whole-of-government VIC GFS liability compatibility_group fact
+      - vic_afs_total_liabilities (different statement shape)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Total liabilities"]
+
+  vic_bpo_net_assets:
+    economic_meaning: >
+      Total assets minus total liabilities, as at 30 June 2025 - actual
+      vs budget. A derived stock balance. The source restates this
+      identical figure a second time as "Total equity" - only "Net
+      assets" is loaded.
+    flow_or_stock: stock_balance
+    source_sheet: BS
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_assets
+    allowed_comparisons:
+      - vic_bpo_net_assets actual vs budget, same reporting date
+      - vic_bpo_total_assets and vic_bpo_total_liabilities at the same reporting date and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_total_assets/vic_bpo_total_liabilities (already their difference)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net assets"]
+    excluded_label_variants: ["Total equity"]
+
+  vic_bpo_net_cash_operating:
+    economic_meaning: >
+      Net cash flows from/(used in) operating activities, cash basis,
+      FY2024-25 - actual vs budget.
+    flow_or_stock: flow
+    source_sheet: CFS
+    period_granularity: financial_year
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_cash_operating
+    allowed_comparisons:
+      - vic_bpo_net_cash_operating actual vs budget, same financial_year
+      - vic_bpo_net_cash_investing and vic_bpo_net_cash_financing in the same financial_year and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_revenue/vic_bpo_expense (different accounting basis)
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from / (used in) operating activities"]
+
+  vic_bpo_net_cash_investing:
+    economic_meaning: >
+      Net cash flows from/(used in) investing activities, cash basis,
+      FY2024-25 - actual vs budget.
+    flow_or_stock: flow
+    source_sheet: CFS
+    period_granularity: financial_year
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_cash_investing
+    allowed_comparisons:
+      - vic_bpo_net_cash_investing actual vs budget, same financial_year
+      - vic_bpo_net_cash_operating and vic_bpo_net_cash_financing in the same financial_year and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_revenue/vic_bpo_expense
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from / (used in) investing activities"]
+
+  vic_bpo_net_cash_financing:
+    economic_meaning: >
+      Net cash flows from/(used in) financing activities, cash basis,
+      FY2024-25 - actual vs budget.
+    flow_or_stock: flow
+    source_sheet: CFS
+    period_granularity: financial_year
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: vic_bpo_net_cash_financing
+    allowed_comparisons:
+      - vic_bpo_net_cash_financing actual vs budget, same financial_year
+      - vic_bpo_net_cash_operating and vic_bpo_net_cash_investing in the same financial_year and estimate_status, plotted as distinct series
+    forbidden_comparisons:
+      - summed with vic_bpo_revenue/vic_bpo_expense
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Net cash flows from / (used in) financing activities"]
+
+  vic_bpo_cash_end_of_year:
+    economic_meaning: >
+      Cash and cash equivalents at the end of the financial year, as at
+      30 June 2025 - actual vs budget. A stock figure, not a flow - do
+      not sum with the three net-cash-flow measures above.
+    flow_or_stock: stock
+    source_sheet: CFS
+    period_granularity: financial_year
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: vic_bpo_cash_end_of_year
+    allowed_comparisons:
+      - vic_bpo_cash_end_of_year actual vs budget, same reporting date
+    forbidden_comparisons:
+      - summed with vic_bpo_net_cash_operating/investing/financing
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: ["Cash and cash equivalents at the end of the financial year"]
