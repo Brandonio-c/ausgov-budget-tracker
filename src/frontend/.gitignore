@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# wrangler local dev state (Miniflare cache/KV/D1 simulation)
+.wrangler/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

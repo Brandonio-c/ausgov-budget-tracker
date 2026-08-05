@@ -15,4 +15,15 @@ zone_name = "vibefactory.app"
 [assets]
 directory = "./out"
 binding = "ASSETS"
-not_found_handling = "single-page-application"
+# "single-page-application" was wrong for this deployment shape: Cloudflare's
+# assets binding applies it to ANY request carrying Sec-Fetch-Mode: navigate
+# (every real top-level browser navigation, confirmed empirically - see
+# ops/reports/cloudflare-route-triage-*.md) REGARDLESS of whether the exact
+# requested path has a real matching asset, always serving the root
+# index.html instead. That's correct for a true client-routed SPA with one
+# shell page, but this app is a Next.js static export with multiple
+# separately pre-rendered pages, each with its own real uploaded index.html -
+# "404-page" serves the exact matching asset when one exists (every real
+# route here) and only falls back to the committed out/404.html when one
+# genuinely doesn't.
+not_found_handling = "404-page"
