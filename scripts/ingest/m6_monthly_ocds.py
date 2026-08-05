@@ -1,5 +1,22 @@
 #!/usr/bin/env python3
-"""M6: federal monthly_actuals + NSW OCDS contract_value flatten."""
+"""M6: NSW OCDS contract_value flatten.
+
+This file's original federal-MFS loading path (export_federal_monthly(),
+measure_type='monthly_actuals', compatibility_group='actual_expense') was
+removed by the MFS-aggregates milestone (see
+ops/reports/mfs-semantics-baseline-*.md, Task 1): it demo-loaded a small
+subset (last 3 sheets, July column only) of the real MFS corpus under the
+SAME compatibility_group as annual GFS/PBS actuals, which was confirmed
+to silently contaminate the live federal actuals dashboard total for any
+financial year lacking GFS-basis data (FY2025-26 at the time). That
+contamination was removed from data/facts.db in Task 1
+(scripts/ops/cleanup_stray_mfs_preload.py). The correct, fully-classified
+MFS load now lives in scripts/ingest/load_mfs_aggregates.py, using its
+own dedicated measure types and compatibility groups
+(config/measure-semantics/mfs.yaml) that can never enter an annual
+additive group. Do not reintroduce a 'monthly_actuals'/'actual_expense'
+federal MFS load here or anywhere else.
+"""
 
 from __future__ import annotations
 
@@ -54,82 +71,6 @@ def write_and_run(meta: dict) -> dict:
     mpath = MAPPINGS / f"{meta['source_id']}.yaml"
     mpath.write_text(yaml.dump(doc, sort_keys=False), encoding="utf-8")
     return run_mapping(mpath, FACTS_DB)
-
-
-def export_federal_monthly() -> tuple[dict, list]:
-    src = REPO_ROOT / "data/raw/federal/federal_monthly_financial_statements"
-    data = json.loads((src / "latest.json").read_text())
-    assets = [a for a in data["assets"] if "operating-statement" in (a.get("original_filename") or "")]
-    asset = assets[0]
-    fp = REPO_ROOT / "data" / asset["stored_path"]
-    xl = pd.ExcelFile(fp)
-    landing = "https://data.gov.au/data/dataset/2b690e28-8239-48c6-a71d-2658f37d51d7"
-    resource = asset.get("final_url") or asset.get("requested_url") or landing
-    rows = []
-    # Take last 3 FY sheets for manageable monthly grain demo + coverage
-    for sheet in xl.sheet_names[-3:]:
-        df = pd.read_excel(fp, sheet_name=sheet, header=None)
-        # row 3 has month labels; col 3 is typically July actual
-        month_labels = [str(v) for v in df.iloc[3].tolist()]
-        july_col = None
-        for j, lab in enumerate(month_labels):
-            if lab.strip().lower() == "july":
-                july_col = j
-                break
-        if july_col is None:
-            july_col = 3
-        for i in range(5, len(df)):
-            # label often in col 0 or 1
-            lab0 = df.iloc[i, 0]
-            lab1 = df.iloc[i, 1]
-            label = None
-            if pd.notna(lab1) and str(lab1).strip():
-                label = str(lab1).strip()
-            elif pd.notna(lab0) and str(lab0).strip():
-                label = str(lab0).strip()
-            if not label:
-                continue
-            low = label.lower()
-            if not any(k in low for k in ("expense", "payment", "total expenses", "wages", "supplier")):
-                # keep major totals and expense section lines containing Total
-                if "total" not in low:
-                    continue
-            val = df.iloc[i, july_col]
-            if pd.isna(val):
-                continue
-            try:
-                amount = float(val) * 1_000_000
-            except (TypeError, ValueError):
-                continue
-            rows.append(
-                {
-                    "fy": sheet,
-                    "amount": amount,
-                    "category": f"{label} | July",
-                    "locator": f"sheet:{sheet} | row:{i+1} | col:July | unit:$m",
-                    "landing_url": landing,
-                    "resource_url": resource,
-                }
-            )
-    out = STAGING / "federal_monthly_financial_statements.csv"
-    STAGING.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(out, index=False)
-    meta = {
-        "source_id": "federal_monthly_financial_statements",
-        "csv": out,
-        "cached_copy_path": str(fp.relative_to(REPO_ROOT)),
-        "title": "Federal GGS monthly operating statement (July actuals)",
-        "publisher": "Department of Finance",
-        "jurisdiction": "Commonwealth",
-        "government_level": "federal",
-        "source_family": "federal_actuals",
-        "measure_type": "monthly_actuals",
-        "accounting_basis": "accrual",
-        "estimate_status": "actual",
-        "period_granularity": "month",
-        "rows": len(rows),
-    }
-    return meta, rows
 
 
 def export_nsw_ocds(limit: int | None = None) -> tuple[dict, list[dict]]:
@@ -211,14 +152,12 @@ def export_nsw_ocds(limit: int | None = None) -> tuple[dict, list[dict]]:
 
 
 def main() -> int:
-    m1, _ = export_federal_monthly()
     m2, spot = export_nsw_ocds()
-    s1 = write_and_run(m1)
     s2 = write_and_run(m2)
     # write spot-check notes (manual URL targets; not live-fetched here)
     spot_path = REPO_ROOT / "ops" / "reports" / "m6-nsw-ocds-spotchecks.json"
     spot_path.write_text(json.dumps(spot, indent=2), encoding="utf-8")
-    print(json.dumps({"federal": s1, "ocds": s2, "spotchecks": spot}, indent=2))
+    print(json.dumps({"ocds": s2, "spotchecks": spot}, indent=2))
     return 0
 
 
