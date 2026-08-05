@@ -418,3 +418,46 @@ export const apiVicAfs = {
   series: (measureType: string) =>
     getJson<VicAfsSeriesResponse>(`/v2/vic-afs/series?measure_type=${encodeURIComponent(measureType)}`),
 };
+
+export type VicBpoFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
+
+export type VicBpoMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  flow_or_stock: VicBpoFlowOrStock;
+  source_sheet: string;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+};
+
+export type VicBpoCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type VicBpoFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: VicBpoFlowOrStock;
+  amount_aud: number;
+  financial_year: string;
+  period_end: string;
+  accounting_basis: string;
+  estimate_status: string;
+  compatibility_group: string;
+  citation: VicBpoCitation;
+};
+
+export type VicBpoSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: VicBpoFlowOrStock;
+  facts: VicBpoFact[];
+};
+
+export const apiVicBpo = {
+  measures: () => getJson<VicBpoMeasureInfo[]>("/v2/vic-bpo/measures"),
+  series: (measureType: string) =>
+    getJson<VicBpoSeriesResponse>(`/v2/vic-bpo/series?measure_type=${encodeURIComponent(measureType)}`),
+};

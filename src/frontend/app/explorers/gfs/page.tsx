@@ -2,14 +2,23 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiV2, apiVicAfs, Citation, VicAfsCitation, VicAfsMeasureInfo } from "@/lib/api";
+import {
+  apiV2,
+  apiVicAfs,
+  apiVicBpo,
+  Citation,
+  VicAfsCitation,
+  VicAfsMeasureInfo,
+  VicBpoCitation,
+  VicBpoMeasureInfo,
+} from "@/lib/api";
 import { CitationPanel } from "@/components/CitationPanel";
 import DashboardNav from "@/components/DashboardNav";
 import DebtNav from "@/components/DebtNav";
 
-type GfsView = "expenses" | "liabilities" | "vic_afs";
+type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo";
 
-function VicAfsCitationBox({ citation }: { citation: VicAfsCitation | null }) {
+function SimpleCitationBox({ citation }: { citation: VicAfsCitation | VicBpoCitation | null }) {
   if (!citation) {
     return (
       <aside className="rounded-md border border-black/10 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
@@ -50,13 +59,21 @@ function GfsExplorerInner() {
   >([]);
   const [vicAfsSelected, setVicAfsSelected] = useState<VicAfsCitation | null>(null);
 
+  const [vicBpoMeasures, setVicBpoMeasures] = useState<VicBpoMeasureInfo[]>([]);
+  const [vicBpoMeasureType, setVicBpoMeasureType] = useState("vic_bpo_revenue");
+  const [vicBpoRows, setVicBpoRows] = useState<
+    Array<{ name: string; value: number; id: string; citation: VicBpoCitation; estimate_status: string; period_end: string }>
+  >([]);
+  const [vicBpoSelected, setVicBpoSelected] = useState<VicBpoCitation | null>(null);
+
   useEffect(() => {
     const v = searchParams.get("view");
-    if (v === "liabilities" || v === "expenses" || v === "vic_afs") setView(v);
+    if (v === "liabilities" || v === "expenses" || v === "vic_afs" || v === "vic_bpo") setView(v);
   }, [searchParams]);
 
   useEffect(() => {
     apiVicAfs.measures().then(setVicAfsMeasures).catch((e: Error) => setError(e.message));
+    apiVicBpo.measures().then(setVicBpoMeasures).catch((e: Error) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -80,7 +97,27 @@ function GfsExplorerInner() {
   }, [view, vicAfsMeasureType]);
 
   useEffect(() => {
-    if (view === "vic_afs") return;
+    if (view !== "vic_bpo") return;
+    apiVicBpo
+      .series(vicBpoMeasureType)
+      .then((resp) => {
+        const mapped = resp.facts.map((f) => ({
+          name: `${f.estimate_status === "actual" ? "Actual" : "Budget"} — ${f.label}`,
+          value: f.amount_aud,
+          id: `${f.measure_type}|${f.estimate_status}`,
+          estimate_status: f.estimate_status,
+          period_end: f.period_end,
+          citation: f.citation,
+        }));
+        setVicBpoRows(mapped);
+        setVicBpoSelected(mapped[0]?.citation ?? null);
+        setError(null);
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [view, vicBpoMeasureType]);
+
+  useEffect(() => {
+    if (view === "vic_afs" || view === "vic_bpo") return;
     const query =
       view === "liabilities"
         ? {
@@ -125,6 +162,13 @@ function GfsExplorerInner() {
             statements (2024-25) - department-level detail, not whole-of-Victorian-government. Each
             measure has its own dedicated compatibility group; never summed into any additive tree.
           </>
+        ) : view === "vic_bpo" ? (
+          <>
+            Victorian Department of Treasury and Finance&apos;s own Budget Portfolio Outcomes
+            (2024-25) - an actual-vs-budget variance comparison for one year, not a multi-year
+            series. A different statement shape from VIC AFS above; never conflated with it or with
+            any whole-of-government total.
+          </>
         ) : (
           <>
             Compatibility group <code>actual_expense</code> on GFS basis (API v2).
@@ -140,6 +184,7 @@ function GfsExplorerInner() {
               ["expenses", "Expenses"],
               ["liabilities", "Liabilities"],
               ["vic_afs", "VIC AFS"],
+              ["vic_bpo", "VIC BPO"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -165,6 +210,21 @@ function GfsExplorerInner() {
               onChange={(e) => setVicAfsMeasureType(e.target.value)}
             >
               {vicAfsMeasures.map((m) => (
+                <option key={m.measure_type} value={m.measure_type}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : view === "vic_bpo" ? (
+          <label className="block text-sm">
+            Measure{" "}
+            <select
+              className="ml-2 border px-2 py-1 dark:border-white/20 dark:bg-zinc-900"
+              value={vicBpoMeasureType}
+              onChange={(e) => setVicBpoMeasureType(e.target.value)}
+            >
+              {vicBpoMeasures.map((m) => (
                 <option key={m.measure_type} value={m.measure_type}>
                   {m.label}
                 </option>
@@ -217,6 +277,30 @@ function GfsExplorerInner() {
             );
           })()}
         </div>
+      ) : view === "vic_bpo" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          {(() => {
+            const info = vicBpoMeasures.find((m) => m.measure_type === vicBpoMeasureType);
+            if (!info) return null;
+            const isStock = info.flow_or_stock === "stock" || info.flow_or_stock === "stock_balance";
+            return (
+              <>
+                <span
+                  className={`rounded-full px-2 py-0.5 font-medium ${
+                    isStock
+                      ? "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-100"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+                  }`}
+                >
+                  {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
+                  Vintage: actual vs budget, FY2024-25 (both shown below)
+                </span>
+              </>
+            );
+          })()}
+        </div>
       ) : null}
       {error ? <p className="mt-4 text-red-600">{error}</p> : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -235,7 +319,24 @@ function GfsExplorerInner() {
                 </li>
               ))}
             </ul>
-            <VicAfsCitationBox citation={vicAfsSelected} />
+            <SimpleCitationBox citation={vicAfsSelected} />
+          </>
+        ) : view === "vic_bpo" ? (
+          <>
+            <ul className="max-h-[70vh] space-y-2 overflow-auto">
+              {vicBpoRows.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    className="text-left underline"
+                    onClick={() => setVicBpoSelected(r.citation)}
+                  >
+                    {r.name} (as at {r.period_end}) — {r.value.toLocaleString("en-AU")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <SimpleCitationBox citation={vicBpoSelected} />
           </>
         ) : (
           <>
