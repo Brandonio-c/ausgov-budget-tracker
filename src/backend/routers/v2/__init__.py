@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from . import citation, dashboard, facts, mfs, query, search, vic_afs, vic_bpo
+from . import citation, dashboard, facts, mfs, query, search, vic_afs, vic_bpo, vic_bpo_soce_admin
 
 router = APIRouter(prefix="/v2", tags=["v2"])
 router.include_router(citation.router)
@@ -11,3 +11,4 @@ router.include_router(search.router)
 router.include_router(mfs.router)
 router.include_router(vic_afs.router)
 router.include_router(vic_bpo.router)
+router.include_router(vic_bpo_soce_admin.router)

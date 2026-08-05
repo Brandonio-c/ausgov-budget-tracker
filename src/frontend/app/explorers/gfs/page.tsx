@@ -6,6 +6,7 @@ import {
   apiV2,
   apiVicAfs,
   apiVicBpo,
+  apiVicBpoSoceAdmin,
   Citation,
   VicAfsCitation,
   VicAfsMeasureInfo,
@@ -65,6 +66,10 @@ function GfsExplorerInner() {
     Array<{ name: string; value: number; id: string; citation: VicBpoCitation; estimate_status: string; period_end: string }>
   >([]);
   const [vicBpoSelected, setVicBpoSelected] = useState<VicBpoCitation | null>(null);
+  // SOCE/Admin measure_types served by the separate vic-bpo-soce-admin
+  // endpoint (see api.ts) - tracked so the shared vic_bpo dropdown/series
+  // effect below can route each selected measure to the right API.
+  const [vicBpoSoceAdminTypes, setVicBpoSoceAdminTypes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const v = searchParams.get("view");
@@ -73,7 +78,12 @@ function GfsExplorerInner() {
 
   useEffect(() => {
     apiVicAfs.measures().then(setVicAfsMeasures).catch((e: Error) => setError(e.message));
-    apiVicBpo.measures().then(setVicBpoMeasures).catch((e: Error) => setError(e.message));
+    Promise.all([apiVicBpo.measures(), apiVicBpoSoceAdmin.measures()])
+      .then(([bpo, soceAdmin]) => {
+        setVicBpoMeasures([...bpo, ...soceAdmin]);
+        setVicBpoSoceAdminTypes(new Set(soceAdmin.map((m) => m.measure_type)));
+      })
+      .catch((e: Error) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -98,7 +108,8 @@ function GfsExplorerInner() {
 
   useEffect(() => {
     if (view !== "vic_bpo") return;
-    apiVicBpo
+    const client = vicBpoSoceAdminTypes.has(vicBpoMeasureType) ? apiVicBpoSoceAdmin : apiVicBpo;
+    client
       .series(vicBpoMeasureType)
       .then((resp) => {
         const mapped = resp.facts.map((f) => ({
@@ -114,7 +125,7 @@ function GfsExplorerInner() {
         setError(null);
       })
       .catch((e: Error) => setError(e.message));
-  }, [view, vicBpoMeasureType]);
+  }, [view, vicBpoMeasureType, vicBpoSoceAdminTypes]);
 
   useEffect(() => {
     if (view === "vic_afs" || view === "vic_bpo") return;
@@ -166,8 +177,11 @@ function GfsExplorerInner() {
           <>
             Victorian Department of Treasury and Finance&apos;s own Budget Portfolio Outcomes
             (2024-25) - an actual-vs-budget variance comparison for one year, not a multi-year
-            series. A different statement shape from VIC AFS above; never conflated with it or with
-            any whole-of-government total.
+            series. Includes the department&apos;s own controlled-operations measures (Operating
+            Statement / Balance Sheet / Cash Flow Statement) plus administered items and equity
+            movements (Admin / Statement of Changes in Equity) - each on its own dedicated
+            compatibility group; never conflated with each other, with VIC AFS above, or with any
+            whole-of-government total.
           </>
         ) : (
           <>

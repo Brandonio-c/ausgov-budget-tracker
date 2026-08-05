@@ -461,3 +461,17 @@ export const apiVicBpo = {
   series: (measureType: string) =>
     getJson<VicBpoSeriesResponse>(`/v2/vic-bpo/series?measure_type=${encodeURIComponent(measureType)}`),
 };
+
+// VIC BPO's deferred `SOCE`/`Admin` sheets - a separate backend endpoint
+// and compatibility_group set (see src/backend/routers/v2/vic_bpo_soce_admin.py
+// for why), but presented to the user as more measures within the same
+// "VIC BPO" toggle on the GFS explorer page - merged client-side with
+// apiVicBpo's own measures/series calls rather than getting a new
+// dropdown or page.
+export const apiVicBpoSoceAdmin = {
+  measures: () => getJson<VicBpoMeasureInfo[]>("/v2/vic-bpo-soce-admin/measures"),
+  series: (measureType: string) =>
+    getJson<VicBpoSeriesResponse>(
+      `/v2/vic-bpo-soce-admin/series?measure_type=${encodeURIComponent(measureType)}`,
+    ),
+};
