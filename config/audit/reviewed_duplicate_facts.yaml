@@ -105,3 +105,39 @@ reviewed_duplicate_facts:
       guessed away.
     evidence_report: ops/reports/duplicate-fact-investigation-20260804T044328Z.md#group-5-qld-qgip-palm-island-aboriginal-shire-council-qld_qgip_expenditure
     review_date: "2026-08-04"
+  - source_key: federal_mfs_aggregates
+    node_path: "MFS YTD net capital investment"
+    financial_year: "2013-14"
+    measure_type: mfs_ytd_net_capital_investment
+    estimate_status: actual
+    amount_aud: 1315000000
+    classification: query_false_positive
+    reason: >
+      Two genuinely different reporting months (February and March
+      2013-14) that happen to report the identical cumulative YTD figure.
+      Verified directly against the raw workbook: the full YTD sequence
+      for this row shows no net-capital-investment activity between the
+      two months (the cumulative total simply did not move) - an
+      ordinary outcome for a lumpy, infrequent flow, not a parsing or
+      duplication defect. Every MFS fact for one measure_type shares a
+      single node (see evidence_report), so duplicate_facts()'s grouping
+      (which does not include reporting_month) cannot distinguish this
+      from a true duplicate on its own.
+    evidence_report: ops/reports/mfs-duplicate-fact-investigation-20260805T003818Z.md#group-1-fy2013-14-1315000000
+    review_date: "2026-08-05"
+  - source_key: federal_mfs_aggregates
+    node_path: "MFS YTD net capital investment"
+    financial_year: "2022-23"
+    measure_type: mfs_ytd_net_capital_investment
+    estimate_status: actual
+    amount_aud: 4400000000
+    classification: query_false_positive
+    reason: >
+      Two genuinely different reporting months (February and April
+      2022-23) that happen to report the identical cumulative YTD figure.
+      Verified directly against the raw workbook: YTD March (between the
+      two flagged months) is a genuinely different figure ($4.2b) - the
+      value decreased in March then increased back to the same total by
+      April, a real intervening change, not evidence of duplication.
+    evidence_report: ops/reports/mfs-duplicate-fact-investigation-20260805T003818Z.md#group-2-fy2022-23-4400000000
+    review_date: "2026-08-05"
