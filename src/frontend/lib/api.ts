@@ -374,3 +374,47 @@ export const apiMfs = {
     return getJson<MfsCompareResponse>(`/v2/mfs/compare?${q.toString()}`);
   },
 };
+
+export type VicAfsFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
+
+export type VicAfsMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  flow_or_stock: VicAfsFlowOrStock;
+  source_sheet: string;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+};
+
+export type VicAfsCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type VicAfsFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: VicAfsFlowOrStock;
+  amount_aud: number;
+  financial_year: string;
+  period_end: string;
+  accounting_basis: string;
+  estimate_status: string;
+  compatibility_group: string;
+  vintage: string;
+  citation: VicAfsCitation;
+};
+
+export type VicAfsSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: VicAfsFlowOrStock;
+  facts: VicAfsFact[];
+};
+
+export const apiVicAfs = {
+  measures: () => getJson<VicAfsMeasureInfo[]>("/v2/vic-afs/measures"),
+  series: (measureType: string) =>
+    getJson<VicAfsSeriesResponse>(`/v2/vic-afs/series?measure_type=${encodeURIComponent(measureType)}`),
+};
