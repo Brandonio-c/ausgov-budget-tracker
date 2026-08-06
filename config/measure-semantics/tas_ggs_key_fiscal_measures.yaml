@@ -1,0 +1,352 @@
+# Declarative semantic model for the Tasmanian Department of Treasury
+# and Finance's "General Government Key Fiscal Measures Time Series"
+# workbook - see ops/reports/qld-tas-family-inventory-20260806T171537Z.md
+# for the full cell-level inventory this model is built from.
+#
+# This is the single source of truth for this family's measure
+# semantics. scripts/ingest/reload_tas_ggs_key_fiscal_measures.py reads
+# this file to populate measure_definitions and to validate every fact
+# before it is published; nothing here is duplicated or re-decided in
+# extractor/loader code.
+#
+# Scope: this is the Tasmanian Treasury's OWN published General
+# Government Sector fiscal-aggregate time series (2013-14 to 2028-29,
+# Actual/Revised Budget/Forward Estimate vintages) - never conflated
+# with the ABS's own, independently-compiled Government Finance
+# Statistics series for Tasmania (`abs_gfs_state_tas_236` and related
+# measure_types), which uses a different methodology, different vintage
+# granularity, and is compiled by a different publisher (the ABS, not
+# TAS Treasury). Economic-meaning text below is drawn directly from the
+# workbook's own "Definitions for Key Measures" sheet.
+#
+# ---------------------------------------------------------------------------
+# Global rules (apply to every measure type below)
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: tas_ggs_never_conflated_with_abs_gfs_tas
+    text: >
+      No measure type defined below may share a compatibility_group,
+      or be summed/compared, with any abs_gfs_state_tas_*/abs_state_
+      accounts_tas_* measure_type. These are two independently
+      published series for the same jurisdiction with different
+      methodologies (Tasmanian Treasury's own Uniform Presentation
+      Framework-style reporting vs the ABS's GFS compilation) - never
+      treated as interchangeable or additive.
+  - id: tas_ggs_never_in_annual_compatibility_group
+    text: >
+      No measure type defined below is registered under any existing
+      dashboard mode_to_family mapping
+      (config/compatibility/view_families.yaml). This family is exposed
+      only through its own dedicated query, never through the additive
+      annual dashboard tree.
+  - id: tas_ggs_number_parsing
+    text: >
+      Source cells are inconsistently typed: some are native Excel
+      numbers, others are strings with a leading space and a trailing
+      non-breaking space (`\xa0`), and some larger values use an
+      embedded non-breaking space (or, in at least one cell, a literal
+      space) as a thousands separator inside the string (e.g.
+      `'1\xa0273.4\xa0'`, `'1 874.6\xa0'`). The extractor must strip all
+      whitespace/`\xa0` before parsing to float; any cell that still
+      cannot be confidently parsed as a number is quarantined, never
+      guessed.
+  - id: tas_ggs_year_label_footnote_markers
+    text: >
+      Two year labels have a footnote-reference digit appended directly
+      to the `YYYY-YY` string with no separator - `'2016-171'`
+      (financial year 2016-17, footnote 1: a one-off $730m
+      Commonwealth payment related to the Mersey Community Hospital)
+      and `'2020-212'` (financial year 2020-21, footnote 2: TAFR
+      outcomes rounded to the nearest $100,000 from this year onward,
+      vs the nearest million in prior years). The extractor parses the
+      true `YYYY-YY` financial year via regex and discards the trailing
+      footnote digit; several other year labels also carry a harmless
+      trailing non-breaking space with no footnote digit.
+  - id: tas_ggs_vintage_is_per_year_not_per_column_pair
+    text: >
+      Unlike vic_bpo_* (same financial year, two columns: Actual vs
+      Budget), this workbook gives each financial year exactly ONE
+      `Data Type` value: `Actual` (2013-14 to 2024-25), `Revised
+      Budget` (2025-26), or `Forward Estimate` (2026-27 to 2028-29) -
+      mapped verbatim to estimate_status values `actual`,
+      `revised_budget`, `forward_estimate`. This is recorded per-fact
+      from the source's own `Data Type` column, never inferred from
+      year position alone.
+  - id: tas_ggs_revision_policy
+    text: >
+      This workbook is republished periodically (the source's own
+      cover sheet states "This data will be updated following the
+      release of each data source"). A future re-acquisition may show a
+      year that is currently `revised_budget` or `forward_estimate`
+      advance to `actual` (or a `forward_estimate` advance to
+      `revised_budget`) - since estimate_status is part of the
+      fact_key, this produces a NEW, additional fact rather than
+      overwriting the prior vintage's fact, which remains as an
+      auditable historical record. If a future re-acquisition ever
+      produces a DIFFERENT amount for the SAME identity (source_id +
+      financial_year + measure_type + accounting_basis + estimate_status
+      + jurisdiction), the loader's apply() refuses to silently
+      overwrite it - it is quarantined pending an explicit
+      revision-policy decision, matching every other family in this
+      repo. Vintage precedence for display purposes (when a consumer
+      wants a single "best known" value per year): `actual` >
+      `revised_budget` > `forward_estimate` - the UI and any future
+      series consumer should prefer the most authoritative available
+      vintage per year, never silently pick the first-seen row.
+  - id: tas_ggs_definitions_sheet_not_extracted
+    text: >
+      The workbook's `Definitions for Key Measures` sheet (51 rows,
+      prose only) is never extracted as facts - it exists purely as the
+      source of the `economic_meaning` text for each measure below.
+
+# ---------------------------------------------------------------------------
+# Measures
+# ---------------------------------------------------------------------------
+
+measures:
+  tas_ggs_revenue:
+    economic_meaning: >
+      Revenue from Transactions for the Tasmanian General Government
+      Sector. "Revenue is recognised when an increase in future
+      economic benefits related to an increase in an asset or decrease
+      in liability has arisen from a mutually agreed interaction
+      between two parties and can be measured reliably." (source:
+      Definitions for Key Measures sheet.)
+    flow_or_stock: flow
+    source_column: "Revenue from Transactions"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: tas_ggs_revenue
+    allowed_comparisons:
+      - tas_ggs_revenue across financial years, same estimate_status precedence rule
+      - tas_ggs_expense in the same financial year
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* or abs_state_accounts_tas_* compatibility_group fact
+      - any annual GFS/PBS actual or budget compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only (own compatibility_group); never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_expense:
+    economic_meaning: >
+      Expenses from Transactions for the Tasmanian General Government
+      Sector. "Expenses are recognised when a decrease in future
+      economic benefits related to a decrease in an asset or increase
+      in a liability has arisen from a mutually agreed interaction
+      between two parties and can be measured reliably." (source:
+      Definitions for Key Measures sheet.)
+    flow_or_stock: flow
+    source_column: "Expenses from Transactions"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: tas_ggs_expense
+    allowed_comparisons:
+      - tas_ggs_expense across financial years, same estimate_status precedence rule
+      - tas_ggs_revenue in the same financial year
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* or abs_state_accounts_tas_* compatibility_group fact
+      - any annual GFS/PBS actual or budget compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_net_operating_balance:
+    economic_meaning: >
+      Net Operating Balance (Surplus/Deficit). "A measure of the
+      ongoing sustainability of the operations of government
+      calculated as Revenue from transactions less Expenses from
+      transactions. It indicates whether the government is generating
+      enough revenue to cover the cost of its operations." A derived
+      balance - never summed with tas_ggs_revenue/tas_ggs_expense
+      (already their difference).
+    flow_or_stock: balance
+    source_column: "Net Operating Balance"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_operating_balance
+    allowed_comparisons:
+      - tas_ggs_net_operating_balance across financial years
+      - tas_ggs_fiscal_balance in the same financial year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with tas_ggs_revenue/tas_ggs_expense
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_fiscal_balance:
+    economic_meaning: >
+      Fiscal Balance (Surplus/Deficit). "Indicates whether a sufficient
+      surplus is being generated by the operations of government to
+      fund its capital expenditure needs. It is determined as the
+      difference between Revenue from transactions over Expenses from
+      transactions, after allowing for the net addition to
+      Non-financial assets such as buildings and infrastructure." A
+      derived balance, distinct from Net Operating Balance (nets out
+      capital investment too).
+    flow_or_stock: balance
+    source_column: "Fiscal Balance"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_fiscal_balance
+    allowed_comparisons:
+      - tas_ggs_fiscal_balance across financial years
+      - tas_ggs_net_operating_balance in the same financial year, plotted as a distinct series
+    forbidden_comparisons:
+      - summed with tas_ggs_revenue/tas_ggs_expense/tas_ggs_infrastructure_investment
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_infrastructure_investment:
+    economic_meaning: >
+      Infrastructure Investment. "Covers a broad range of Government's
+      investment including spending on Roads and Bridges; Hospitals and
+      Health; Schools, Education and Skills; Tourism, Recreation and
+      Culture; Law and Order; ICT Support to Service Delivery; and
+      Other Infrastructure."
+    flow_or_stock: flow
+    source_column: "Infrastructure Investment"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: tas_ggs_infrastructure_investment
+    allowed_comparisons:
+      - tas_ggs_infrastructure_investment across financial years
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_net_debt:
+    economic_meaning: >
+      Net Debt at 30 June. "A measure used to help assess the overall
+      strength of a Government's fiscal position. Net Debt comprises
+      Borrowings plus Lease liabilities plus Service concession
+      liabilities, less the sum of Cash and deposits and Investments."
+      This is the Tasmanian Treasury's own presentation-framework Net
+      Debt figure, NOT the ABS-GFS-consistent variant (see
+      tas_ggs_gfs_net_debt below, and abs_gfs_state_tas_* for the ABS's
+      own independent compilation).
+    flow_or_stock: stock
+    source_column: "Net Debt at 30 June"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_debt
+    allowed_comparisons:
+      - tas_ggs_net_debt across financial years
+      - tas_ggs_gfs_net_debt at the same financial year, plotted as a distinct series (Net Debt excludes lease/service-concession liabilities differently)
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* compatibility_group fact (a different publisher's independently-compiled figure)
+      - summed with tas_ggs_net_worth/tas_ggs_net_financial_liabilities
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_gfs_net_debt:
+    economic_meaning: >
+      GFS Net Debt at 30 June. "Comprises Borrowings less the sum of
+      Cash and deposits and Investments. This is equivalent to Net Debt
+      based on the Australian Bureau of Statistics Government Finance
+      and Statistics reporting framework and excludes the impact of
+      Lease liabilities and Service concession liabilities." Despite
+      the name, this is still Tasmanian Treasury's OWN published figure
+      (calculated to be ABS-GFS-consistent in methodology) - not the
+      ABS's own independently-compiled abs_gfs_state_tas_* series,
+      which is never conflated with this measure_type.
+    flow_or_stock: stock
+    source_column: "GFS Net Debt at 30 June"
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_gfs_net_debt
+    allowed_comparisons:
+      - tas_ggs_gfs_net_debt across financial years
+      - tas_ggs_net_debt at the same financial year, plotted as a distinct series
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* compatibility_group fact - despite the similar name and GFS-consistent methodology, this is a distinct, dedicated compatibility_group and must never be merged with the ABS's own series
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_net_worth:
+    economic_meaning: >
+      Net Worth. "Calculated as Total assets less Total liabilities.
+      The change in Net Worth is the preferred measure for assessing
+      the sustainability of fiscal activities." A derived point-in-time
+      balance.
+    flow_or_stock: stock_balance
+    source_column: "Net Worth"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_worth
+    allowed_comparisons:
+      - tas_ggs_net_worth across financial years
+    forbidden_comparisons:
+      - summed with tas_ggs_net_debt/tas_ggs_net_financial_liabilities
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_net_financial_liabilities:
+    economic_meaning: >
+      Net Financial Liabilities. "Comprises Total liabilities less
+      Financial assets, excluding equity investment in the PNFC and PFC
+      sectors. This is a broader measure than Net Debt, as it
+      incorporates other liabilities such as superannuation."
+    flow_or_stock: stock
+    source_column: "Net Financial Liabilities"
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_financial_liabilities
+    allowed_comparisons:
+      - tas_ggs_net_financial_liabilities across financial years
+      - tas_ggs_net_debt at the same financial year, plotted as a distinct series (broader measure)
+    forbidden_comparisons:
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
+
+  tas_ggs_cash_surplus_deficit:
+    economic_meaning: >
+      Cash Surplus/Deficit. "Represents the net cash flows from
+      operating activities plus net cash flows from investments in
+      non-financial assets." Unlike the other 9 measures (accrual
+      basis), this is a cash-basis flow measure.
+    flow_or_stock: flow
+    source_column: "Cash Surplus/Deficit"
+    period_granularity: financial_year
+    accounting_basis: cash
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_cash_surplus_deficit
+    allowed_comparisons:
+      - tas_ggs_cash_surplus_deficit across financial years
+    forbidden_comparisons:
+      - summed with any accrual-basis measure in this family
+      - any abs_gfs_state_tas_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+    source_label_variants: []
