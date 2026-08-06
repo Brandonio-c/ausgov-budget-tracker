@@ -365,9 +365,19 @@ def test_citation_preserved_through_real_load(fixture_db):
 
 
 def test_dedicated_compatibility_groups_distinct_from_annual_and_vic_afs(fixture_db):
+    """Checks exactly this family's own 11 OS/BS/CFS measure_types
+    (sourced from vic_bpo.yaml itself, not a `LIKE 'vic_bpo_%'` wildcard
+    - the sibling vic_bpo_soce_admin family deliberately shares the same
+    `vic_bpo_` naming prefix to signal it's the same overall workbook/
+    department, so a wildcard would over-match)."""
+    this_familys_measure_types = tuple(loader.load_semantics()["measures"].keys())
+    assert len(this_familys_measure_types) == 11
+
     conn = sqlite3.connect(str(fixture_db))
+    placeholders = ",".join("?" * len(this_familys_measure_types))
     rows = conn.execute(
-        "SELECT measure_type, compatibility_group FROM measure_definitions WHERE measure_type LIKE 'vic_bpo_%'"
+        f"SELECT measure_type, compatibility_group FROM measure_definitions WHERE measure_type IN ({placeholders})",
+        this_familys_measure_types,
     ).fetchall()
     afs_rows = conn.execute(
         "SELECT compatibility_group FROM measure_definitions WHERE measure_type LIKE 'vic_afs_%'"
