@@ -78,7 +78,7 @@ this workbook gives **each year exactly one `Data Type`**: `Actual` for
 year), `Forward Estimate` for 2026-27 through 2028-29 (3 years). This
 is recorded as `estimate_status` per fact, matching the sheet's own
 stated values exactly (mapped to lowercase-with-underscore tokens:
-`actual`, `revised_budget`, `forward_estimate`) - never inferred from
+`actual`, `revised_estimate`, `forward_estimate`) - never inferred from
 year position alone.
 
 ## Flow vs. stock classification (confirmed against the `Definitions for Key Measures` sheet's own prose, not assumed)

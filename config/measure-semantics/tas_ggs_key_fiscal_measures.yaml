@@ -71,7 +71,7 @@ global_rules:
       `Data Type` value: `Actual` (2013-14 to 2024-25), `Revised
       Budget` (2025-26), or `Forward Estimate` (2026-27 to 2028-29) -
       mapped verbatim to estimate_status values `actual`,
-      `revised_budget`, `forward_estimate`. This is recorded per-fact
+      `revised_estimate`, `forward_estimate`. This is recorded per-fact
       from the source's own `Data Type` column, never inferred from
       year position alone.
   - id: tas_ggs_revision_policy
@@ -79,9 +79,9 @@ global_rules:
       This workbook is republished periodically (the source's own
       cover sheet states "This data will be updated following the
       release of each data source"). A future re-acquisition may show a
-      year that is currently `revised_budget` or `forward_estimate`
+      year that is currently `revised_estimate` or `forward_estimate`
       advance to `actual` (or a `forward_estimate` advance to
-      `revised_budget`) - since estimate_status is part of the
+      `revised_estimate`) - since estimate_status is part of the
       fact_key, this produces a NEW, additional fact rather than
       overwriting the prior vintage's fact, which remains as an
       auditable historical record. If a future re-acquisition ever
@@ -92,7 +92,7 @@ global_rules:
       revision-policy decision, matching every other family in this
       repo. Vintage precedence for display purposes (when a consumer
       wants a single "best known" value per year): `actual` >
-      `revised_budget` > `forward_estimate` - the UI and any future
+      `revised_estimate` > `forward_estimate` - the UI and any future
       series consumer should prefer the most authoritative available
       vintage per year, never silently pick the first-seen row.
   - id: tas_ggs_definitions_sheet_not_extracted

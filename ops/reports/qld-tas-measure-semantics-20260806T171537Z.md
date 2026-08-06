@@ -31,9 +31,9 @@ workbook's own `Definitions for Key Measures` sheet - not invented.
 
 Documented as `global_rules.tas_ggs_revision_policy` in the YAML:
 
-- `estimate_status` (`actual` / `revised_budget` / `forward_estimate`)
+- `estimate_status` (`actual` / `revised_estimate` / `forward_estimate`)
   is part of the fact_key's identity - a future re-acquisition that
-  advances a year's vintage (e.g. 2025-26 moving from `revised_budget`
+  advances a year's vintage (e.g. 2025-26 moving from `revised_estimate`
   to `actual` in next year's edition) produces a **new, additional**
   fact rather than overwriting the prior vintage's fact, which remains
   as an auditable historical record.
@@ -42,7 +42,7 @@ Documented as `global_rules.tas_ggs_revision_policy` in the YAML:
   accounting_basis + estimate_status + jurisdiction), the loader
   refuses to silently overwrite - it is quarantined pending explicit
   review, matching every other family in this repo.
-- **Vintage precedence for display**: `actual` > `revised_budget` >
+- **Vintage precedence for display**: `actual` > `revised_estimate` >
   `forward_estimate` - documented for any future consumer that wants a
   single "best known" value per year, though the API/series endpoint
   itself returns all vintages (never silently drops one).
