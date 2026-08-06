@@ -1,0 +1,233 @@
+# Declarative semantic model for the TAS Treasurer's Annual Financial
+# Report (TAFR) tabular Executive Summary PDF sub-shape (2010-11,
+# 2011-12, 2012-13 editions) - see
+# ops/reports/pdf-ocr-family-inventory-20260806T185946Z.md for the full
+# page-level inventory this is built from.
+#
+# This adapter publishes into the SAME 7 already-shipped tas_ggs_*
+# measure_types/compatibility_groups defined in migration
+# scripts/ingest/migrations/011_tas_ggs_key_fiscal_measures.sql and
+# documented in config/measure-semantics/tas_ggs_key_fiscal_measures.yaml
+# - it is a backward EXTENSION of that family (2010-11 to 2012-13,
+# filling the gap before the GGS xlsx's 2013-14 starting point), not a
+# new family. No new measure_types or migration are needed.
+#
+# This is a SEPARATE, self-contained config file (not a modification
+# of tas_ggs_key_fiscal_measures.yaml) - mirrors the pattern already
+# established for the VIC BPO SOCE/Admin adapter (a new, additional
+# adapter extending a sibling family without touching the original,
+# already-shipped xlsx loader/config). scripts/ingest/reload_tas_ggs_
+# key_fiscal_measures.py and its own YAML are NOT modified by this file.
+#
+# ---------------------------------------------------------------------------
+# Global rules
+# ---------------------------------------------------------------------------
+version: 1
+
+global_rules:
+  - id: tas_tafr_pdf_extends_not_duplicates_tas_ggs
+    text: >
+      Every fact published by this adapter uses one of the 7
+      already-shipped tas_ggs_* measure_types listed below - the same
+      compatibility_group, accounting_basis, flow_or_stock, and
+      scale_factor values as config/measure-semantics/tas_ggs_key_
+      fiscal_measures.yaml already declares for these measure_types
+      (verified identical, not re-derived independently). This adapter
+      covers financial years 2010-11 to 2012-13 only - a disjoint,
+      non-overlapping range from the GGS xlsx's 2013-14 onward
+      coverage. If a future re-acquisition of either source ever
+      produces overlapping years, the loader's amount-conflict
+      detection (shared fact_key scheme) will catch and quarantine any
+      genuine disagreement rather than silently picking one source.
+  - id: tas_tafr_general_government_sector_only
+    text: >
+      Only the General Government Sector variant of each table is
+      extracted - the Total State Sector's own parallel table (a
+      different, broader sector aggregation) is explicitly out of
+      scope and must never be conflated with tas_ggs_* (which is
+      General-Government-Sector-scoped per its own definitions).
+      Reliable disambiguation rule (verified across all 3 editions,
+      not a title-text match alone, which fails for the 2010-11
+      edition due to a wrapped heading): the General Government Sector
+      table always appears strictly before the Total State Sector
+      table in page order within each PDF. The extractor takes the
+      FIRST matching table only.
+  - id: tas_tafr_underlying_measure_excluded
+    text: >
+      "Underlying Net Operating Surplus/(Deficit)" (present in the
+      2011-12 and 2012-13 editions' Key Financial Indicators table) is
+      a distinct concept - it removes the impact of one-off
+      Australian Government funding for specific capital projects -
+      and is not modelled by any existing tas_ggs_* measure_type. It
+      is deliberately excluded from extraction (quarantined as
+      unrecognized_row_label), not silently dropped nor conflated with
+      tas_ggs_net_operating_balance.
+  - id: tas_tafr_prior_year_actual_column_excluded
+    text: >
+      Each Key Financial Indicators row has 3 numeric columns
+      (Original Budget, Actual, Prior Year Actual). Only the first two
+      are extracted - the Prior Year Actual column restates a value
+      that either belongs to a year already covered by a different
+      edition's own Budget/Actual pair, or falls outside this
+      adapter's scope entirely. It was used only as a manual
+      cross-check during Task 3's inventory (confirmed matching in
+      every case checked), never loaded as a fact, to keep this
+      adapter's extraction rule simple and unambiguous: one edition
+      contributes exactly one new financial year's Budget+Actual pair.
+  - id: tas_tafr_number_parsing
+    text: >
+      Values use a plain space as a thousands separator (e.g. "13 130"
+      = 13,130) and standard parenthesized-negative accounting notation
+      (e.g. "(220)" = -220). A stray trailing ")" character with no
+      matching leading "(" appears on some tokens as a pypdf text-
+      extraction artifact (e.g. a column-header year label, or a
+      Total-State-Sector-block value) - the parser only treats a token
+      as negative if it has BOTH a leading "(" and a trailing ")"; a
+      lone trailing ")" is stripped as noise, never treated as a sign
+      marker. Any cell that cannot be confidently parsed as a number is
+      quarantined, never guessed.
+  - id: tas_tafr_estimate_status_budget_not_revised_estimate
+    text: >
+      Each edition's "<FY> Original Budget" column maps to
+      estimate_status `budget` - a distinct token from `revised_
+      estimate` (reserved for the GGS xlsx's "Revised Budget" mid-cycle
+      vintage) and from `forward_estimate`. `budget` is already a valid
+      value in the facts table's own CHECK constraint, simply not yet
+      used by any tas_ggs_* fact before this adapter.
+  - id: tas_tafr_label_wording_variants_across_editions
+    text: >
+      "Expenses from transactions" (2010-11, 2011-12 editions) and
+      "Expense from transactions" (2012-13 edition, singular) both map
+      to tas_ggs_expense - handled as label variants of the same
+      measure_type, the same pattern used throughout this repo for
+      minor source-label wording differences across editions.
+  - id: tas_tafr_cross_table_consistency_expected
+    text: >
+      Net Operating Balance and Fiscal Balance each appear in BOTH
+      target tables per edition (Key Financial Indicators, under the
+      names "Net Operating Surplus/(Deficit)"/"Fiscal Surplus/
+      (Deficit)"; Summary of Operating Result, under "Net Operating
+      Balance – Surplus/(Deficit)"/"Equals Fiscal Balance – Surplus/
+      (Deficit)"). Both extractions load into the SAME fact_key
+      (same measure_type + financial_year + estimate_status) - the
+      loader's existing idempotent-skip logic treats the second
+      extraction of an identical value as a no-op (not a duplicate),
+      and its revision-conflict detection would catch any genuine
+      disagreement between the two tables (none found in the 3
+      editions inspected).
+
+# ---------------------------------------------------------------------------
+# Measures (must match tas_ggs_key_fiscal_measures.yaml's own
+# compatibility_group/accounting_basis/flow_or_stock/scale_factor for
+# every measure_type listed here)
+# ---------------------------------------------------------------------------
+
+measures:
+  tas_ggs_revenue:
+    economic_meaning: >
+      Revenue from Transactions for the Tasmanian General Government
+      Sector, as reported in the Treasurer's Annual Financial Report's
+      "General Government Summary of Operating Result" table.
+    flow_or_stock: flow
+    source_table: "Summary of Operating Result"
+    pdf_row_label_variants: ["Revenue from transactions"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: tas_ggs_revenue
+
+  tas_ggs_expense:
+    economic_meaning: >
+      Expenses from Transactions for the Tasmanian General Government
+      Sector, as reported in the "General Government Summary of
+      Operating Result" table.
+    flow_or_stock: flow
+    source_table: "Summary of Operating Result"
+    pdf_row_label_variants: ["Expenses from transactions", "Expense from transactions"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: tas_ggs_expense
+
+  tas_ggs_net_operating_balance:
+    economic_meaning: >
+      Net Operating Balance (Surplus/Deficit) for the Tasmanian General
+      Government Sector - appears as "Net Operating Surplus/(Deficit)"
+      in the Key Financial Indicators table and "Net Operating Balance
+      – Surplus/(Deficit)" in the Summary of Operating Result table
+      (cross-checked identical in every edition).
+    flow_or_stock: balance
+    source_table: "Key Financial Indicators / Summary of Operating Result"
+    pdf_row_label_variants: ["Net Operating Surplus/(Deficit)", "Net Operating Balance – Surplus/(Deficit)"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_operating_balance
+
+  tas_ggs_fiscal_balance:
+    economic_meaning: >
+      Fiscal Balance (Surplus/Deficit) for the Tasmanian General
+      Government Sector - appears as "Fiscal Surplus/(Deficit)" in the
+      Key Financial Indicators table (the report's own older name for
+      the same concept the GGS xlsx calls "Fiscal Balance") and
+      "Equals Fiscal Balance – Surplus/(Deficit)" in the Summary of
+      Operating Result table (cross-checked identical in every
+      edition).
+    flow_or_stock: balance
+    source_table: "Key Financial Indicators / Summary of Operating Result"
+    pdf_row_label_variants: ["Fiscal Surplus/(Deficit)", "Equals Fiscal Balance – Surplus/(Deficit)"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_fiscal_balance
+
+  tas_ggs_net_debt:
+    economic_meaning: >
+      Net Debt at 30 June for the Tasmanian General Government Sector,
+      as reported in the Key Financial Indicators table.
+    flow_or_stock: stock
+    source_table: "Key Financial Indicators"
+    pdf_row_label_variants: ["Net Debt"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_debt
+
+  tas_ggs_net_worth:
+    economic_meaning: >
+      Net Worth at 30 June for the Tasmanian General Government Sector,
+      as reported in the Key Financial Indicators table.
+    flow_or_stock: stock_balance
+    source_table: "Key Financial Indicators"
+    pdf_row_label_variants: ["Net Worth"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_worth
+
+  tas_ggs_net_financial_liabilities:
+    economic_meaning: >
+      Net Financial Liabilities at 30 June for the Tasmanian General
+      Government Sector, as reported in the Key Financial Indicators
+      table.
+    flow_or_stock: stock
+    source_table: "Key Financial Indicators"
+    pdf_row_label_variants: ["Net Financial Liabilities"]
+    period_granularity: financial_year
+    accounting_basis: accrual
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: tas_ggs_net_financial_liabilities
