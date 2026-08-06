@@ -475,3 +475,53 @@ export const apiVicBpoSoceAdmin = {
       `/v2/vic-bpo-soce-admin/series?measure_type=${encodeURIComponent(measureType)}`,
     ),
 };
+
+// Tasmanian Treasury's "GGS Key Fiscal Measures Time Series" - a
+// genuine multi-year time series (16 financial years, each with one
+// vintage: actual / revised_estimate / forward_estimate), unlike
+// vic_bpo_*'s single-year actual-vs-budget comparison. Its own
+// dedicated toggle on the GFS explorer page (not merged into VIC BPO's
+// dropdown - a different jurisdiction and a different measure family
+// entirely).
+export type TasGgsFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
+
+export type TasGgsMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  flow_or_stock: TasGgsFlowOrStock;
+  source_column: string;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+};
+
+export type TasGgsCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type TasGgsFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: TasGgsFlowOrStock;
+  amount_aud: number;
+  financial_year: string;
+  period_end: string;
+  accounting_basis: string;
+  estimate_status: string;
+  compatibility_group: string;
+  citation: TasGgsCitation;
+};
+
+export type TasGgsSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: TasGgsFlowOrStock;
+  facts: TasGgsFact[];
+};
+
+export const apiTasGgs = {
+  measures: () => getJson<TasGgsMeasureInfo[]>("/v2/tas-ggs/measures"),
+  series: (measureType: string) =>
+    getJson<TasGgsSeriesResponse>(`/v2/tas-ggs/series?measure_type=${encodeURIComponent(measureType)}`),
+};
