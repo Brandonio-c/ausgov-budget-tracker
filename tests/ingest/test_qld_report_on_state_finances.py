@@ -232,6 +232,20 @@ def _write_older_edition_pdf(path: Path) -> None:
     path.write_bytes(_make_pdf_bytes(["Filler", table_page]))
 
 
+def _write_residual_rows_pdf(path: Path, *, borrowing_label: str = "Borrowing") -> None:
+    table_page = (
+        "Key UPF Financial Aggregates\n"
+        "Revenue 77,000 78,000 10,000 11,000 87,000 89,000\n"
+        "Expenses 75,000 76,000 9,000 10,000 84,000 86,000\n"
+        "Borrowing with QTC 66,766 64,708 40,000 39,000 106,766 103,708\n"
+        "Leases and similar arrangements 8,013 8,100 500 500 8,513 8,600\n"
+        "Securities and derivatives 64 57 20 20 84 77\n"
+        f"{borrowing_label} 74,843 72,864 40,520 39,520 115,363 112,384\n"
+        "Net Debt 22,092 16,727 30,000 28,000 52,092 44,727\n"
+    )
+    path.write_bytes(_make_pdf_bytes([table_page]))
+
+
 # ---- extractor: fixture PDFs --------------------------------------------
 
 
@@ -310,11 +324,39 @@ def test_older_label_vocabulary_maps_without_conflating_measures(tmp_path):
     assert actual["qld_rsf_net_debt"] == -11260.0
 
 
-def test_older_only_labels_do_not_expand_completed_newer_cluster():
-    labels = extractor._row_label_map("2024-25")
-    assert "Borrowing" not in labels
-    assert "Net Debt" not in labels
-    assert "Borrowing with QTC" in labels
+@pytest.mark.parametrize(
+    "financial_year,present,absent",
+    [
+        ("2002-03", {"Net Debt"}, {"Borrowing", "Borrowings", "Net Borrowing"}),
+        ("2006-07", {"Net debt", "Net Borrowing"}, {"Borrowing", "Borrowings"}),
+        ("2011-12", {"Borrowing"}, {"Net Debt", "Net debt", "Net Borrowing"}),
+        ("2018-19", set(), {"Borrowing", "Borrowings", "Net Debt", "Net debt"}),
+        ("2020-21", {"Net Debt"}, {"Borrowing", "Borrowings"}),
+        ("2021-22", {"Borrowing", "Borrowings", "Net Debt"}, {"Net Borrowing"}),
+        ("2024-25", {"Borrowing", "Borrowings", "Net Debt"}, {"Net Borrowing"}),
+    ],
+)
+def test_residual_row_mapping_has_explicit_edition_applicability(financial_year, present, absent):
+    labels = extractor._row_label_map(financial_year)
+    assert present <= labels.keys()
+    assert absent.isdisjoint(labels)
+    assert labels["Borrowing with QTC"] == "qld_rsf_borrowing_qtc"
+
+
+def test_newer_residual_stock_rows_are_published_with_exact_values_and_citations(tmp_path):
+    path = tmp_path / "Report-on-State-Finances-2024-25.pdf"
+    _write_residual_rows_pdf(path)
+    rows, quarantine = extractor.extract_pdf_edition(path, "test_source", "2024-25")
+    residuals = [r for r in rows if r["measure_type"] in {"qld_rsf_borrowing", "qld_rsf_net_debt"}]
+    assert quarantine == []
+    assert {(r["measure_type"], r["estimate_status"]): r["amount_million_aud"] for r in residuals} == {
+        ("qld_rsf_borrowing", "estimated_actual"): 74843.0,
+        ("qld_rsf_borrowing", "actual"): 72864.0,
+        ("qld_rsf_net_debt", "estimated_actual"): 22092.0,
+        ("qld_rsf_net_debt", "actual"): 16727.0,
+    }
+    assert all("page:1" in r["locator"] and "fy:2024-25" in r["locator"] for r in residuals)
+    assert {r["row_label"] for r in residuals} == {"Borrowing", "Net Debt"}
 
 
 def test_extractor_all_editions(tmp_path):
@@ -478,6 +520,42 @@ def test_full_load_is_idempotent(fixture_db):
         "SELECT fact_key, COUNT(*) c FROM facts GROUP BY fact_key HAVING c > 1"
     ).fetchall()
     assert dupes == []
+    conn.close()
+
+
+def test_residual_rows_reload_is_idempotent_and_preserves_citations(tmp_path, monkeypatch):
+    db = tmp_path / "facts.db"
+    migrate(db)
+    pdf = tmp_path / "Report-on-State-Finances-2024-25.pdf"
+    _write_residual_rows_pdf(pdf)
+    extracted, extractor_quarantine = extractor.extract_pdf_edition(
+        pdf, loader.SOURCE_ID, "2024-25"
+    )
+    residuals = [
+        row
+        for row in extracted
+        if row["measure_type"] in {"qld_rsf_borrowing", "qld_rsf_net_debt"}
+    ]
+
+    monkeypatch.setattr(loader, "extract_all_editions", lambda source_id: (residuals, extractor_quarantine))
+    conn = sqlite3.connect(str(db))
+    first = loader.run(conn, apply=True, quarantine_path=tmp_path / "q.jsonl")
+    second = loader.run(conn, apply=True, quarantine_path=tmp_path / "q.jsonl")
+
+    assert first["facts_to_insert"] == 4
+    assert first["nodes_inserted"] == 2
+    assert first["edges_inserted"] == 0
+    assert second["facts_to_insert"] == 0
+    assert second["facts_updated"] == 0
+    assert second["facts_already_present_idempotent_skip"] == 4
+    assert second["nodes_inserted"] == 0
+    assert second["edges_inserted"] == 0
+    assert second["semantic_changes"] == 0
+    citations = conn.execute(
+        "SELECT source_locator_json FROM facts WHERE measure_type IN ('qld_rsf_borrowing', 'qld_rsf_net_debt')"
+    ).fetchall()
+    assert len(citations) == 4
+    assert all("page:1" in json.loads(row[0])["locator"] for row in citations)
     conn.close()
 
 
