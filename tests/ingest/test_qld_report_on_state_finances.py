@@ -213,6 +213,25 @@ def _write_edition_pdf_variant(path: Path) -> None:
     path.write_bytes(_make_pdf_bytes(pages))
 
 
+def _write_older_edition_pdf(path: Path) -> None:
+    table_page = (
+        "Summary of Key GFS Financial Aggregates\n"
+        "General Government Public Non-financial Non-financial Public\n"
+        "Sector Corporations Sector Sector\n"
+        "Est. Actual Outcome Est. Actual Outcome Est. Actual Outcome\n"
+        "$ million $ million $ million $ million $ million $ million\n"
+        "Revenue 19,913 20,256 7,335 7,751 24,772 25,423\n"
+        "Expenses 20,263 20,241 7,551 7,803 25,337 25,460\n"
+        "Net Operating Balance (350) 15 (216) (52) (565) (37)\n"
+        "Net Lending/Borrowing (769) (140) (873) (894) (1,640) (1,034)\n"
+        "Cash Surplus/(Deficit) 51 645 (583) (722) (530) (78)\n"
+        "Gross Fixed Capital Formation 1,779 1,607 1,776 1,948 3,554 3,556\n"
+        "Net Worth 58,692 64,894 12,644 12,096 58,692 64,894\n"
+        "Net Debt (10,636) (11,260) 10,949 11,479 313 219\n"
+    )
+    path.write_bytes(_make_pdf_bytes(["Filler", table_page]))
+
+
 # ---- extractor: fixture PDFs --------------------------------------------
 
 
@@ -275,6 +294,27 @@ def test_extractor_quarantines_missing_table_page(tmp_path):
     rows, quarantine = extractor.extract_pdf_edition(path, "test_source", "2018-19")
     assert rows == []
     assert quarantine[0]["reason"] == "table_page_not_found"
+
+
+def test_older_label_vocabulary_maps_without_conflating_measures(tmp_path):
+    path = tmp_path / "older.pdf"
+    _write_older_edition_pdf(path)
+    rows, quarantine = extractor.extract_pdf_edition(path, "test_source", "2002-03")
+    assert quarantine == []
+    assert len(rows) == 16
+    actual = {r["measure_type"]: r["amount_million_aud"] for r in rows if r["estimate_status"] == "actual"}
+    assert actual["qld_rsf_fiscal_balance"] == -140.0
+    assert actual["qld_rsf_cash_surplus"] == 645.0
+    assert actual["qld_rsf_gross_fixed_capital_formation"] == 1607.0
+    assert actual["qld_rsf_net_worth"] == 64894.0
+    assert actual["qld_rsf_net_debt"] == -11260.0
+
+
+def test_older_only_labels_do_not_expand_completed_newer_cluster():
+    labels = extractor._row_label_map("2024-25")
+    assert "Borrowing" not in labels
+    assert "Net Debt" not in labels
+    assert "Borrowing with QTC" in labels
 
 
 def test_extractor_all_editions(tmp_path):
@@ -349,6 +389,14 @@ def test_stock_measure_has_no_period_start(semantics):
     assert reason == ""
     assert fact["period_start"] is None
     assert fact["period_end"] == "2019-06-30"
+
+
+def test_older_stock_measure_has_no_period_start(semantics):
+    row = _row("qld_rsf_net_worth", fy="2002-03")
+    fact, reason = loader.classify_and_validate(row, semantics)
+    assert reason == ""
+    assert fact["period_start"] is None
+    assert fact["period_end"] == "2003-06-30"
 
 
 def test_flow_measure_has_period_start_and_end(semantics):
@@ -467,6 +515,25 @@ def test_citation_preserved_through_real_load(fixture_db):
     conn.close()
 
 
+def test_citation_locator_repair_is_idempotent(fixture_db):
+    conn = sqlite3.connect(str(fixture_db))
+    loader.run(conn, apply=True)
+    conn.execute(
+        "UPDATE facts SET source_locator_json = ? WHERE fact_key = ?",
+        (
+            json.dumps({"locator": "stale", "cached_copy_path": "stale"}),
+            "qld_report_on_state_finances_actuals|2018-19|qld_rsf_revenue|gfs|actual|QLD",
+        ),
+    )
+    conn.commit()
+    repaired = loader.run(conn, apply=True)
+    assert repaired["facts_updated"] == 1
+    repeated = loader.run(conn, apply=True)
+    assert repeated["facts_updated"] == 0
+    assert repeated["facts_already_present_idempotent_skip"] == 112
+    conn.close()
+
+
 def test_all_seven_years_load_as_distinct_facts(fixture_db):
     conn = sqlite3.connect(str(fixture_db))
     loader.run(conn, apply=True)
@@ -485,7 +552,7 @@ def test_dedicated_compatibility_groups_distinct_from_abs_gfs_qld(fixture_db):
         "SELECT DISTINCT measure_type, compatibility_group FROM measure_definitions WHERE measure_type LIKE 'qld_rsf_%'"
     ).fetchall()
     conn.close()
-    assert len(rows) == 8
+    assert len(rows) == 14
     annual_groups = {"actual_expense", "budget_expense", "gfs_revenue", "gfs_liability"}
     for measure_type, group in rows:
         assert group == measure_type  # 1:1

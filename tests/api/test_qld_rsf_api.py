@@ -134,11 +134,11 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> TestClient:
     return TestClient(app)
 
 
-def test_measures_lists_all_8(client: TestClient):
+def test_measures_lists_all_14(client: TestClient):
     r = client.get("/v2/qld-rsf/measures")
     assert r.status_code == 200
     body = r.json()
-    assert len(body) == 8
+    assert len(body) == 14
     types = {m["measure_type"] for m in body}
     assert "qld_rsf_revenue" in types
     assert "qld_rsf_fiscal_balance" in types
