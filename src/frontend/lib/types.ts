@@ -15,12 +15,51 @@ export interface BreakdownMeta {
   estimate_status?: string | null;
 }
 
+export interface RelationshipMeta {
+  edge_kind: "root" | "same_group" | "related_breakdown";
+  branch_kind: "additive" | "related";
+  presentation_role: "data" | "navigation";
+  edge_set_id?: string | null;
+  branch_family?: string | null;
+  source_key?: string | null;
+  source_family?: string | null;
+  compatibility_group?: string | null;
+  accounting_basis?: string | null;
+  estimate_status?: string | null;
+  requested_financial_year?: string | null;
+  fact_financial_year?: string | null;
+  is_year_fallback: boolean;
+  fallback_reason?: string | null;
+  match_quality?: string | null;
+  unit?: string | null;
+}
+
+export interface ProjectionBranchSummary {
+  branch_family?: string | null;
+  branch_kind: "additive" | "related";
+  node_count: number;
+  max_depth: number;
+}
+
+export interface ProjectionMeta {
+  requested_mode: string;
+  requested_level: string;
+  requested_financial_year: string;
+  selected_accounting_basis?: string | null;
+  max_visible_depth: number;
+  max_additive_depth: number;
+  contains_related_branches: boolean;
+  branch_summaries: ProjectionBranchSummary[];
+}
+
 export interface TreeNode {
   name: string;
   value: number;
   id: number | null;
   children: TreeNode[] | null;
   breakdown?: BreakdownMeta | null;
+  relationship?: RelationshipMeta | null;
+  projection?: ProjectionMeta | null;
   mixed_observation_dates?: boolean | null;
   observation_dates?: string[] | null;
   valuation_basis?: string | null;

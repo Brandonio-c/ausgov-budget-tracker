@@ -270,6 +270,7 @@ def projection_signature(
     def walk(
         node: dict[str, Any],
         depth: int,
+        semantic_depth: int,
         path: list[str],
         inherited_related: bool,
         parent_meta: dict[str, Any] | None,
@@ -282,13 +283,18 @@ def projection_signature(
         is_related = inherited_related or rel["branch_kind"] == "related"
         counts[depth] += 1
         branch_counts["related" if is_related else "additive"] += 1
-        origin_counts["edge_only" if (node.get("relationship") or node.get("breakdown")) else "path_only"] += 1
+        origin_counts[
+            "edge_only" if rel.get("edge_set_id") else "path_only"
+        ] += 1
         max_tree_depth = max(max_tree_depth, depth)
+        current_semantic_depth = semantic_depth + (
+            0 if rel["presentation_role"] == "navigation" else 1
+        )
         if rel["presentation_role"] != "navigation":
             if is_related:
-                max_related_depth = max(max_related_depth, depth)
+                max_related_depth = max(max_related_depth, current_semantic_depth)
             else:
-                max_additive_depth = max(max_additive_depth, depth)
+                max_additive_depth = max(max_additive_depth, current_semantic_depth)
 
         fact_id = node.get("id")
         meta = metadata.get(int(fact_id)) if isinstance(fact_id, int) else None
@@ -333,7 +339,7 @@ def projection_signature(
                         "fact_year": fact_year,
                     }
                 )
-        elif fact_year == requested_year:
+        elif meta and fact_year == requested_year:
             exact_year_count += 1
 
         if inherited_related and rel["branch_kind"] != "related":
@@ -341,7 +347,14 @@ def projection_signature(
                 {"kind": "related_status_not_inherited", "path": " / ".join(current_path)}
             )
         children = node.get("children") or []
-        if children and is_related:
+        if (
+            children
+            and not is_related
+            and any(
+                _relationship(child).get("branch_kind") == "related"
+                for child in children
+            )
+        ):
             related_parent_paths.add(" / ".join(current_path))
         if not children:
             deepest_paths.append((depth, " / ".join(current_path)))
@@ -354,7 +367,14 @@ def projection_signature(
                         {"kind": "citation_incomplete", "path": " / ".join(current_path), "fact_id": fact_id}
                     )
         for child in children:
-            walk(child, depth + 1, current_path, is_related, meta or parent_meta)
+            walk(
+                child,
+                depth + 1,
+                current_semantic_depth,
+                current_path,
+                is_related,
+                meta or parent_meta,
+            )
 
     projection_children = list(tree.get("children") or [])
     # The annual UI auto-enters the sole Commonwealth jurisdiction wrapper;
@@ -365,7 +385,7 @@ def projection_signature(
             projection_children = list(sole_children)
 
     for child in projection_children:
-        walk(child, 1, [], False, None)
+        walk(child, 1, 0, [], False, None)
 
     frontend = _frontend_depth_metrics(projection_children)
     first_level_names = sorted(str(child.get("name") or "") for child in projection_children)

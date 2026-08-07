@@ -10,10 +10,10 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 
 | Plan item | Status | Evidence | Commit/change | Remaining work |
 | --- | --- | --- | --- | --- |
-| 2.1 Golden projection fixtures | complete | `tests/fixtures/dashboard_projection/baseline.json`; required ten projections | Wave 0 working tree | Review fixture only when semantics intentionally change |
-| 2.2 Depth/visibility audit | complete | `dashboard-depth-audit-20260807T232555Z.{md,json}`: 10 projections, 0 hard failures | Wave 0 working tree | Keep the audit in regression use |
-| 2.3 Graph integrity checks | in_progress | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations | Wave 0 working tree | Add policy-aware child/completeness checks with declarative edge-set registry |
-| 1.1 Relationship/projection API contract | not_started | Current API exposes only optional `breakdown` | — | Implement after stable fixtures |
+| 2.1 Golden projection fixtures | complete | `tests/fixtures/dashboard_projection/baseline.json`; required ten projections | `b6f5c1e` | Review fixture only when semantics intentionally change |
+| 2.2 Depth/visibility audit | complete | `dashboard-depth-audit-20260807T232555Z.{md,json}`: 10 projections, 0 hard failures | `b6f5c1e` | Keep the audit in regression use |
+| 2.3 Graph integrity checks | in_progress | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations | `b6f5c1e` | Add policy-aware child/completeness checks with declarative edge-set registry |
+| 1.1 Relationship/projection API contract | complete | Every non-root dashboard node has typed relationship metadata; roots have projection summaries; rollback flag covered | Contract milestone working tree | Frontend consumption remains in renderer/depth UX milestones |
 | 1.2 Declarative edge-set policy | not_started | Current traversal contains source/name heuristics | — | Add config and policy loader |
 | 1.3 Projection builder | not_started | Projection logic is distributed across dashboard and graph modules | — | Extract pure projection stages |
 | 3.1 Truthful ring values and units | not_started | Plan/current code identifies layout scaling contract defect | — | Implement after relationship contract |
@@ -93,3 +93,55 @@ Policy-aware checks for authoritative completeness and per-edge-set fallback can
 ### Next item
 
 Plan section 1.1: add the backward-compatible relationship/projection API contract, then use it as the basis for declarative edge policy.
+
+## Milestone: Relationship and projection API contract
+
+### Item
+
+Plan section 1.1 and the metadata-propagation foundation of section 1.3.
+
+### Previous behavior
+
+Only related/fallback nodes had the legacy `breakdown` object. Consumers inferred navigation folders from labels, could not distinguish a same-group edge inside a related branch, and had no root metadata describing safe versus additive depth.
+
+### Root cause
+
+Edge kind, inherited branch semantics, source provenance, presentation role and requested/fact year were conflated in one optional compatibility object. Canonical leaves were historically stamped as related when related children were attached.
+
+### Changes
+
+- Added typed `RelationshipMeta`, `ProjectionMeta`, and branch-summary schemas plus matching frontend types.
+- Added the pure `dashboard_projection.py` metadata/summary module.
+- Added a `relationship` object to every non-root dashboard node and root `projection` metadata.
+- Preserved `breakdown` as a deprecated compatibility alias.
+- Preserved actual edge kind while propagating `branch_kind=related` through descendants.
+- Marked jurisdiction and repeated source-function bridges as navigation where they are not semantic levels.
+- Kept canonical ABS parents additive even when related Statement 6/FBO children are attached.
+- Added temporary `DASHBOARD_PROJECTION_V2` rollback control, enabled by default.
+- Updated the projection audit to use explicit edge-set identity and semantic depth.
+
+### Validation
+
+- Focused API/unit/graph tests: **22 passed**.
+- Full backend suite: **563 passed**, one dependency deprecation warning.
+- Frontend `lint:ci`: passed at the unchanged accepted baseline of 25 errors / 13 warnings.
+- TypeScript `tsc --noEmit`: passed.
+- Frontend production build: passed, 12 static routes.
+- Ruff and diff checks: passed.
+- [`dashboard-depth-audit-20260807T234053Z.md`](dashboard-depth-audit-20260807T234053Z.md): fixture match, zero hard failures, zero duplicate semantic edges, zero cycles, zero missing terminal citations.
+
+### Data impact
+
+None. No schema migration, loader or database write was performed.
+
+### Dashboard impact
+
+The wire contract is richer but tree values and reachability are unchanged. Federal actual root totals remain $639.703b (2022-23), $687.277b (2023-24), and $745.030b (2024-25); safe visible depths remain 2, 2 and 4. The 2024-25 root now explicitly reports additive depth 2, related depth 4 through the audit, 11 canonical nodes with related children, and source/basis/year/unit metadata on projected nodes.
+
+### Remaining risks
+
+Branch-family labels still reflect current source families until the declarative edge-set policy supplies product-level families such as `statement_6`, `fbo`, `contracts` and `grants`. The existing frontend has not yet migrated from `breakdown` to `relationship`; that is intentionally isolated from this API contract commit.
+
+### Next item
+
+Plan section 1.2 and section 3.3 preflight: add the declarative edge-set policy and audit path-versus-edge suppression before changing cascade behavior.

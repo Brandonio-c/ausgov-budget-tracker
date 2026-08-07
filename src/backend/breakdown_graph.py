@@ -107,7 +107,10 @@ def fact_for_node_year(
             f.amount_aud,
             f.financial_year,
             f.estimate_status,
+            f.accounting_basis,
+            f.unit,
             d.source_key,
+            d.source_family,
             m.compatibility_group,
             n.name AS node_name
         FROM facts f
@@ -144,7 +147,10 @@ def fact_for_node_year(
             "source_key": row["source_key"],
             "compatibility_group": row["compatibility_group"],
             "estimate_status": row["estimate_status"],
+            "accounting_basis": row["accounting_basis"],
+            "unit": row["unit"],
             "node_name": row["node_name"],
+            "source_family": row["source_family"],
             "node_id": node_id,
             "fy_fallback": False,
             "requested_financial_year": financial_year,
@@ -161,7 +167,10 @@ def fact_for_node_year(
             f.amount_aud,
             f.financial_year,
             f.estimate_status,
+            f.accounting_basis,
+            f.unit,
             d.source_key,
+            d.source_family,
             m.compatibility_group,
             n.name AS node_name
         FROM facts f
@@ -206,7 +215,10 @@ def fact_for_node_year(
         "source_key": best["source_key"],
         "compatibility_group": best["compatibility_group"],
         "estimate_status": best["estimate_status"],
+        "accounting_basis": best["accounting_basis"],
+        "unit": best["unit"],
         "node_name": best["node_name"],
+        "source_family": best["source_family"],
         "node_id": node_id,
         "fy_fallback": True,
         "requested_financial_year": financial_year,
@@ -299,6 +311,36 @@ def _child_meta_from_fact(
     }
 
 
+def _relationship_from_fact(
+    fact: dict[str, Any],
+    *,
+    tree_year: str,
+    edge_kind: str,
+    branch_kind: str,
+    edge_set_id: str | None,
+    match_quality: str | None = None,
+    presentation_role: str = "data",
+) -> dict[str, Any]:
+    return {
+        "edge_kind": edge_kind,
+        "branch_kind": branch_kind,
+        "presentation_role": presentation_role,
+        "edge_set_id": edge_set_id,
+        "branch_family": fact.get("source_family"),
+        "source_key": fact.get("source_key"),
+        "source_family": fact.get("source_family"),
+        "compatibility_group": fact.get("compatibility_group"),
+        "accounting_basis": fact.get("accounting_basis"),
+        "estimate_status": fact.get("estimate_status"),
+        "requested_financial_year": tree_year,
+        "fact_financial_year": fact.get("financial_year"),
+        "is_year_fallback": bool(fact.get("fy_fallback")),
+        "fallback_reason": fact.get("fallback_reason"),
+        "match_quality": match_quality,
+        "unit": fact.get("unit"),
+    }
+
+
 def build_same_group_subtree(
     conn,
     parent_node_id: int,
@@ -330,6 +372,14 @@ def build_same_group_subtree(
             "node_id": edge["child_node_id"],
             "source_key": fact["source_key"],
             "compatibility_group": fact["compatibility_group"],
+            "relationship": _relationship_from_fact(
+                fact,
+                tree_year=financial_year,
+                edge_kind="same_group",
+                branch_kind="additive",
+                edge_set_id=edge.get("crosswalk_id"),
+                match_quality=match_quality_from_notes(edge.get("notes")),
+            ),
         }
         meta = _child_meta_from_fact(fact, tree_year=financial_year)
         if meta:
@@ -383,11 +433,21 @@ def _mark_related_descendants(
     unrelated parent and cross-government facts reading as if additive.
     """
     existing = node.get("breakdown") or {}
-    own_fy = existing.get("fact_financial_year")
-    own_is_fallback = bool(existing.get("is_year_fallback"))
-    own_reason = existing.get("fallback_reason")
+    existing_relationship = node.get("relationship") or {}
+    own_fy = existing_relationship.get("fact_financial_year") or existing.get(
+        "fact_financial_year"
+    )
+    own_is_fallback = bool(
+        existing_relationship.get("is_year_fallback")
+        or existing.get("is_year_fallback")
+    )
+    own_reason = existing_relationship.get("fallback_reason") or existing.get(
+        "fallback_reason"
+    )
     own_edition = existing.get("source_budget_edition") or existing.get("source_key")
-    own_estimate_status = existing.get("estimate_status")
+    own_estimate_status = existing_relationship.get("estimate_status") or existing.get(
+        "estimate_status"
+    )
 
     child_fys: list[str] = []
     for child in (node.get("children") or {}).values():
@@ -402,9 +462,16 @@ def _mark_related_descendants(
         if child_fy:
             child_fys.append(child_fy)
 
-    effective_fy = own_fy or (sorted(child_fys)[0] if child_fys else None)
-    is_fallback = own_is_fallback or (effective_fy is not None and effective_fy != own_fy)
-    if effective_fy:
+    mismatched_child_fys = sorted(fy for fy in child_fys if fy != tree_year)
+    effective_fy = (
+        own_fy
+        if own_is_fallback
+        else (mismatched_child_fys[0] if mismatched_child_fys else own_fy)
+    )
+    is_fallback = own_is_fallback or (
+        effective_fy is not None and effective_fy != tree_year
+    )
+    if effective_fy and effective_fy != tree_year:
         mismatch_years.add(str(effective_fy))
         banner = (
             f"{FY_MISMATCH_BANNER} Selected year {tree_year}; showing {effective_fy}. "
@@ -417,7 +484,10 @@ def _mark_related_descendants(
         "source_key": existing.get("source_key") or source_key,
         "compatibility_group": existing.get("compatibility_group") or compat,
         "match_quality": existing.get("match_quality") or quality,
-        "fact_financial_year": effective_fy,
+        # Compatibility alias keeps its historical convention: null means
+        # exact-year.  The new relationship contract always carries the
+        # actual fact year explicitly.
+        "fact_financial_year": effective_fy if is_fallback else None,
         "requested_financial_year": tree_year,
         "is_year_fallback": is_fallback,
         # own_reason only genuinely describes a fallback when own_fy is set
@@ -428,11 +498,32 @@ def _mark_related_descendants(
         # reason so the disclosure stays honest about where the mismatch
         # actually lives.
         "fallback_reason": (
-            own_reason if own_fy else ("nested_child_year_mismatch" if effective_fy else own_reason)
+            own_reason
+            if own_is_fallback
+            else ("nested_child_year_mismatch" if is_fallback else own_reason)
         ),
         "source_budget_edition": own_edition or existing.get("source_key") or source_key,
         "estimate_status": own_estimate_status,
         "banner": banner,
+    }
+    node["relationship"] = {
+        **existing_relationship,
+        "edge_kind": existing_relationship.get("edge_kind") or "same_group",
+        "branch_kind": "related",
+        "presentation_role": existing_relationship.get("presentation_role") or "data",
+        "source_key": existing_relationship.get("source_key") or source_key,
+        "compatibility_group": (
+            existing_relationship.get("compatibility_group") or compat
+        ),
+        "requested_financial_year": tree_year,
+        "fact_financial_year": effective_fy,
+        "is_year_fallback": is_fallback,
+        "fallback_reason": (
+            own_reason
+            if own_is_fallback
+            else ("nested_child_year_mismatch" if is_fallback else own_reason)
+        ),
+        "match_quality": existing_relationship.get("match_quality") or quality,
     }
     node["preserve_amount"] = True
     return effective_fy
@@ -470,6 +561,7 @@ def build_related_subtree(
 
     children: dict[str, Any] = {}
     meta_source = related[0].get("child_source_key")
+    meta_fact: dict[str, Any] | None = None
     quality = match_quality_from_notes(related[0].get("notes"))
     mismatch_years: set[str] = set()
     for edge in related:
@@ -487,6 +579,14 @@ def build_related_subtree(
             "node_id": edge["child_node_id"],
             "source_key": fact["source_key"],
             "compatibility_group": fact["compatibility_group"],
+            "relationship": _relationship_from_fact(
+                fact,
+                tree_year=financial_year,
+                edge_kind="related_breakdown",
+                branch_kind="related",
+                edge_set_id=edge.get("crosswalk_id"),
+                match_quality=edge_quality,
+            ),
         }
         node["breakdown"] = {
             "fact_financial_year": fact["financial_year"] if fact.get("fy_fallback") else None,
@@ -527,6 +627,7 @@ def build_related_subtree(
         )
         children[label] = node
         meta_source = fact["source_key"] or meta_source
+        meta_fact = fact
         quality = match_quality_from_notes(edge.get("notes"))
 
     if not children:
@@ -541,8 +642,16 @@ def build_related_subtree(
     breakdown = {
         "kind": "related_breakdown",
         "source_key": meta_source,
+        "source_family": (meta_fact or {}).get("source_family"),
         "compatibility_group": compat,
+        "accounting_basis": (meta_fact or {}).get("accounting_basis"),
+        "estimate_status": (meta_fact or {}).get("estimate_status"),
+        "requested_financial_year": financial_year,
+        "is_year_fallback": bool(mismatch_year),
+        "fallback_reason": "nested_child_year_mismatch" if mismatch_year else None,
+        "unit": (meta_fact or {}).get("unit"),
         "match_quality": quality,
+        "edge_set_id": related[0].get("crosswalk_id"),
         "fact_financial_year": mismatch_year,
         "banner": banner_for_related(
             meta_source,
@@ -613,6 +722,29 @@ def resolve_related_parent_node_id(
     return None
 
 
+def _relationship_from_breakdown(
+    breakdown: dict[str, Any], *, presentation_role: str
+) -> dict[str, Any]:
+    return {
+        "edge_kind": "related_breakdown",
+        "branch_kind": "related",
+        "presentation_role": presentation_role,
+        "edge_set_id": breakdown.get("edge_set_id"),
+        "branch_family": breakdown.get("source_family"),
+        "source_key": breakdown.get("source_key"),
+        "source_family": breakdown.get("source_family"),
+        "compatibility_group": breakdown.get("compatibility_group"),
+        "accounting_basis": breakdown.get("accounting_basis"),
+        "estimate_status": breakdown.get("estimate_status"),
+        "requested_financial_year": breakdown.get("requested_financial_year"),
+        "fact_financial_year": breakdown.get("fact_financial_year"),
+        "is_year_fallback": bool(breakdown.get("is_year_fallback")),
+        "fallback_reason": breakdown.get("fallback_reason"),
+        "match_quality": breakdown.get("match_quality"),
+        "unit": breakdown.get("unit"),
+    }
+
+
 def _related_folder(
     *,
     related_list: list[dict[str, Any]],
@@ -621,11 +753,16 @@ def _related_folder(
     parent_fact_id: int | None,
 ) -> dict[str, Any]:
     """Navigable related folder preserving parent amount (non-additive)."""
+    relationship = _relationship_from_breakdown(
+        breakdown, presentation_role="navigation"
+    )
     return {
         "children": {item["name"]: item["node"] for item in related_list},
         "amount": float(parent_amount or 0),
         "fact_id": parent_fact_id,
         "breakdown": breakdown,
+        "relationship": relationship,
+        "presentation_role": "navigation",
         "preserve_amount": True,
     }
 
@@ -640,7 +777,13 @@ def attach_related_to_tree(
     parents so Statement 6 / FBO cascades are reachable without double-counting.
     """
 
-    def _attach(node: dict[str, Any], nid: int, *, as_folders: bool) -> None:
+    def _attach(
+        node: dict[str, Any],
+        nid: int,
+        *,
+        as_folders: bool,
+        parent_name: str,
+    ) -> None:
         kids = node.setdefault("children", {})
         parent_amount = float(node.get("amount") or 0)
         parent_fact = node.get("fact_id")
@@ -658,6 +801,15 @@ def attach_related_to_tree(
             parent_name=None,
             source_key_prefixes=("federal_fbo_",),
         )
+        # A related source often repeats the canonical function at its own
+        # root (Defence -> Defence).  That attach node is a navigation bridge,
+        # not another semantic level; descendants retain their source-native
+        # data roles.
+        for item in [*(s6_list or []), *(fbo_list or [])]:
+            if item["name"] == parent_name:
+                item["node"].setdefault("relationship", {})[
+                    "presentation_role"
+                ] = "navigation"
         if as_folders:
             if s6_list and s6_bd and "Statement 6 (budget estimates)" not in kids:
                 kids["Statement 6 (budget estimates)"] = _related_folder(
@@ -679,6 +831,14 @@ def attach_related_to_tree(
         if s6_list and s6_bd:
             node["children"] = {item["name"]: item["node"] for item in s6_list}
             node["breakdown"] = s6_bd
+            node["relationship"] = {
+                "edge_kind": "same_group",
+                "branch_kind": "additive",
+                "presentation_role": "data",
+                "requested_financial_year": financial_year,
+                "fact_financial_year": financial_year,
+                "is_year_fallback": False,
+            }
             if fbo_list and fbo_bd:
                 node["children"]["FBO Appendix A (audited)"] = _related_folder(
                     related_list=fbo_list,
@@ -689,6 +849,14 @@ def attach_related_to_tree(
         elif fbo_list and fbo_bd:
             node["children"] = {item["name"]: item["node"] for item in fbo_list}
             node["breakdown"] = fbo_bd
+            node["relationship"] = {
+                "edge_kind": "same_group",
+                "branch_kind": "additive",
+                "presentation_role": "data",
+                "requested_financial_year": financial_year,
+                "fact_financial_year": financial_year,
+                "is_year_fallback": False,
+            }
 
     def walk(node: dict[str, Any], path_name: str | None = None) -> None:
         kids = node.get("children") or {}
@@ -702,7 +870,7 @@ def attach_related_to_tree(
                     conn, purpose, node.get("fact_id")
                 )
                 if nid is not None:
-                    _attach(node, nid, as_folders=True)
+                    _attach(node, nid, as_folders=True, parent_name=purpose)
             return
 
         fact_id = node.get("fact_id")
@@ -711,7 +879,7 @@ def attach_related_to_tree(
         nid = resolve_related_parent_node_id(conn, path_name or "", fact_id)
         if nid is None:
             return
-        _attach(node, nid, as_folders=False)
+        _attach(node, nid, as_folders=False, parent_name=path_name or "")
 
     walk(tree)
 

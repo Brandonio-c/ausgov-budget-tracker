@@ -25,12 +25,59 @@ class BreakdownMeta(BaseModel):
     estimate_status: Optional[str] = None
 
 
+class RelationshipMeta(BaseModel):
+    """Explicit projection semantics for every non-root dashboard node.
+
+    ``breakdown`` remains as a deprecated compatibility alias while clients
+    migrate.  Unlike that alias, edge kind and inherited branch semantics are
+    separate: a same-group edge nested beneath a related attach point remains
+    ``edge_kind=same_group`` but ``branch_kind=related``.
+    """
+
+    edge_kind: Literal["root", "same_group", "related_breakdown"]
+    branch_kind: Literal["additive", "related"]
+    presentation_role: Literal["data", "navigation"]
+    edge_set_id: Optional[str] = None
+    branch_family: Optional[str] = None
+    source_key: Optional[str] = None
+    source_family: Optional[str] = None
+    compatibility_group: Optional[str] = None
+    accounting_basis: Optional[str] = None
+    estimate_status: Optional[str] = None
+    requested_financial_year: Optional[str] = None
+    fact_financial_year: Optional[str] = None
+    is_year_fallback: bool = False
+    fallback_reason: Optional[str] = None
+    match_quality: Optional[str] = None
+    unit: Optional[str] = None
+
+
+class ProjectionBranchSummary(BaseModel):
+    branch_family: Optional[str] = None
+    branch_kind: Literal["additive", "related"]
+    node_count: int
+    max_depth: int
+
+
+class ProjectionMeta(BaseModel):
+    requested_mode: str
+    requested_level: str
+    requested_financial_year: str
+    selected_accounting_basis: Optional[str] = None
+    max_visible_depth: int
+    max_additive_depth: int
+    contains_related_branches: bool
+    branch_summaries: list[ProjectionBranchSummary] = Field(default_factory=list)
+
+
 class TreeNode(BaseModel):
     name: str
     value: float
     id: Optional[int] = None  # present on leaves; also on related parents for citation
     children: Optional[list["TreeNode"]] = None
     breakdown: Optional[BreakdownMeta] = None
+    relationship: Optional[RelationshipMeta] = None
+    projection: Optional[ProjectionMeta] = None
     # Dashboard warnings / debt semantics (optional; set on roots or debt leaves)
     mixed_observation_dates: Optional[bool] = None
     observation_dates: Optional[list[str]] = None

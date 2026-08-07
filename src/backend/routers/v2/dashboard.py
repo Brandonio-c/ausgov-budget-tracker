@@ -34,6 +34,11 @@ from ...compatibility import (
     mode_to_view_family,
     validate_fact_set,
 )
+from ...dashboard_projection import (
+    projection_metadata,
+    projection_v2_enabled,
+    relationship_from_node_dict,
+)
 from ...evidence_locator import (
     build_reconstructed,
     media_type_for_path,
@@ -232,6 +237,7 @@ def _fact_rows(
     sql = f"""
         SELECT
             f.id AS fact_id,
+            f.financial_year,
             f.amount_aud,
             f.amount_value,
             f.quantity,
@@ -242,7 +248,10 @@ def _fact_rows(
             d.jurisdiction,
             n.name AS node_name,
             f.accounting_basis,
+            f.estimate_status,
             d.source_key,
+            d.source_family,
+            m.compatibility_group,
             f.observation_date,
             f.valuation_basis,
             f.amount_granularity,
@@ -278,6 +287,7 @@ def _fact_rows(
             continue
         row = {
             "fact_id": int(r["fact_id"]),
+            "financial_year": r["financial_year"],
             "amount_aud": r["amount_aud"],
             "amount_value": r["amount_value"],
             "quantity": r["quantity"],
@@ -288,7 +298,10 @@ def _fact_rows(
             "jurisdiction": r["jurisdiction"] or "Uncategorized",
             "node_name": (r["node_name"] or "Uncategorized").strip(),
             "accounting_basis": r["accounting_basis"],
+            "estimate_status": r["estimate_status"],
             "source_key": r["source_key"],
+            "source_family": r["source_family"],
+            "compatibility_group": r["compatibility_group"],
             "observation_date": r["observation_date"],
             "valuation_basis": r["valuation_basis"],
             "amount_granularity": r["amount_granularity"],
@@ -387,13 +400,31 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
         "fact_id": None,
         "observation_dates": set(),
         "valuation_bases": set(),
+        "_projection_values": {},
     }
+
+    def record_projection_values(node: dict[str, Any], row: dict[str, Any]) -> None:
+        values = node.setdefault("_projection_values", {})
+        for key in (
+            "source_key",
+            "source_family",
+            "compatibility_group",
+            "accounting_basis",
+            "estimate_status",
+            "financial_year",
+            "unit",
+        ):
+            value = row.get(key)
+            if value not in (None, ""):
+                values.setdefault(key, set()).add(str(value))
+
     for row in rows:
         nested = _path_parts(row["node_name"], row.get("source_key"), mode=mode)
         if nested is None:
             continue
         parts = [row["jurisdiction"], *nested]
         cursor = root
+        record_projection_values(cursor, row)
         for part in parts:
             kids = cursor.setdefault("children", {})
             if part not in kids:
@@ -403,8 +434,11 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
                     "fact_id": None,
                     "observation_dates": set(),
                     "valuation_bases": set(),
+                    "_projection_values": {},
+                    "presentation_role": "data",
                 }
             cursor = kids[part]
+            record_projection_values(cursor, row)
         # Leaf-only: accumulate amount only on the leaf node; parents roll up from children.
         cursor["amount"] = float(cursor.get("amount") or 0) + row["amount_aud"]
         cursor["fact_id"] = row["fact_id"]
@@ -439,9 +473,35 @@ def _breakdown_meta(node: dict[str, Any]) -> BreakdownMeta | None:
     return BreakdownMeta(**raw)
 
 
-def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
+def _to_tree_node(
+    name: str,
+    node: dict[str, Any],
+    *,
+    requested_financial_year: str | None = None,
+    inherited_related: bool = False,
+    include_relationship: bool | None = None,
+) -> TreeNode:
     children_map = node.get("children") or {}
     breakdown = _breakdown_meta(node)
+    if include_relationship is None:
+        include_relationship = projection_v2_enabled()
+    if not requested_financial_year:
+        years = sorted(
+            (node.get("_projection_values") or {}).get("financial_year") or []
+        )
+        requested_financial_year = years[0] if len(years) == 1 else ""
+    relationship = (
+        relationship_from_node_dict(
+            node,
+            requested_financial_year=requested_financial_year,
+            inherited_related=inherited_related,
+        )
+        if include_relationship
+        else None
+    )
+    child_inherited_related = inherited_related or bool(
+        relationship and relationship.branch_kind == "related"
+    )
     obs_dates = sorted(node.get("observation_dates") or [])
     mixed = len(obs_dates) > 1
     val_bases = sorted(node.get("valuation_bases") or [])
@@ -465,9 +525,19 @@ def _to_tree_node(name: str, node: dict[str, Any]) -> TreeNode:
         "mixed_observation_dates": mixed if obs_dates else None,
         "unit": node.get("unit"),
         "warning": "; ".join(warnings) if warnings else None,
+        "relationship": relationship,
     }
     if children_map:
-        children = [_to_tree_node(k, v) for k, v in children_map.items()]
+        children = [
+            _to_tree_node(
+                k,
+                v,
+                requested_financial_year=requested_financial_year,
+                inherited_related=child_inherited_related,
+                include_relationship=include_relationship,
+            )
+            for k, v in children_map.items()
+        ]
         # Related children must not re-total the parent pie slice.
         if breakdown and breakdown.kind == "related_breakdown":
             return TreeNode(
@@ -607,6 +677,7 @@ def dashboard_tree(
     level = _normalize_level(level)
     filt = _mode_filters(mode)
     conn = _facts_conn()
+    selected_basis: str | None = None
     try:
         rows = _fact_rows(conn, mode, level, year, valuation_basis=valuation_basis)
         if not rows:
@@ -626,6 +697,17 @@ def dashboard_tree(
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
         tree_dict = _build_tree_dict(rows, mode=mode)
+        if level == "federal":
+            for jurisdiction_node in (tree_dict.get("children") or {}).values():
+                jurisdiction_node["presentation_role"] = "navigation"
+        bases = sorted(
+            {
+                str(row["accounting_basis"])
+                for row in rows
+                if row.get("accounting_basis")
+            }
+        )
+        selected_basis = bases[0] if len(bases) == 1 else None
         if mode == "actuals":
             attach_related_to_tree(conn, tree_dict, year)
         elif mode == "budget" and level == "federal":
@@ -633,7 +715,7 @@ def dashboard_tree(
     finally:
         conn.close()
     children = [
-        _to_tree_node(name, child)
+        _to_tree_node(name, child, requested_financial_year=year)
         for name, child in (tree_dict.get("children") or {}).items()
     ]
     obs_dates = sorted(tree_dict.get("observation_dates") or [])
@@ -659,6 +741,17 @@ def dashboard_tree(
             warnings.append("Root total suppressed (non-additive or incompatible set).")
 
     unit = decision.units[0] if len(decision.units) == 1 else None
+    projection = (
+        projection_metadata(
+            children,
+            requested_mode=mode,
+            requested_level=level,
+            requested_financial_year=year,
+            selected_accounting_basis=selected_basis,
+        )
+        if projection_v2_enabled()
+        else None
+    )
     return TreeNode(
         name=f"{level} — {year}",
         value=total,
@@ -672,6 +765,7 @@ def dashboard_tree(
         view_family=decision.view_family,
         root_total_allowed=decision.root_total_allowed,
         warning="; ".join(warnings) if warnings else None,
+        projection=projection,
     )
 
 
@@ -731,7 +825,7 @@ def _sum_named_nodes(
     children = node.get("children") or {}
     for child_name, child in children.items():
         if child_name.strip().lower() == name_lower:
-            tree_node = _to_tree_node(child_name, child)
+            tree_node = _to_tree_node(child_name, child, include_relationship=False)
             total += float(tree_node.value or 0)
             sample = _first_fact_id(tree_node)
             if sample is not None:
@@ -752,7 +846,7 @@ def _level_point(
         return None
     tree_dict = _build_tree_dict(rows, mode=mode)
     children = [
-        _to_tree_node(name, child)
+        _to_tree_node(name, child, include_relationship=False)
         for name, child in (tree_dict.get("children") or {}).items()
     ]
     if category and category.strip():
@@ -929,12 +1023,16 @@ def dashboard_item_children(
                             "source_key": related_bd.get("source_key"),
                             "compatibility_group": related_bd.get("compatibility_group"),
                             "breakdown": related_bd,
+                            "presentation_role": "navigation",
                             "preserve_amount": True,
                         },
                     }
                 ]
             children = [
-                _to_tree_node(item["name"], item["node"]) for item in same_list
+                _to_tree_node(
+                    item["name"], item["node"], requested_financial_year=fy
+                )
+                for item in same_list
             ]
             return {
                 "fact_id": fact_id,
@@ -953,7 +1051,10 @@ def dashboard_item_children(
         )
         if related_list and breakdown:
             children = [
-                _to_tree_node(item["name"], item["node"]) for item in related_list
+                _to_tree_node(
+                    item["name"], item["node"], requested_financial_year=fy
+                )
+                for item in related_list
             ]
             return {
                 "fact_id": fact_id,

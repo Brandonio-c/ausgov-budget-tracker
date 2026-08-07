@@ -85,7 +85,7 @@ def test_signature_separates_additive_related_and_navigation_depth() -> None:
 
     assert failures == []
     assert signature["max_additive_depth"] == 1
-    assert signature["max_related_depth"] == 2
+    assert signature["max_related_depth"] == 1
     assert signature["branch_counts"] == {"additive": 1, "related": 2}
     assert signature["citation"] == {"fact_leaves": 2, "complete": 2, "missing": 0}
 
