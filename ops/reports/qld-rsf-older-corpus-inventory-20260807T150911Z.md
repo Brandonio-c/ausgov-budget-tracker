@@ -29,4 +29,3 @@ RSF edition for that year and therefore has explicit precedence. No older
 facts or quarantines existed before this load; expected publishable output
 is 234 facts (117 source rows x two vintages) and four extractor quarantine
 records.
-

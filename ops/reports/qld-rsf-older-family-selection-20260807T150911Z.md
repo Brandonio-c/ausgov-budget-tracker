@@ -31,4 +31,3 @@ force-fit into later labels.
 
 The Cloudflare nested-route issue is irrelevant: RSF remains in the existing
 `/explorers/gfs` explorer and `/v2/qld-rsf` API. No route is added or changed.
-

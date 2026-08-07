@@ -90,7 +90,6 @@ None.
   "parent_amount_preserved": true
 }
 ```
-
 **health** (`Health`)
 
 ```json
@@ -246,4 +245,3 @@ None.
   "parent_amount_preserved": true
 }
 ```
-
