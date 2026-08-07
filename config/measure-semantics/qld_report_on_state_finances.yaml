@@ -1,7 +1,7 @@
 # Declarative semantic model for the Queensland Treasury's "Report on
 # State Finances" - "Key UPF Financial Aggregates" table, General
-# Government Sector only, 2018-19 to 2024-25 (7 editions) - see
-# ops/reports/qld-corpus-inventory-20260807T142208Z.md for the full
+# Government Sector only, 2002-03 to 2024-25 (23 editions) - see
+# ops/reports/qld-rsf-older-corpus-inventory-20260807T150911Z.md for the full
 # page-level inventory this is built from.
 #
 # This is the single source of truth for this family's measure
@@ -24,17 +24,17 @@
 # ---------------------------------------------------------------------------
 # Global rules
 # ---------------------------------------------------------------------------
-version: 1
+version: 2
 
 global_rules:
   - id: qld_rsf_general_government_sector_only
     text: >
-      Every row in the source table has 6 numeric columns - 3 sector-
+      Every selected row in the source table has 6 numeric columns - 3 sector-
       pairs (General Government Sector, Public Non-financial
       Corporations Sector, Non-financial Public Sector), each pair
       being (Est. Actual, Outcome). Only the FIRST pair (General
       Government Sector) is ever extracted - confirmed reliably first
-      in every one of the 7 target editions by cross-referencing each
+      in every one of the 23 target editions by cross-referencing each
       edition's own narrative Overview text against the table's
       first-pair values (e.g. 2020-21's narrative "$62.732 billion"
       matches that edition's own Revenue row first-pair second value).
@@ -64,16 +64,17 @@ global_rules:
       Public Sector columns use a bare "-" placeholder for nil values -
       this never affects General Government Sector extraction (always
       real numbers in every edition checked), but means the row's
-      total token count is not fixed at 6 - the extractor only
-      requires AT LEAST 2 numeric tokens (enough for the GGS pair), not
-      an exact count. Any row where fewer than 2 numeric tokens can be
-      confidently parsed is quarantined, never guessed.
+      total token count is not fixed at 6 - the extractor requires AT
+      LEAST 4 numeric tokens (the GGS pair plus the final pair), not an
+      exact count. This also rejects nearby narrative sentences that
+      happen to contain two dollar figures. Any row with fewer than 4
+      numeric tokens is quarantined, never guessed.
   - id: qld_rsf_row_label_narrative_false_positive
     text: >
       A bare "Revenue" line (a subsection heading from the surrounding
       narrative text, e.g. "General Government Sector Revenue") can
       appear before or after the real "Revenue <6 numbers>" data row in
-      most editions. This is naturally quarantined by the "at least 2
+      most editions. This is naturally quarantined by the "at least 4
       numeric tokens" rule above (the bare heading line has zero
       trailing numbers) - not a special case requiring separate logic.
   - id: qld_rsf_estimate_status_estimated_actual_not_budget
@@ -94,13 +95,23 @@ global_rules:
       "Net Debt" (present from the 2020-21 edition onward) and
       "Borrowings"/"Borrowing" (a summary total, present from 2021-22
       onward) are explicitly excluded from this milestone's scope -
-      they are not present in all 7 target editions, and including
-      them would break the "one adapter, uniform row-set across the
-      full cluster" design. Deferred, not silently dropped - a future
-      milestone could extend coverage for the years where they exist.
+      they are not present in all 7 newer target editions. The older
+      editions' own Net Debt and generic Borrowing rows are separately
+      modelled below; the later extra rows remain deferred rather than
+      being silently folded into those older-edition series.
+  - id: qld_rsf_older_label_drift
+    text: >
+      The 2002-03 to 2017-18 editions use bounded label vocabularies.
+      Fiscal balance is also published as Net Lending/Borrowing in the
+      earliest editions; this is the UPF fiscal-balance aggregate and maps
+      to the same measure. Gross Fixed Capital Formation is not force-fit
+      to Capital purchases. Cash surplus/(deficit), net worth, net debt,
+      net borrowing, and generic borrowing each retain distinct semantic
+      identities. Unlisted labels are ignored; malformed selected rows are
+      quarantined.
   - id: qld_rsf_revision_policy
     text: >
-      Each of the 7 target editions is the department's own final,
+      Each of the 23 target editions is the department's own final,
       audited report for its stated financial year - there is no
       competing prior edition of the SAME year's Report on State
       Finances to reconcile against. The stable fact_key below is
@@ -170,7 +181,7 @@ measures:
       General Government Sector. A derived balance - never summed with
       qld_rsf_revenue/qld_rsf_expense (already their difference).
     flow_or_stock: balance
-    row_label_variants: ["Net operating balance"]
+    row_label_variants: ["Net operating balance", "Net Operating Balance"]
     period_granularity: financial_year
     accounting_basis: gfs
     unit: AUD
@@ -190,7 +201,7 @@ measures:
       Capital purchases (capital expenditure) for the Queensland
       General Government Sector.
     flow_or_stock: flow
-    row_label_variants: ["Capital purchases"]
+    row_label_variants: ["Capital purchases", "Capital Purchases"]
     period_granularity: financial_year
     accounting_basis: gfs
     unit: AUD
@@ -210,7 +221,7 @@ measures:
       Sector. A derived balance, distinct from Net Operating Balance
       (nets out capital investment too).
     flow_or_stock: balance
-    row_label_variants: ["Fiscal balance"]
+    row_label_variants: ["Fiscal balance", "Fiscal Balance", "Net Lending/Borrowing", "Net Lending/(Borrowing)", "Net lending/(borrowing)"]
     period_granularity: financial_year
     accounting_basis: gfs
     unit: AUD
@@ -283,4 +294,94 @@ measures:
       - qld_rsf_borrowing_qtc and qld_rsf_leases at the same financial_year, plotted as distinct series
     forbidden_comparisons:
       - any abs_gfs_state_qld_* compatibility_group fact
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_cash_surplus:
+    economic_meaning: General Government Sector GFS cash surplus/(deficit).
+    flow_or_stock: balance
+    row_label_variants: ["Cash Surplus/(Deficit)", "Cash surplus/(deficit)"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: qld_rsf_cash_surplus
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_cash_surplus across financial years]
+    forbidden_comparisons: [summed with revenue or expenses, any ABS GFS compatibility group]
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_gross_fixed_capital_formation:
+    economic_meaning: General Government Sector gross fixed capital formation, retained separately from capital purchases.
+    flow_or_stock: flow
+    row_label_variants: ["Gross Fixed Capital Formation"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: qld_rsf_gross_fixed_capital_formation
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_gross_fixed_capital_formation across financial years]
+    forbidden_comparisons: [qld_rsf_capital_purchases without explicit reconciliation]
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_net_worth:
+    economic_meaning: General Government Sector net worth at 30 June.
+    flow_or_stock: stock
+    row_label_variants: ["Net Worth", "Net worth"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: qld_rsf_net_worth
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_net_worth across financial year end dates]
+    forbidden_comparisons: [summed with flows or balances]
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_net_debt:
+    economic_meaning: General Government Sector net debt at 30 June; negative values mean financial assets exceed relevant liabilities.
+    flow_or_stock: stock
+    row_label_variants: ["Net Debt", "Net debt"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: qld_rsf_net_debt
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_net_debt across financial year end dates]
+    forbidden_comparisons: [summed with flows or gross borrowing]
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_net_borrowing:
+    economic_meaning: General Government Sector net borrowing transaction measure, distinct from UPF fiscal balance/net lending-borrowing.
+    flow_or_stock: flow
+    row_label_variants: ["Net Borrowing", "Net borrowing"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: signed
+    compatibility_group: qld_rsf_net_borrowing
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_net_borrowing across financial years]
+    forbidden_comparisons: [qld_rsf_fiscal_balance, qld_rsf_borrowing]
+    dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
+
+  qld_rsf_borrowing:
+    economic_meaning: General Government Sector gross borrowing at 30 June, before the source began publishing instrument components.
+    flow_or_stock: stock
+    row_label_variants: ["Borrowing"]
+    period_granularity: financial_year
+    accounting_basis: gfs
+    unit: AUD
+    scale_factor: 1000000
+    sign_convention: positive
+    compatibility_group: qld_rsf_borrowing
+    edition_valid_to: "2017-18"
+    allowed_comparisons: [qld_rsf_borrowing across financial year end dates]
+    forbidden_comparisons: [qld_rsf_borrowing_qtc as if interchangeable, summed with flows]
     dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree

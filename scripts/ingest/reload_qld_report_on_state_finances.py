@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""Load 7 editions of the Queensland Treasury's "Report on State
+"""Load 23 editions of the Queensland Treasury's "Report on State
 Finances" into data/facts.db (QLD PDF population milestone - Task
 5/6).
 
 Reads scripts/ingest/extractors/qld_report_on_state_finances.py's
 extraction, classifies every row against the declarative semantic
 model in config/measure-semantics/qld_report_on_state_finances.yaml,
-validates it, and publishes it under one of 8 NEW qld_rsf_* measure
-types/compatibility_groups (see scripts/ingest/migrations/
-012_qld_rsf_measures.sql) - a genuinely new family (Queensland
-currently has zero Treasury-published-own fiscal-aggregate coverage in
-this dashboard).
+validates it, and publishes it under one of 14 isolated qld_rsf_* measure
+types/compatibility_groups (see scripts/ingest/migrations/012 through 014).
 
 A row is published only if every one of these holds:
 
@@ -30,7 +27,7 @@ Anything that fails any of these is written to
 data/staging/quarantine/qld_report_on_state_finances_load_quarantine.jsonl,
 never to facts.db.
 
-Revision policy: each of the 7 target editions is Queensland
+Revision policy: each of the 23 target editions is Queensland
 Treasury's own final, audited report for its stated financial year -
 there is no competing prior edition of the SAME year to reconcile
 against today. The stable fact_key below is identity-complete
@@ -203,17 +200,24 @@ def run(conn: sqlite3.Connection, *, apply: bool, quarantine_path: Path = QUARAN
     # materially different amount, refuse to overwrite - quarantine for
     # explicit review rather than letting insertion order decide.
     to_insert: list[dict] = []
+    citation_updates: list[tuple[int, str]] = []
     superseded_conflicts: list[dict] = []
     for fact in prepared:
         existing = conn.execute(
-            "SELECT id, amount_aud FROM facts WHERE fact_key = ?", (fact["fact_key"],)
+            "SELECT id, amount_aud, source_locator_json FROM facts WHERE fact_key = ?",
+            (fact["fact_key"],),
         ).fetchone()
         if existing is None:
             to_insert.append(fact)
             continue
         existing_amount = existing[1]
         if existing_amount is not None and abs(float(existing_amount) - float(fact["amount_aud"])) < 0.01:
-            continue  # already loaded, identical - idempotent no-op
+            expected_locator_json = json.dumps(
+                {"locator": fact["locator"], "cached_copy_path": fact["cached_copy_path"]}
+            )
+            if existing[2] != expected_locator_json:
+                citation_updates.append((existing[0], expected_locator_json))
+            continue
         superseded_conflicts.append(
             {
                 "reason": "amount_conflict_with_existing_fact",
@@ -229,10 +233,16 @@ def run(conn: sqlite3.Connection, *, apply: bool, quarantine_path: Path = QUARAN
         "rows_quarantined_by_extractor": len(extractor_quarantine),
         "rows_validated_publishable": len(prepared),
         "rows_quarantined_by_loader": len(quarantine) - len(extractor_quarantine),
-        "facts_already_present_idempotent_skip": len(prepared) - len(to_insert) - len(superseded_conflicts),
+        "facts_already_present_idempotent_skip": (
+            len(prepared) - len(to_insert) - len(citation_updates) - len(superseded_conflicts)
+        ),
         "facts_to_insert": len(to_insert),
+        "facts_updated": len(citation_updates),
+        "facts_superseded": 0,
         "revision_conflicts_quarantined": len(superseded_conflicts),
         "nodes_inserted": 0,
+        "edges_inserted": 0,
+        "semantic_changes": 0,
         "mode": "apply" if apply else "dry-run",
     }
     quarantine.extend(superseded_conflicts)
@@ -274,6 +284,13 @@ def run(conn: sqlite3.Connection, *, apply: bool, quarantine_path: Path = QUARAN
                 "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')",
                 (fact_id, node_ids[fact["measure_type"]]),
             )
+        conn.commit()
+
+    if apply and citation_updates:
+        conn.executemany(
+            "UPDATE facts SET source_locator_json = ? WHERE id = ?",
+            [(locator_json, fact_id) for fact_id, locator_json in citation_updates],
+        )
         conn.commit()
 
     if quarantine:
