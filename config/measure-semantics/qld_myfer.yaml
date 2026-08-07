@@ -1,0 +1,91 @@
+family:
+  id: qld_myfer
+  publisher: Queensland Treasury
+  publication: Mid-Year Fiscal and Economic Review
+  source_population: qld_report_on_state_finances_actuals
+  jurisdiction: QLD
+  government_level: state
+  sector: General Government Sector
+  accounting_basis: gfs
+  native_unit: AUD_million
+  output_unit: AUD
+  scale_factor: 1000000
+  period_granularity: financial_year
+  estimate_status: revised_estimate
+  compatibility_policy: >
+    MYFER values are within-year revised estimates. They remain in dedicated
+    qld_myfer_* compatibility groups and must not be merged with audited RSF
+    actual/estimated-actual series or ABS GFS series. Side-by-side comparison
+    is allowed only when the estimate status, publication vintage, and period
+    are disclosed.
+  selected_cluster:
+    editions: ["2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2025-26"]
+    table_shape: >
+      Compact General Government Sector key fiscal aggregates table with one
+      label column and six fiscal columns: prior-year actual/outcome,
+      current-year budget, current-year MYFER/revised estimate, and three
+      projections.
+    selected_column_index: 2
+    selected_column_meaning: current-edition MYFER/revised estimate
+  revision_policy:
+    identity_fields:
+      - source_id
+      - source_budget_year
+      - financial_year
+      - measure_type
+      - accounting_basis
+      - estimate_status
+      - jurisdiction
+    precedence: >
+      One acquired publication is selected for each source_budget_year. A
+      byte-identical or value-identical reload is an idempotent no-op. A new
+      amount for the same identity is quarantined as an explicit revision
+      conflict; processing order never chooses the winner.
+  quarantine_rules:
+    - missing selected table or selected MYFER/revised-estimate column
+    - missing or malformed expected measure row
+    - ambiguous sector or period attribution
+    - unexpected numeric column count
+    - missing exact PDF locator or cached source file
+    - amount conflict for an existing semantic identity
+  excluded_rows:
+    - label: Borrowing / Borrowing with QTC
+      reason: Label and instrument scope drift across editions; not in the safe common cluster.
+    - label: Borrowing (NFPS)
+      reason: Non-financial Public Sector, not General Government Sector.
+    - label: Net debt
+      reason: Not present across the full selected cluster and is a point-in-time stock.
+    - label: Leases and similar arrangements / Securities and derivatives
+      reason: Instrument rows occur only in later editions and are outside this first common cluster.
+
+measures:
+  qld_myfer_revenue:
+    label: QLD MYFER general government revenue
+    source_labels: [Revenue]
+    flow_or_stock: flow
+    compatibility_group: qld_myfer_revenue
+    root_total_allowed: true
+  qld_myfer_expense:
+    label: QLD MYFER general government expenses
+    source_labels: [Expenses]
+    flow_or_stock: flow
+    compatibility_group: qld_myfer_expense
+    root_total_allowed: true
+  qld_myfer_net_operating_balance:
+    label: QLD MYFER net operating balance
+    source_labels: [Net operating balance, Net Operating Balance]
+    flow_or_stock: balance
+    compatibility_group: qld_myfer_net_operating_balance
+    root_total_allowed: false
+  qld_myfer_capital_purchases:
+    label: QLD MYFER purchases of non-financial assets
+    source_labels: [Capital purchases, PNFA]
+    flow_or_stock: flow
+    compatibility_group: qld_myfer_capital_purchases
+    root_total_allowed: true
+  qld_myfer_fiscal_balance:
+    label: QLD MYFER fiscal balance
+    source_labels: [Fiscal balance, Fiscal Balance]
+    flow_or_stock: balance
+    compatibility_group: qld_myfer_fiscal_balance
+    root_total_allowed: false
