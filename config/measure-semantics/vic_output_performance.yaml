@@ -1,0 +1,32 @@
+version: 1
+family:
+  source_id: vic_output_performance_measures_2024_25
+  jurisdiction: VIC
+  government_level: state
+  financial_year: "2024-25"
+  publication_month: "2025-10"
+  accounting_basis: accrual
+  native_unit: AUD_million
+  output_unit: AUD
+  scale_factor: 1000000
+  revision_policy: >-
+    The workbook has one acquired edition. Actual and target are distinct;
+    target maps to budget. Equal reloads are no-ops and amount conflicts are
+    quarantined rather than overwritten.
+  scope_policy: >-
+    Publish only exact Total output cost rows with unit $ million. Defer all
+    non-dollar KPI units and threshold strings. Do not merge these departmental
+    output costs into whole-of-government expenditure trees.
+measure:
+  measure_type: vic_output_total_cost
+  label: VIC DTF output total cost
+  source_label: Total output cost
+  flow_or_stock: flow
+  period_granularity: financial_year
+  compatibility_group: vic_output_total_cost
+quarantine_rules:
+  - missing_expected_output_sheet
+  - missing_total_output_cost_row
+  - unit_not_aud_million
+  - non_numeric_actual_or_target
+  - amount_conflict_with_existing_fact
