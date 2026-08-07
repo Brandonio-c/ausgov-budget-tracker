@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  apiQldMyfer,
   apiQldRsf,
   apiTasGgs,
   apiV2,
@@ -10,6 +11,8 @@ import {
   apiVicBpo,
   apiVicBpoSoceAdmin,
   Citation,
+  QldMyferCitation,
+  QldMyferMeasureInfo,
   QldRsfCitation,
   QldRsfMeasureInfo,
   TasGgsCitation,
@@ -23,12 +26,12 @@ import { CitationPanel } from "@/components/CitationPanel";
 import DashboardNav from "@/components/DashboardNav";
 import DebtNav from "@/components/DebtNav";
 
-type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo" | "tas_ggs" | "qld_rsf";
+type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo" | "tas_ggs" | "qld_rsf" | "qld_myfer";
 
 function SimpleCitationBox({
   citation,
 }: {
-  citation: VicAfsCitation | VicBpoCitation | TasGgsCitation | QldRsfCitation | null;
+  citation: VicAfsCitation | VicBpoCitation | TasGgsCitation | QldRsfCitation | QldMyferCitation | null;
 }) {
   if (!citation) {
     return (
@@ -95,6 +98,13 @@ function GfsExplorerInner() {
   >([]);
   const [qldRsfSelected, setQldRsfSelected] = useState<QldRsfCitation | null>(null);
 
+  const [qldMyferMeasures, setQldMyferMeasures] = useState<QldMyferMeasureInfo[]>([]);
+  const [qldMyferMeasureType, setQldMyferMeasureType] = useState("qld_myfer_revenue");
+  const [qldMyferRows, setQldMyferRows] = useState<
+    Array<{ name: string; value: number; id: string; citation: QldMyferCitation; source_budget_year: string; period_end: string }>
+  >([]);
+  const [qldMyferSelected, setQldMyferSelected] = useState<QldMyferCitation | null>(null);
+
   useEffect(() => {
     const v = searchParams.get("view");
     if (
@@ -103,7 +113,8 @@ function GfsExplorerInner() {
       v === "vic_afs" ||
       v === "vic_bpo" ||
       v === "tas_ggs" ||
-      v === "qld_rsf"
+      v === "qld_rsf" ||
+      v === "qld_myfer"
     )
       setView(v);
   }, [searchParams]);
@@ -118,6 +129,7 @@ function GfsExplorerInner() {
       .catch((e: Error) => setError(e.message));
     apiTasGgs.measures().then(setTasGgsMeasures).catch((e: Error) => setError(e.message));
     apiQldRsf.measures().then(setQldRsfMeasures).catch((e: Error) => setError(e.message));
+    apiQldMyfer.measures().then(setQldMyferMeasures).catch((e: Error) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -202,7 +214,27 @@ function GfsExplorerInner() {
   }, [view, qldRsfMeasureType]);
 
   useEffect(() => {
-    if (view === "vic_afs" || view === "vic_bpo" || view === "tas_ggs" || view === "qld_rsf") return;
+    if (view !== "qld_myfer") return;
+    apiQldMyfer
+      .series(qldMyferMeasureType)
+      .then((resp) => {
+        const mapped = resp.facts.map((f) => ({
+          name: `${f.financial_year} MYFER (${f.estimate_status.replace("_", " ")}) — ${f.label}`,
+          value: f.amount_aud,
+          id: `${f.measure_type}|${f.source_budget_year}|${f.financial_year}`,
+          source_budget_year: f.source_budget_year,
+          period_end: f.period_end,
+          citation: f.citation,
+        }));
+        setQldMyferRows(mapped);
+        setQldMyferSelected(mapped[0]?.citation ?? null);
+        setError(null);
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [view, qldMyferMeasureType]);
+
+  useEffect(() => {
+    if (view === "vic_afs" || view === "vic_bpo" || view === "tas_ggs" || view === "qld_rsf" || view === "qld_myfer") return;
     const query =
       view === "liabilities"
         ? {
@@ -274,6 +306,13 @@ function GfsExplorerInner() {
             different vintage concept from TAS&apos;s budget/actual pair. Never conflated with the
             ABS&apos;s own independently-compiled GFS series for Queensland.
           </>
+        ) : view === "qld_myfer" ? (
+          <>
+            Queensland Treasury&apos;s Mid-Year Fiscal and Economic Review, General Government
+            Sector key fiscal aggregates. These are current-year <code>revised estimates</code>,
+            not audited RSF actuals. The publication vintage, financial-year period, flow/balance
+            status, and citation remain visible; MYFER is never merged into annual additive trees.
+          </>
         ) : (
           <>
             Compatibility group <code>actual_expense</code> on GFS basis (API v2).
@@ -292,6 +331,7 @@ function GfsExplorerInner() {
               ["vic_bpo", "VIC BPO"],
               ["tas_ggs", "TAS GGS"],
               ["qld_rsf", "QLD RSF"],
+              ["qld_myfer", "QLD MYFER"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -362,6 +402,21 @@ function GfsExplorerInner() {
               onChange={(e) => setQldRsfMeasureType(e.target.value)}
             >
               {qldRsfMeasures.map((m) => (
+                <option key={m.measure_type} value={m.measure_type}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : view === "qld_myfer" ? (
+          <label className="block text-sm">
+            Measure{" "}
+            <select
+              className="ml-2 border px-2 py-1 dark:border-white/20 dark:bg-zinc-900"
+              value={qldMyferMeasureType}
+              onChange={(e) => setQldMyferMeasureType(e.target.value)}
+            >
+              {qldMyferMeasures.map((m) => (
                 <option key={m.measure_type} value={m.measure_type}>
                   {m.label}
                 </option>
@@ -487,6 +542,23 @@ function GfsExplorerInner() {
             );
           })()}
         </div>
+      ) : view === "qld_myfer" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          {(() => {
+            const info = qldMyferMeasures.find((m) => m.measure_type === qldMyferMeasureType);
+            if (!info) return null;
+            return (
+              <>
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                  {info.flow_or_stock === "flow" ? "Flow (financial year)" : "Balance (financial year)"}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
+                  Vintage: each listed MYFER edition; status: revised estimate
+                </span>
+              </>
+            );
+          })()}
+        </div>
       ) : null}
       {error ? <p className="mt-4 text-red-600">{error}</p> : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -557,6 +629,24 @@ function GfsExplorerInner() {
               ))}
             </ul>
             <SimpleCitationBox citation={qldRsfSelected} />
+          </>
+        ) : view === "qld_myfer" ? (
+          <>
+            <ul className="max-h-[70vh] space-y-2 overflow-auto">
+              {qldMyferRows.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    className="text-left underline"
+                    onClick={() => setQldMyferSelected(r.citation)}
+                  >
+                    {r.name} (period ending {r.period_end}; vintage {r.source_budget_year}) —{" "}
+                    {r.value.toLocaleString("en-AU")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <SimpleCitationBox citation={qldMyferSelected} />
           </>
         ) : (
           <>

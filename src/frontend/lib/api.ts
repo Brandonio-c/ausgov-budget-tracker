@@ -575,3 +575,50 @@ export const apiQldRsf = {
   series: (measureType: string) =>
     getJson<QldRsfSeriesResponse>(`/v2/qld-rsf/series?measure_type=${encodeURIComponent(measureType)}`),
 };
+
+// Queensland MYFER current-year revised estimates. Kept separate from
+// audited RSF actuals and exposed as its own GFS-explorer view.
+export type QldMyferFlowOrStock = "flow" | "balance";
+
+export type QldMyferMeasureInfo = {
+  measure_type: string;
+  label: string;
+  flow_or_stock: QldMyferFlowOrStock;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+  period_granularity: string;
+};
+
+export type QldMyferCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type QldMyferFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: QldMyferFlowOrStock;
+  amount_aud: number;
+  financial_year: string;
+  period_start?: string | null;
+  period_end: string;
+  period_granularity: string;
+  source_budget_year: string;
+  publication_date?: string | null;
+  estimate_status: string;
+  compatibility_group: string;
+  citation: QldMyferCitation;
+};
+
+export type QldMyferSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: QldMyferFlowOrStock;
+  facts: QldMyferFact[];
+};
+
+export const apiQldMyfer = {
+  measures: () => getJson<QldMyferMeasureInfo[]>("/v2/qld-myfer/measures"),
+  series: (measureType: string) =>
+    getJson<QldMyferSeriesResponse>(`/v2/qld-myfer/series?measure_type=${encodeURIComponent(measureType)}`),
+};
