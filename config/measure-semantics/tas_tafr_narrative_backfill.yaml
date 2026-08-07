@@ -1,0 +1,52 @@
+version: 1
+
+family:
+  source_id: tas_treasurer_annual_financial_reports
+  selected_years: ["2007-08", "2008-09", "2009-10"]
+  deferred_years: ["2003-04", "2004-05", "2005-06", "2006-07"]
+  jurisdiction: TAS
+  government_level: state
+  sector: general_government
+  accounting_basis: accrual
+  period_granularity: financial_year
+  native_unit: AUD_million
+  output_unit: AUD
+  scale_factor: 1000000
+  allowed_estimate_statuses: [budget, actual]
+  revision_policy: >-
+    Original Budget and final Actual are separate facts. Intermediate revised
+    or preliminary outcome columns are excluded. Equal reloads are no-ops; a
+    changed amount for an existing identity is quarantined, never overwritten.
+  compatibility_policy: >-
+    Selected AASB 1049-era General Government facts extend the existing
+    tas_ggs compatibility groups. Pre-2007-08 prose-era printed values remain
+    deferred because the source says the later time series was recast.
+
+quarantine_rules:
+  - missing_exact_pdf_page
+  - missing_expected_row
+  - unexpected_numeric_column_count
+  - ambiguous_sector
+  - amount_conflict_with_existing_fact
+
+measures:
+  tas_ggs_revenue:
+    source_labels: [Revenue from transactions]
+    flow_or_stock: flow
+    compatibility_group: tas_ggs_revenue
+  tas_ggs_expense:
+    source_labels: [Expenses from transactions]
+    flow_or_stock: flow
+    compatibility_group: tas_ggs_expense
+  tas_ggs_net_operating_balance:
+    source_labels: [NET OPERATING BALANCE, Net Operating Balance]
+    flow_or_stock: balance
+    compatibility_group: tas_ggs_net_operating_balance
+  tas_ggs_fiscal_balance:
+    source_labels: [FISCAL BALANCE, Equals Fiscal Balance]
+    flow_or_stock: balance
+    compatibility_group: tas_ggs_fiscal_balance
+  tas_ggs_net_debt:
+    source_labels: [Net Debt]
+    flow_or_stock: stock
+    compatibility_group: tas_ggs_net_debt
