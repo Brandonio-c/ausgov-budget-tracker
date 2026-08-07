@@ -1,0 +1,652 @@
+{
+  "generated_at": "2026-08-07T17:46:34.479699+00:00",
+  "base_url": "http://127.0.0.1:8010",
+  "total_hard_failures": 0,
+  "total_accepted_source_rounding_warnings": 0,
+  "results": [
+    {
+      "path_label": "federal_actuals_2024_25",
+      "requested_mode": "actuals",
+      "requested_level": "federal",
+      "requested_jurisdiction": null,
+      "requested_year": "2024-25",
+      "visited_nodes": 298,
+      "citation_checks": 215,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 215,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 4096,
+          "name": "Community health services",
+          "amount": 41266000000.0,
+          "pct_of_parent": 0.3492530997418645,
+          "depth": 2
+        },
+        {
+          "fact_id": 4086,
+          "name": "Hospital services",
+          "amount": 34395000000.0,
+          "pct_of_parent": 0.29110067284499175,
+          "depth": 2
+        },
+        {
+          "fact_id": 4066,
+          "name": "Medical products, appliances and equipment",
+          "amount": 20727000000.0,
+          "pct_of_parent": 0.17542211501840801,
+          "depth": 2
+        },
+        {
+          "fact_id": 4116,
+          "name": "Other health",
+          "amount": 14100000000.0,
+          "pct_of_parent": 0.119334772121366,
+          "depth": 2
+        },
+        {
+          "fact_id": 4106,
+          "name": "Public health services",
+          "amount": 7667000000.0,
+          "pct_of_parent": 0.06488934027336972,
+          "depth": 2
+        },
+        {
+          "fact_id": 257827,
+          "name": "Aboriginal and Torres Strait Islander health",
+          "amount": 1363000000.0,
+          "pct_of_parent": 0.011535694638398713,
+          "depth": 3
+        },
+        {
+          "fact_id": 257803,
+          "name": "Assistance to the states for public hospitals",
+          "amount": 30217000000.0,
+          "pct_of_parent": 0.25574034107739835,
+          "depth": 3
+        },
+        {
+          "fact_id": 257821,
+          "name": "General administration",
+          "amount": 4946000000.0,
+          "pct_of_parent": 0.0418602682916508,
+          "depth": 3
+        },
+        {
+          "fact_id": 257815,
+          "name": "Health services",
+          "amount": 31259000000.0,
+          "pct_of_parent": 0.26455926537175745,
+          "depth": 3
+        },
+        {
+          "fact_id": 257809,
+          "name": "Hospital services(a)",
+          "amount": 1092000000.0,
+          "pct_of_parent": 0.00924209724514409,
+          "depth": 3
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path_label": "federal_budget_latest",
+      "requested_mode": "budget",
+      "requested_level": "federal",
+      "requested_jurisdiction": null,
+      "requested_year": "2029-30",
+      "visited_nodes": 1638,
+      "citation_checks": 1141,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 1141,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 337708,
+          "name": "2026\u00ad27 Opening balance/cash reserves at 1 July 3,458 2,677 Funds from Government Annual appropriations \u2013 ordinary annual services (a) Outcome",
+          "amount": 10450000.0,
+          "pct_of_parent": 0.0008257453003239608,
+          "depth": 2
+        },
+        {
+          "fact_id": 337527,
+          "name": "2028\u00ad29 2029\u00ad30 NEW CAPITAL APPROPRIATIONS Capital budget - Bill (No. 1) (DCB)",
+          "amount": 71155000.0,
+          "pct_of_parent": 0.005622574817660424,
+          "depth": 2
+        },
+        {
+          "fact_id": 337729,
+          "name": "Adjusted opening balance",
+          "amount": 38635000.0,
+          "pct_of_parent": 0.0030528870505278686,
+          "depth": 2
+        },
+        {
+          "fact_id": 337492,
+          "name": "Adjusted opening balance (1,458,801)",
+          "amount": 396709000.0,
+          "pct_of_parent": 0.03134742510490126,
+          "depth": 2
+        },
+        {
+          "fact_id": 337666,
+          "name": "Adjusted opening balance (9,506)",
+          "amount": 16574000.0,
+          "pct_of_parent": 0.0013096557519205096,
+          "depth": 2
+        },
+        {
+          "fact_id": 337552,
+          "name": "Agriculture Future Drought Resilience Special Account",
+          "amount": 83200000.0,
+          "pct_of_parent": 0.0065743549269812,
+          "depth": 2
+        },
+        {
+          "fact_id": 337397,
+          "name": "Animal Biosecurity and Response Reform",
+          "amount": 1242000.0,
+          "pct_of_parent": 9.81412117705607e-05,
+          "depth": 2
+        },
+        {
+          "fact_id": 337674,
+          "name": "Appropriations",
+          "amount": 22144000.0,
+          "pct_of_parent": 0.0017497898497965349,
+          "depth": 2
+        },
+        {
+          "fact_id": 337632,
+          "name": "Cash and cash equivalents at the beginning of the reporting period",
+          "amount": 23201000.0,
+          "pct_of_parent": 0.0018333126040972455,
+          "depth": 2
+        },
+        {
+          "fact_id": 337522,
+          "name": "Cash and cash equivalents at the end of the reporting period",
+          "amount": 23201000.0,
+          "pct_of_parent": 0.0018333126040972455,
+          "depth": 2
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path_label": "qld_state_actuals_2024_25",
+      "requested_mode": "actuals",
+      "requested_level": "state",
+      "requested_jurisdiction": "QLD",
+      "requested_year": "2024-25",
+      "visited_nodes": 223,
+      "citation_checks": 172,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 172,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 4816,
+          "name": "Civil and fire protection services",
+          "amount": 989000000.0,
+          "pct_of_parent": 0.010841801778099342,
+          "depth": 1
+        },
+        {
+          "fact_id": 4906,
+          "name": "Community health services",
+          "amount": 6317000000.0,
+          "pct_of_parent": 0.219958912218392,
+          "depth": 2
+        },
+        {
+          "fact_id": 4896,
+          "name": "Hospital services",
+          "amount": 15088000000.0,
+          "pct_of_parent": 0.5253664821198509,
+          "depth": 2
+        },
+        {
+          "fact_id": 4926,
+          "name": "Other health",
+          "amount": 2189000000.0,
+          "pct_of_parent": 0.07622131689822069,
+          "depth": 2
+        },
+        {
+          "fact_id": 4886,
+          "name": "Outpatient services",
+          "amount": 4473000000.0,
+          "pct_of_parent": 0.155750548417424,
+          "depth": 2
+        },
+        {
+          "fact_id": 4916,
+          "name": "Public health services",
+          "amount": 652000000.0,
+          "pct_of_parent": 0.02270274034611233,
+          "depth": 2
+        },
+        {
+          "fact_id": 257827,
+          "name": "Aboriginal and Torres Strait Islander health",
+          "amount": 1363000000.0,
+          "pct_of_parent": 0.04745821727019499,
+          "depth": 3
+        },
+        {
+          "fact_id": 257803,
+          "name": "Assistance to the states for public hospitals",
+          "amount": 30217000000.0,
+          "pct_of_parent": 1.052123955431755,
+          "depth": 3
+        },
+        {
+          "fact_id": 257821,
+          "name": "General administration",
+          "amount": 4946000000.0,
+          "pct_of_parent": 0.17221448467966574,
+          "depth": 3
+        },
+        {
+          "fact_id": 257815,
+          "name": "Health services",
+          "amount": 31259000000.0,
+          "pct_of_parent": 1.0884052924791086,
+          "depth": 3
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path_label": "local_government_actuals_2024_25",
+      "requested_mode": "actuals",
+      "requested_level": "local",
+      "requested_jurisdiction": null,
+      "requested_year": "2024-25",
+      "visited_nodes": 1624,
+      "citation_checks": 1246,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 1246,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 258085,
+          "name": "Immigration",
+          "amount": 3758000000.0,
+          "pct_of_parent": 4.147902869757174,
+          "depth": 2
+        },
+        {
+          "fact_id": 258079,
+          "name": "Industrial relations",
+          "amount": 1044000000.0,
+          "pct_of_parent": 1.1523178807947019,
+          "depth": 2
+        },
+        {
+          "fact_id": 258073,
+          "name": "Labour market assistance to job seekers and industry",
+          "amount": 2268000000.0,
+          "pct_of_parent": 2.5033112582781456,
+          "depth": 2
+        },
+        {
+          "fact_id": 333855,
+          "name": "Special appropriation: Offshore Minerals Act",
+          "amount": 1994000.0,
+          "pct_of_parent": 0.0005671217292377702,
+          "depth": 3
+        },
+        {
+          "fact_id": 258061,
+          "name": "Tourism and area promotion",
+          "amount": 196000000.0,
+          "pct_of_parent": 0.2163355408388521,
+          "depth": 2
+        },
+        {
+          "fact_id": 258067,
+          "name": "Vocational and industry training",
+          "amount": 2113000000.0,
+          "pct_of_parent": 2.3322295805739515,
+          "depth": 2
+        },
+        {
+          "fact_id": 258543,
+          "name": "Immigration",
+          "amount": 3758000000.0,
+          "pct_of_parent": 4.147902869757174,
+          "depth": 3
+        },
+        {
+          "fact_id": 258542,
+          "name": "Industrial relations",
+          "amount": 1044000000.0,
+          "pct_of_parent": 1.1523178807947019,
+          "depth": 3
+        },
+        {
+          "fact_id": 258544,
+          "name": "Other economic affairs nec",
+          "amount": 3516000000.0,
+          "pct_of_parent": 3.880794701986755,
+          "depth": 3
+        },
+        {
+          "fact_id": 258538,
+          "name": "Tourism and area promotion",
+          "amount": 196000000.0,
+          "pct_of_parent": 0.2163355408388521,
+          "depth": 3
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path_label": "federal_debt_latest",
+      "requested_mode": "debt",
+      "requested_level": "federal",
+      "requested_jurisdiction": null,
+      "requested_year": "2025-26",
+      "visited_nodes": 49,
+      "citation_checks": 44,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 44,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 261620,
+          "name": "21 Apr 2027 4.75%",
+          "amount": 39399488000.0,
+          "pct_of_parent": 0.0440390319927762,
+          "depth": 3
+        },
+        {
+          "fact_id": 261624,
+          "name": "21 Apr 2029 3.25%",
+          "amount": 43499786000.0,
+          "pct_of_parent": 0.048622166545233235,
+          "depth": 3
+        },
+        {
+          "fact_id": 261632,
+          "name": "21 Apr 2033 4.5%",
+          "amount": 27700000000.0,
+          "pct_of_parent": 0.030961853773325703,
+          "depth": 3
+        },
+        {
+          "fact_id": 261642,
+          "name": "21 Apr 2037 3.75%",
+          "amount": 24000000000.0,
+          "pct_of_parent": 0.026826154893856206,
+          "depth": 3
+        },
+        {
+          "fact_id": 261627,
+          "name": "21 Dec 2030 1%",
+          "amount": 46600000000.0,
+          "pct_of_parent": 0.05208745075223746,
+          "depth": 3
+        },
+        {
+          "fact_id": 261636,
+          "name": "21 Dec 2034 3.5%",
+          "amount": 29200000000.0,
+          "pct_of_parent": 0.03263848845419171,
+          "depth": 3
+        },
+        {
+          "fact_id": 261638,
+          "name": "21 Dec 2035 4.25%",
+          "amount": 23900000000.0,
+          "pct_of_parent": 0.026714379248465137,
+          "depth": 3
+        },
+        {
+          "fact_id": 261628,
+          "name": "21 Jun 2031 1.5%",
+          "amount": 46000000000.0,
+          "pct_of_parent": 0.05141679687989106,
+          "depth": 3
+        },
+        {
+          "fact_id": 261635,
+          "name": "21 Jun 2034 4.25%",
+          "amount": 10000000000.0,
+          "pct_of_parent": 0.011177564539106752,
+          "depth": 3
+        },
+        {
+          "fact_id": 261637,
+          "name": "21 Jun 2035 2.75%",
+          "amount": 30850000000.0,
+          "pct_of_parent": 0.03448278660314433,
+          "depth": 3
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path_label": "federal_gdp_ratios_latest",
+      "requested_mode": "ratios",
+      "requested_level": "federal",
+      "requested_jurisdiction": null,
+      "requested_year": "2024-25",
+      "visited_nodes": 3,
+      "citation_checks": 1,
+      "hard_failure_count": 0,
+      "scope_failures": [],
+      "jurisdiction_failures": [],
+      "edge_kind_failures": [],
+      "additive_reconciliation_failures": [],
+      "cross_year_failures": [],
+      "label_quality_failures": [],
+      "citation_failures": [],
+      "transport_errors": [],
+      "accepted_source_rounding_warnings": [],
+      "flagged_leaves_count": 1,
+      "flagged_leaves_sample": [
+        {
+          "fact_id": 279045,
+          "name": "Taxation revenue as % of GDP",
+          "amount": 24.3256,
+          "pct_of_parent": 1.0,
+          "depth": 2
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "pbs_s6_crosswalk": [
+    {
+      "label": "social_services",
+      "s6_node_name": "Social security and welfare",
+      "fact_id": 257892,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 334998000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2027-28 where 2029-30 is unpublished in those tables.",
+      "child_count": 216,
+      "sample_child": "1.1.1 \u2013 Component 1 (Family Tax Benefit Part A) Special appropriations A New Tax System (Family Assistance) (Administration) Act 1999",
+      "sample_child_amount": 15009970000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2026_27_social_services | pdf:portfolio-budget-statements-2026-27-social-services.pdf | page:38 | program:1.1.1 \u2013 Component 1 (Family Tax Benefit Part A) Special appropriations A New Tax System (Family Assistance) (Administration) Act 1999 | fy:2029-30 | unit:$000 | infer:table_header/high"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "health",
+      "s6_node_name": "Health",
+      "fact_id": 257838,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 148915000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2026-27 where 2029-30 is unpublished in those tables.",
+      "child_count": 180,
+      "sample_child": "2024\u201325 2023\u201324 Administered Australian Immunisation Register",
+      "sample_child_amount": 10391000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2024_25_health_disability_and_ageing | pdf:federal_pbs_2024_25_health_disability_and_ageing__2024-25-health-pbs.pdf | page:118 | program:2024\u201325 2023\u201324 Administered Australian Immunisation Register | fy:2027-28 | unit:$000 | infer:source_layout_template/medium"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "ndia",
+      "s6_node_name": "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme",
+      "fact_id": 258258,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 56239000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2027-28 where 2029-30 is unpublished in those tables.",
+      "child_count": 9,
+      "sample_child": "National Disability Insurance Scheme Participant Plans",
+      "sample_child_amount": 40353135000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2026_27_health_disability_ageing | pdf:budget-2026-27-health-disability-and-ageing-portfolio-budget-statements.pdf | page:114 | program:National Disability Insurance Scheme Participant Plans | fy:2029-30 | unit:$000 | infer:source_layout_template/medium"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "defence",
+      "s6_node_name": "Defence",
+      "fact_id": 257718,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 61860000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2028-29 where 2029-30 is unpublished in those tables.",
+      "child_count": 24,
+      "sample_child": "Key cost category / Capability Acquisition Program",
+      "sample_child_amount": 108454100.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2025_26_defence_portfolio | pdf:federal_pbs_2025_26_defence_portfolio__2025-26-Defence-PBS.pdf | page:30 | program:3 Capability Acquisition Program 17,702.7 18, | fy:2028-29 | unit:$000 | infer:table_header/high"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "education",
+      "s6_node_name": "Education",
+      "fact_id": 257790,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 63917000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2027-28 where 2029-30 is unpublished in those tables.",
+      "child_count": 153,
+      "sample_child": "2024\u00ad25 2025\u00ad26 2026\u00ad27 2027\u00ad28 Quality Outcomes",
+      "sample_child_amount": 36060000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2024_25_education_portfolio | pdf:federal_pbs_2024_25_education_portfolio__federal_pbs_2024_25_education_portfolio.pdf | page:53 | program:2024\u00ad25 2025\u00ad26 2026\u00ad27 2027\u00ad28 Quality Outcomes | fy:2027-28 | unit:$000 | infer:source_layout_template/medium"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "dva_health",
+      "s6_node_name": "Health / Medical services and benefits / Veterans' pharmaceutical benefits",
+      "fact_id": 258178,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 377000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2027-28 where 2029-30 is unpublished in those tables.",
+      "child_count": 5,
+      "sample_child": "Pharmaceutical Benefits Scheme (PBS) New and Amended Listings (b) 2.1, 2.3 Administered payment",
+      "sample_child_amount": 8914000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2025_26_veterans_affairs | pdf:federal_pbs_2025_26_veterans_affairs__2025-26-Veterans-Affairs-PBS.pdf | page:29 | program:Pharmaceutical Benefits Scheme (PBS) New and Amended Listings (b) 2.1, 2.3 Administered payment | fy:2028-29 | unit:$000 | infer:table_header/high"
+      },
+      "parent_amount_preserved": true
+    },
+    {
+      "label": "dva_welfare",
+      "s6_node_name": "Social security and welfare / Assistance to veterans and dependants",
+      "fact_id": 257850,
+      "financial_year": "2029-30",
+      "estimate_status": "forward_estimate",
+      "parent_amount_aud": 14405000000,
+      "unit": "AUD",
+      "status": "reachable",
+      "non_additive_labelled": true,
+      "banner": "Related breakdown from a different measure family \u2014 amounts are shown for navigation and must not be summed into the parent pie slice. Source: federal_pbs_programs_all. Crosswalk match: approx. Deeper component/program rows use FY 2027-28 where 2029-30 is unpublished in those tables.",
+      "child_count": 144,
+      "sample_child": "Administered payment - 67 5 - - Total - 67 5 - - Strengthening Medicare - Health Workforce (b) (f) 2.1, 2.4 Administered payment -",
+      "sample_child_amount": 96000.0,
+      "citation_ok": true,
+      "citation_detail": {
+        "has_source_file": true,
+        "locator": "source_id:federal_pbs_2025_26_veterans_affairs | pdf:federal_pbs_2025_26_veterans_affairs__2025-26-Veterans-Affairs-PBS.pdf | page:30 | program:Administered payment - 67 5 - - Total - 67 5 - - Strengthening Medicare - Health Workforce (b) (f) 2.1, 2.4 Administered payment - | fy:2028-29 | unit:$000 | infer:table_header/high"
+      },
+      "parent_amount_preserved": true
+    }
+  ]
+}

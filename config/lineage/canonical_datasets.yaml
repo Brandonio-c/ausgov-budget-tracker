@@ -60,6 +60,10 @@ datasets:
     # substring rule above but isn't actually processed; require an actual
     # pdf asset before crediting coverage.
     handled_formats: [pdf]
+    # Each published fact retains `source_id:<registry id>` in its locator;
+    # let the coverage audit attribute aggregate-loader facts back to the
+    # individual portfolio PDF without changing the fact source_document.
+    origin_lineage: locator_source_id
     extractor_name: extractors/pbs_programs_all.py
     coverage_status: partially_ingested
     notes: Header-aware year resolution; quarantined rows excluded.

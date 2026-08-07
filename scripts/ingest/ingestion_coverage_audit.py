@@ -66,6 +66,14 @@ DUPLICATE_ALIASES: dict[str, str] = {
     "federal_fbo_appendix_a_2024_25": "federal_fbo_2024_25_function_subfunction",
     "federal_social_services_pbs_2025_26_archive": "federal_pbs_programs_all",
     "federal_pbs_2025_26_social_services_portfolio": "federal_pbs_programs_all",
+    # Earlier handoff IDs duplicate the later canonical 2026-27 registry
+    # entries byte-for-byte (matching latest.json SHA-256 values).
+    "federal_defence_pbs_2026_27": "federal_pbs_2026_27_defence",
+    "federal_dss_pbs_2026_27": "federal_pbs_2026_27_social_services",
+    "federal_dva_pbs_2026_27": "federal_pbs_2026_27_veterans_affairs",
+    "federal_education_pbs_2026_27": "federal_pbs_2026_27_education",
+    "federal_health_disability_ageing_pbs_2026_27": "federal_pbs_2026_27_health_disability_ageing",
+    "federal_ndia_pbs_2026_27": "federal_pbs_2026_27_ndia",
     "sa_final_budget_outcome_cfr_2024_25": "sa_final_budget_outcome_and_cfr",
     "sa_lggc_council_database_reports": "sa_lggc_publications_database_reports",
     "nt_grants_commission_annual_reports": "nt_local_grants_commission_reports",
@@ -95,6 +103,7 @@ REFERENCE_ONLY = {
     "commonwealth_balance_sheet_user_guide",
     "abn_bulk_extract_resource_index",
     "anzsic_2006_revision_2",
+    "federal_pbs_index_2026_27",
 }
 
 # Visualization-value ranks for acquired-not-ingested prioritisation (lower = higher value).
@@ -211,6 +220,67 @@ def _facts_by_source(conn: sqlite3.Connection | None) -> dict[str, dict[str, Any
     return out
 
 
+def _facts_by_origin(
+    conn: sqlite3.Connection | None,
+    datasets: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Summarise facts by the raw source ID retained in their citation.
+
+    Generalised adapters publish under one source_document key, but retain
+    the originating registry source as ``source_id:<id>`` in every locator.
+    Reading that field gives the coverage audit truthful per-source lineage
+    without duplicating source_documents or changing published facts.
+    """
+    if conn is None:
+        return {}
+    source_keys = sorted(
+        {
+            key
+            for dataset in datasets
+            if dataset.get("origin_lineage") == "locator_source_id"
+            for key in (dataset.get("fact_source_keys") or [])
+        }
+    )
+    if not source_keys:
+        return {}
+    placeholders = ",".join("?" for _ in source_keys)
+    rows = conn.execute(
+        f"""
+        SELECT f.measure_type,
+               n.name,
+               json_extract(f.source_locator_json, '$.locator') AS locator
+        FROM facts f
+        JOIN source_documents d ON d.id = f.source_document_id
+        LEFT JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+        LEFT JOIN nodes n ON n.id = fn.node_id
+        WHERE d.source_key IN ({placeholders})
+          AND json_extract(f.source_locator_json, '$.locator') LIKE '%source_id:%'
+        """,
+        source_keys,
+    ).fetchall()
+    counts: Counter[str] = Counter()
+    measures: dict[str, set[str]] = {}
+    depths: dict[str, int] = {}
+    pattern = re.compile(r"(?:^|\|\s*)source_id:([^|]+)")
+    for measure_type, node_name, locator in rows:
+        match = pattern.search(locator or "")
+        if not match:
+            continue
+        source_id = match.group(1).strip()
+        counts[source_id] += 1
+        measures.setdefault(source_id, set()).add(measure_type)
+        depth = (str(node_name).count("/") + 1) if node_name else 1
+        depths[source_id] = max(depths.get(source_id, 1), depth)
+    return {
+        source_id: {
+            "fact_count": count,
+            "measures": sorted(measures[source_id]),
+            "hierarchy_depth": depths[source_id],
+        }
+        for source_id, count in counts.items()
+    }
+
+
 def _load_canonical_datasets() -> list[dict[str, Any]]:
     if not CANONICAL_DATASETS.is_file():
         return []
@@ -260,6 +330,7 @@ def classify(
     mapping_ids: set[str],
     code_refs: set[str],
     facts: dict[str, dict[str, Any]],
+    origin_facts: dict[str, dict[str, Any]] | None = None,
     canonical_datasets: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     fact_info = facts.get(source_id) or {}
@@ -274,7 +345,17 @@ def classify(
     has_files = acquired is not None and acquired.get("asset_count", 0) > 0
 
     family = None
-    if fact_count == 0 and has_files and canonical_datasets:
+    origin_fact_info = (origin_facts or {}).get(source_id) or {}
+    if fact_count == 0 and origin_fact_info:
+        fact_count = int(origin_fact_info.get("fact_count") or 0)
+        fact_info = origin_fact_info
+    if (
+        canonical is None
+        and fact_count > 0
+        and has_files
+        and canonical_datasets
+        and source_id in (origin_facts or {})
+    ):
         family = _family_coverage(
             source_id, (acquired or {}).get("formats") or [], canonical_datasets, facts
         )
@@ -295,6 +376,11 @@ def classify(
         status = "not_acquired"
         reason = "no_latest_json"
         next_action = "acquire_or_exclude"
+    elif family is not None:
+        canonical_dataset_id, family_status = family
+        status = family_status
+        reason = f"covered_via_family_adapter:{canonical_dataset_id}"
+        next_action = "maintain_family_adapter"
     elif fact_count > 0 and has_mapping:
         # Heuristic: PBS aggregator covers many PDFs — treat portfolio PBS as partial if only via aggregator
         if source_id.startswith("federal_pbs_") and source_id not in (
@@ -313,11 +399,6 @@ def classify(
         status = "partially_ingested"
         reason = "facts_present_without_dedicated_mapping_file"
         next_action = "add_explicit_mapping"
-    elif family is not None:
-        canonical_dataset_id, family_status = family
-        status = family_status
-        reason = f"covered_via_family_adapter:{canonical_dataset_id}"
-        next_action = "improve_per_source_lineage"
     elif has_mapping and has_files:
         status = "adapter_broken"
         reason = "mapping_or_adapter_exists_but_zero_facts"
@@ -359,6 +440,7 @@ def main(argv: list[str] | None = None) -> int:
     canonical_datasets = _load_canonical_datasets()
     conn = sqlite3.connect(str(args.db)) if args.db.exists() else None
     facts = _facts_by_source(conn)
+    origin_facts = _facts_by_origin(conn, canonical_datasets)
     total_facts = 0
     if conn:
         total_facts = int(conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0])
@@ -373,6 +455,7 @@ def main(argv: list[str] | None = None) -> int:
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            origin_facts=origin_facts,
             canonical_datasets=canonical_datasets,
         )
         rows.append(
@@ -412,6 +495,7 @@ def main(argv: list[str] | None = None) -> int:
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            origin_facts=origin_facts,
             canonical_datasets=canonical_datasets,
         )
         rows.append(
@@ -441,6 +525,7 @@ def main(argv: list[str] | None = None) -> int:
         if r["ingestion_status"]
         in {"acquired_not_ingested", "adapter_missing", "adapter_broken", "partially_ingested"}
         and r["acquisition_status"] == "acquired"
+        and r["next_ingestion_action"] != "maintain_family_adapter"
     ]
     backlog.sort(key=lambda r: (r["viz_value_rank"], r["source_id"]))
 

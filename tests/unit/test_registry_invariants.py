@@ -96,6 +96,7 @@ def test_status_buckets_sum_to_registry_total(registry_sources, facts_conn):
     code_refs = audit._ingest_code_refs()
     facts = audit._facts_by_source(facts_conn)
     canonical_datasets = audit._load_canonical_datasets()
+    origin_facts = audit._facts_by_origin(facts_conn, canonical_datasets)
 
     statuses = []
     for source in registry_sources:
@@ -106,6 +107,7 @@ def test_status_buckets_sum_to_registry_total(registry_sources, facts_conn):
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            origin_facts=origin_facts,
             canonical_datasets=canonical_datasets,
         )
         statuses.append(classified["ingestion_status"])
@@ -172,6 +174,7 @@ def test_every_fully_ingested_source_has_nonzero_facts(registry_sources, facts_c
     code_refs = audit._ingest_code_refs()
     facts = audit._facts_by_source(facts_conn)
     canonical_datasets = audit._load_canonical_datasets()
+    origin_facts = audit._facts_by_origin(facts_conn, canonical_datasets)
 
     violations = []
     for source in registry_sources:
@@ -182,11 +185,37 @@ def test_every_fully_ingested_source_has_nonzero_facts(registry_sources, facts_c
             mapping_ids=mapping_ids,
             code_refs=code_refs,
             facts=facts,
+            origin_facts=origin_facts,
             canonical_datasets=canonical_datasets,
         )
         if classified["ingestion_status"] == "fully_ingested" and classified["fact_count"] == 0:
             violations.append(source.id)
     assert not violations, f"fully_ingested sources with zero facts: {violations}"
+
+
+def test_generalised_pbs_sources_have_per_source_lineage(facts_conn):
+    """The family adapter must expose its retained origin IDs to the audit."""
+    sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
+    import ingestion_coverage_audit as audit
+
+    datasets = audit._load_canonical_datasets()
+    origins = audit._facts_by_origin(facts_conn, datasets)
+    treasury = origins["federal_pbs_2025_26_treasury_portfolio"]
+    assert treasury["fact_count"] > 0
+    assert "budget_estimate" in treasury["measures"]
+
+    classified = audit.classify(
+        "federal_pbs_2025_26_treasury_portfolio",
+        acquired={"asset_count": 1, "formats": ["pdf"]},
+        mapping_ids=set(),
+        code_refs=set(),
+        facts=audit._facts_by_source(facts_conn),
+        origin_facts=origins,
+        canonical_datasets=datasets,
+    )
+    assert classified["fact_count"] == treasury["fact_count"]
+    assert classified["adapter_family"] == "federal_pbs_programs"
+    assert classified["next_ingestion_action"] == "maintain_family_adapter"
 
 
 def test_every_published_fact_has_a_valid_source_document(facts_conn):
