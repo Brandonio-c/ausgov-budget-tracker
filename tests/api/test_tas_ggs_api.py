@@ -83,6 +83,27 @@ def _seed(db: Path) -> None:
         "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')", (stock_fact, net_debt_node)
     )
 
+    # A PDF-backfilled fact (2010-11 'budget' vintage, pre-dating the
+    # xlsx's 2013-14 starting point) - proves the same already-shipped
+    # endpoint serves both source types with no route change.
+    pdf_fact = conn.execute(
+        """
+        INSERT INTO facts (
+            fact_key, financial_year, period_start, period_end, period_granularity,
+            measure_type, accounting_basis, estimate_status, amount_aud, unit, currency,
+            source_document_id, source_locator_json, retrieved_at
+        ) VALUES (
+            'tas_treasurer_annual_financial_reports|2010-11|tas_ggs_net_debt|accrual|budget|TAS',
+            '2010-11', NULL, '2011-06-30', 'financial_year', 'tas_ggs_net_debt', 'accrual', 'budget', -309000000.0, 'AUD', 'AUD',
+            ?, '{"locator": "test-tas-ggs-pdf-backfill", "cached_copy_path": "data/raw/state/tas_treasurer_annual_financial_reports/snapshots/20260724T170239Z/files/TAF-2010-11.pdf"}', datetime('now')
+        )
+        """,
+        (tas_doc,),
+    ).lastrowid
+    conn.execute(
+        "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, 'primary')", (pdf_fact, net_debt_node)
+    )
+
     # A real annual GFS actual expense fact, to prove TAS GGS never
     # contaminates it.
     annual_doc = conn.execute(
@@ -168,10 +189,25 @@ def test_series_unknown_measure_type_400s(client: TestClient):
 def test_stock_fact_has_no_period_start_in_db_but_period_end_present(client: TestClient):
     r = client.get("/v2/tas-ggs/series", params={"measure_type": "tas_ggs_net_debt"})
     facts = r.json()["facts"]
-    assert len(facts) == 1
-    assert facts[0]["period_end"] == "2017-06-30"
-    assert facts[0]["flow_or_stock"] == "stock"
-    assert facts[0]["amount_aud"] == pytest.approx(1273400000.0)
+    assert len(facts) == 2  # 2016-17 actual (xlsx) + 2010-11 budget (PDF backfill)
+    actual_2016_17 = next(f for f in facts if f["financial_year"] == "2016-17")
+    assert actual_2016_17["period_end"] == "2017-06-30"
+    assert actual_2016_17["flow_or_stock"] == "stock"
+    assert actual_2016_17["amount_aud"] == pytest.approx(1273400000.0)
+
+
+def test_pdf_backfilled_year_reachable_through_same_endpoint_no_route_change(client: TestClient):
+    """The PDF backfill adapter publishes no new router or route - this
+    proves the already-shipped /v2/tas-ggs/series endpoint serves a
+    PDF-sourced fact (2010-11, pre-dating the xlsx's 2013-14 start)
+    exactly like any xlsx-sourced fact, including its distinct 'budget'
+    estimate_status and its PDF-style citation."""
+    r = client.get("/v2/tas-ggs/series", params={"measure_type": "tas_ggs_net_debt"})
+    facts = r.json()["facts"]
+    pdf_fact = next(f for f in facts if f["financial_year"] == "2010-11")
+    assert pdf_fact["estimate_status"] == "budget"
+    assert pdf_fact["amount_aud"] == pytest.approx(-309000000.0)
+    assert pdf_fact["citation"]["cached_copy_path"].endswith("TAF-2010-11.pdf")
 
 
 def test_citation_present_on_every_fact(client: TestClient):
