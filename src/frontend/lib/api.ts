@@ -525,3 +525,53 @@ export const apiTasGgs = {
   series: (measureType: string) =>
     getJson<TasGgsSeriesResponse>(`/v2/tas-ggs/series?measure_type=${encodeURIComponent(measureType)}`),
 };
+
+// Queensland Treasury's "Report on State Finances" - "Key UPF
+// Financial Aggregates" table, General Government Sector only
+// (2018-19 to 2024-25). Its own dedicated toggle on the GFS explorer
+// page (not merged into an existing dropdown - a genuinely new
+// jurisdiction/measure family). Vintage is "estimated_actual" (the
+// outcome as projected in a LATER budget-cycle document) vs "actual" -
+// a materially different concept from TAS's "budget".
+export type QldRsfFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
+
+export type QldRsfMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  flow_or_stock: QldRsfFlowOrStock;
+  row_label: string;
+  compatibility_group: string;
+  accounting_basis: string;
+  unit: string;
+};
+
+export type QldRsfCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type QldRsfFact = {
+  label: string;
+  measure_type: string;
+  flow_or_stock: QldRsfFlowOrStock;
+  amount_aud: number;
+  financial_year: string;
+  period_end: string;
+  accounting_basis: string;
+  estimate_status: string;
+  compatibility_group: string;
+  citation: QldRsfCitation;
+};
+
+export type QldRsfSeriesResponse = {
+  measure_type: string;
+  flow_or_stock: QldRsfFlowOrStock;
+  facts: QldRsfFact[];
+};
+
+export const apiQldRsf = {
+  measures: () => getJson<QldRsfMeasureInfo[]>("/v2/qld-rsf/measures"),
+  series: (measureType: string) =>
+    getJson<QldRsfSeriesResponse>(`/v2/qld-rsf/series?measure_type=${encodeURIComponent(measureType)}`),
+};

@@ -1,6 +1,6 @@
 # Ingestion coverage (lineage)
 
-Observed source keys: 127
+Observed source keys: 128
 
 - **abs_gfs_table4_expenses**: `fully_ingested` — 230 facts
 - **abs_gfs_table1_revenue**: `partially_ingested` — 230 facts

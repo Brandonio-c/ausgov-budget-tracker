@@ -5,6 +5,7 @@ from . import (
     dashboard,
     facts,
     mfs,
+    qld_rsf,
     query,
     search,
     tas_ggs,
@@ -24,3 +25,4 @@ router.include_router(vic_afs.router)
 router.include_router(vic_bpo.router)
 router.include_router(vic_bpo_soce_admin.router)
 router.include_router(tas_ggs.router)
+router.include_router(qld_rsf.router)

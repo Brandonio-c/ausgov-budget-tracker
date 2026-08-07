@@ -3,12 +3,15 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  apiQldRsf,
   apiTasGgs,
   apiV2,
   apiVicAfs,
   apiVicBpo,
   apiVicBpoSoceAdmin,
   Citation,
+  QldRsfCitation,
+  QldRsfMeasureInfo,
   TasGgsCitation,
   TasGgsMeasureInfo,
   VicAfsCitation,
@@ -20,9 +23,13 @@ import { CitationPanel } from "@/components/CitationPanel";
 import DashboardNav from "@/components/DashboardNav";
 import DebtNav from "@/components/DebtNav";
 
-type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo" | "tas_ggs";
+type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo" | "tas_ggs" | "qld_rsf";
 
-function SimpleCitationBox({ citation }: { citation: VicAfsCitation | VicBpoCitation | TasGgsCitation | null }) {
+function SimpleCitationBox({
+  citation,
+}: {
+  citation: VicAfsCitation | VicBpoCitation | TasGgsCitation | QldRsfCitation | null;
+}) {
   if (!citation) {
     return (
       <aside className="rounded-md border border-black/10 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
@@ -81,9 +88,24 @@ function GfsExplorerInner() {
   >([]);
   const [tasGgsSelected, setTasGgsSelected] = useState<TasGgsCitation | null>(null);
 
+  const [qldRsfMeasures, setQldRsfMeasures] = useState<QldRsfMeasureInfo[]>([]);
+  const [qldRsfMeasureType, setQldRsfMeasureType] = useState("qld_rsf_revenue");
+  const [qldRsfRows, setQldRsfRows] = useState<
+    Array<{ name: string; value: number; id: string; citation: QldRsfCitation; estimate_status: string; period_end: string }>
+  >([]);
+  const [qldRsfSelected, setQldRsfSelected] = useState<QldRsfCitation | null>(null);
+
   useEffect(() => {
     const v = searchParams.get("view");
-    if (v === "liabilities" || v === "expenses" || v === "vic_afs" || v === "vic_bpo" || v === "tas_ggs") setView(v);
+    if (
+      v === "liabilities" ||
+      v === "expenses" ||
+      v === "vic_afs" ||
+      v === "vic_bpo" ||
+      v === "tas_ggs" ||
+      v === "qld_rsf"
+    )
+      setView(v);
   }, [searchParams]);
 
   useEffect(() => {
@@ -95,6 +117,7 @@ function GfsExplorerInner() {
       })
       .catch((e: Error) => setError(e.message));
     apiTasGgs.measures().then(setTasGgsMeasures).catch((e: Error) => setError(e.message));
+    apiQldRsf.measures().then(setQldRsfMeasures).catch((e: Error) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -159,7 +182,27 @@ function GfsExplorerInner() {
   }, [view, tasGgsMeasureType]);
 
   useEffect(() => {
-    if (view === "vic_afs" || view === "vic_bpo" || view === "tas_ggs") return;
+    if (view !== "qld_rsf") return;
+    apiQldRsf
+      .series(qldRsfMeasureType)
+      .then((resp) => {
+        const mapped = resp.facts.map((f) => ({
+          name: `${f.financial_year} (${f.estimate_status.replace("_", " ")}) — ${f.label}`,
+          value: f.amount_aud,
+          id: `${f.measure_type}|${f.financial_year}|${f.estimate_status}`,
+          estimate_status: f.estimate_status,
+          period_end: f.period_end,
+          citation: f.citation,
+        }));
+        setQldRsfRows(mapped);
+        setQldRsfSelected(mapped[0]?.citation ?? null);
+        setError(null);
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [view, qldRsfMeasureType]);
+
+  useEffect(() => {
+    if (view === "vic_afs" || view === "vic_bpo" || view === "tas_ggs" || view === "qld_rsf") return;
     const query =
       view === "liabilities"
         ? {
@@ -222,6 +265,15 @@ function GfsExplorerInner() {
             conflated with the ABS&apos;s own independently-compiled GFS series for Tasmania - a
             different publisher and methodology, despite similar-sounding measure names.
           </>
+        ) : view === "qld_rsf" ? (
+          <>
+            Queensland Treasury&apos;s own Report on State Finances - &quot;Key UPF Financial
+            Aggregates&quot; table, General Government Sector only (2018-19 to 2024-25). Each
+            year carries two vintages: <code>estimated actual</code> (the outcome as projected in
+            a later budget-cycle document) and <code>actual</code> (the audited outcome) - a
+            different vintage concept from TAS&apos;s budget/actual pair. Never conflated with the
+            ABS&apos;s own independently-compiled GFS series for Queensland.
+          </>
         ) : (
           <>
             Compatibility group <code>actual_expense</code> on GFS basis (API v2).
@@ -239,6 +291,7 @@ function GfsExplorerInner() {
               ["vic_afs", "VIC AFS"],
               ["vic_bpo", "VIC BPO"],
               ["tas_ggs", "TAS GGS"],
+              ["qld_rsf", "QLD RSF"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -294,6 +347,21 @@ function GfsExplorerInner() {
               onChange={(e) => setTasGgsMeasureType(e.target.value)}
             >
               {tasGgsMeasures.map((m) => (
+                <option key={m.measure_type} value={m.measure_type}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : view === "qld_rsf" ? (
+          <label className="block text-sm">
+            Measure{" "}
+            <select
+              className="ml-2 border px-2 py-1 dark:border-white/20 dark:bg-zinc-900"
+              value={qldRsfMeasureType}
+              onChange={(e) => setQldRsfMeasureType(e.target.value)}
+            >
+              {qldRsfMeasures.map((m) => (
                 <option key={m.measure_type} value={m.measure_type}>
                   {m.label}
                 </option>
@@ -395,6 +463,30 @@ function GfsExplorerInner() {
             );
           })()}
         </div>
+      ) : view === "qld_rsf" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          {(() => {
+            const info = qldRsfMeasures.find((m) => m.measure_type === qldRsfMeasureType);
+            if (!info) return null;
+            const isStock = info.flow_or_stock === "stock" || info.flow_or_stock === "stock_balance";
+            return (
+              <>
+                <span
+                  className={`rounded-full px-2 py-0.5 font-medium ${
+                    isStock
+                      ? "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-100"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+                  }`}
+                >
+                  {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
+                  Vintage: estimated actual and actual, 2018-19 to 2024-25 (both shown below)
+                </span>
+              </>
+            );
+          })()}
+        </div>
       ) : null}
       {error ? <p className="mt-4 text-red-600">{error}</p> : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -448,6 +540,23 @@ function GfsExplorerInner() {
               ))}
             </ul>
             <SimpleCitationBox citation={tasGgsSelected} />
+          </>
+        ) : view === "qld_rsf" ? (
+          <>
+            <ul className="max-h-[70vh] space-y-2 overflow-auto">
+              {qldRsfRows.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    className="text-left underline"
+                    onClick={() => setQldRsfSelected(r.citation)}
+                  >
+                    {r.name} (as at {r.period_end}) — {r.value.toLocaleString("en-AU")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <SimpleCitationBox citation={qldRsfSelected} />
           </>
         ) : (
           <>
