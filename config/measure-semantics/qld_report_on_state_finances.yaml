@@ -90,15 +90,16 @@ global_rules:
       `estimated_actual` token (already valid in the facts table's own
       CHECK constraint), never `budget`. The "Outcome"/"Actual" column
       maps to `actual`.
-  - id: qld_rsf_excluded_measures_out_of_scope
+  - id: qld_rsf_optional_stock_totals
     text: >
-      "Net Debt" (present from the 2020-21 edition onward) and
-      "Borrowings"/"Borrowing" (a summary total, present from 2021-22
-      onward) are explicitly excluded from this milestone's scope -
-      they are not present in all 7 newer target editions. The older
-      editions' own Net Debt and generic Borrowing rows are separately
-      modelled below; the later extra rows remain deferred rather than
-      being silently folded into those older-edition series.
+      Net Debt and gross Borrowing/Borrowings are optional published stock
+      totals whose presence changes across editions. They retain the same
+      GGS economic meaning when the table publishes them, so applicability is
+      declared per edition below rather than inferred from a continuous year
+      range. Gross Borrowing is the total of the separately published debt-
+      instrument components in newer editions (subject to the source's stated
+      rounding), never interchangeable with one component and never added to
+      its components. Net Borrowing remains a distinct transaction flow.
   - id: qld_rsf_older_label_drift
     text: >
       The 2002-03 to 2017-18 editions use bounded label vocabularies.
@@ -351,7 +352,7 @@ measures:
     scale_factor: 1000000
     sign_convention: signed
     compatibility_group: qld_rsf_net_debt
-    edition_valid_to: "2017-18"
+    published_editions: ["2002-03", "2003-04", "2004-05", "2005-06", "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25"]
     allowed_comparisons: [qld_rsf_net_debt across financial year end dates]
     forbidden_comparisons: [summed with flows or gross borrowing]
     dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
@@ -367,21 +368,22 @@ measures:
     sign_convention: signed
     compatibility_group: qld_rsf_net_borrowing
     edition_valid_to: "2017-18"
+    published_editions: ["2006-07", "2008-09", "2009-10", "2010-11"]
     allowed_comparisons: [qld_rsf_net_borrowing across financial years]
     forbidden_comparisons: [qld_rsf_fiscal_balance, qld_rsf_borrowing]
     dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree
 
   qld_rsf_borrowing:
-    economic_meaning: General Government Sector gross borrowing at 30 June, before the source began publishing instrument components.
+    economic_meaning: General Government Sector gross borrowing at 30 June; in newer editions this is the published total of the separately reported debt-instrument components, subject to rounding.
     flow_or_stock: stock
-    row_label_variants: ["Borrowing"]
+    row_label_variants: ["Borrowing", "Borrowings"]
     period_granularity: financial_year
     accounting_basis: gfs
     unit: AUD
     scale_factor: 1000000
     sign_convention: positive
     compatibility_group: qld_rsf_borrowing
-    edition_valid_to: "2017-18"
+    published_editions: ["2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17", "2017-18", "2021-22", "2022-23", "2023-24", "2024-25"]
     allowed_comparisons: [qld_rsf_borrowing across financial year end dates]
-    forbidden_comparisons: [qld_rsf_borrowing_qtc as if interchangeable, summed with flows]
+    forbidden_comparisons: [qld_rsf_borrowing_qtc as if interchangeable, added to qld_rsf_borrowing_qtc/qld_rsf_leases/qld_rsf_securities_derivatives, summed with flows]
     dashboard_treatment: GFS/jurisdiction explorer only; never in an annual additive tree

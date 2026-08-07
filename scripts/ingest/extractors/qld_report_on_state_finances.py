@@ -98,6 +98,9 @@ def _row_label_map(financial_year: str) -> dict[str, str]:
     semantics = yaml.safe_load(SEMANTICS_PATH.read_text(encoding="utf-8"))
     result: dict[str, str] = {}
     for measure_type, spec in semantics["measures"].items():
+        published_editions = spec.get("published_editions")
+        if published_editions is not None and financial_year not in published_editions:
+            continue
         valid_from = spec.get("edition_valid_from")
         valid_to = spec.get("edition_valid_to")
         if valid_from and financial_year < valid_from:
