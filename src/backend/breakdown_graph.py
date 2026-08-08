@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from backend.edge_set_policy import EdgeSetPolicy, load_edge_set_registry
+
 RELATED_BANNER = (
     "Related breakdown from a different measure family — amounts are shown for "
     "navigation and must not be summed into the parent pie slice."
@@ -263,6 +265,11 @@ def child_edges(
         if cid in seen:
             continue
         seen.add(cid)
+        policy = load_edge_set_registry().resolve(
+            crosswalk_id=r["crosswalk_id"],
+            edge_kind=edge_kind,
+            source_key=r["child_source_key"],
+        )
         out.append(
             {
                 "child_node_id": cid,
@@ -271,6 +278,7 @@ def child_edges(
                 "notes": r["notes"],
                 "crosswalk_id": r["crosswalk_id"],
                 "priority": r["priority"],
+                "policy": policy,
             }
         )
     return out
@@ -317,16 +325,18 @@ def _relationship_from_fact(
     tree_year: str,
     edge_kind: str,
     branch_kind: str,
-    edge_set_id: str | None,
+    policy: EdgeSetPolicy,
     match_quality: str | None = None,
     presentation_role: str = "data",
 ) -> dict[str, Any]:
     return {
         "edge_kind": edge_kind,
-        "branch_kind": branch_kind,
-        "presentation_role": presentation_role,
-        "edge_set_id": edge_set_id,
-        "branch_family": fact.get("source_family"),
+        "branch_kind": (
+            "related" if policy.branch_kind == "related" else branch_kind
+        ),
+        "presentation_role": presentation_role or policy.presentation_role,
+        "edge_set_id": policy.id,
+        "branch_family": policy.branch_family or fact.get("source_family"),
         "source_key": fact.get("source_key"),
         "source_family": fact.get("source_family"),
         "compatibility_group": fact.get("compatibility_group"),
@@ -356,11 +366,14 @@ def build_same_group_subtree(
     edges = child_edges(conn, parent_node_id, "same_group", financial_year)
     out: list[dict[str, Any]] = []
     for edge in edges:
+        policy: EdgeSetPolicy = edge["policy"]
         fact = fact_for_node_year(
             conn,
             edge["child_node_id"],
             financial_year,
-            allow_nearest=allow_nearest_fy,
+            allow_nearest=(
+                allow_nearest_fy and policy.fallback_policy == "nearest_earlier"
+            ),
         )
         if fact is None:
             continue
@@ -377,9 +390,11 @@ def build_same_group_subtree(
                 tree_year=financial_year,
                 edge_kind="same_group",
                 branch_kind="additive",
-                edge_set_id=edge.get("crosswalk_id"),
+                policy=policy,
                 match_quality=match_quality_from_notes(edge.get("notes")),
+                presentation_role=policy.presentation_role,
             ),
+            "_edge_policy": policy,
         }
         meta = _child_meta_from_fact(fact, tree_year=financial_year)
         if meta:
@@ -537,25 +552,19 @@ def build_related_subtree(
     parent_name: str | None = None,
     depth: int = 0,
     max_depth: int = 8,
-    source_key_prefixes: tuple[str, ...] | None = None,
+    edge_set_ids: tuple[str, ...] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """
     Load related_breakdown children for a leaf; nest same_group under each.
-    Uses nearest-FY fallback for deeper same_group nests when needed.
+    Uses each declared edge set's fallback policy.
     Depth 8 leaves room for S6 → component → PBS → grant program → recipient.
     """
     if depth > max_depth:
         return [], None
     related = child_edges(conn, parent_node_id, "related_breakdown", financial_year)
-    if source_key_prefixes:
-        related = [
-            e
-            for e in related
-            if any(
-                str(e.get("child_source_key") or "").startswith(p)
-                for p in source_key_prefixes
-            )
-        ]
+    if edge_set_ids:
+        allowed = set(edge_set_ids)
+        related = [e for e in related if e["policy"].id in allowed]
     if not related:
         return [], None
 
@@ -565,8 +574,12 @@ def build_related_subtree(
     quality = match_quality_from_notes(related[0].get("notes"))
     mismatch_years: set[str] = set()
     for edge in related:
+        policy: EdgeSetPolicy = edge["policy"]
         fact = fact_for_node_year(
-            conn, edge["child_node_id"], financial_year, allow_nearest=True
+            conn,
+            edge["child_node_id"],
+            financial_year,
+            allow_nearest=policy.fallback_policy == "nearest_earlier",
         )
         if fact is None:
             continue
@@ -584,9 +597,11 @@ def build_related_subtree(
                 tree_year=financial_year,
                 edge_kind="related_breakdown",
                 branch_kind="related",
-                edge_set_id=edge.get("crosswalk_id"),
+                policy=policy,
                 match_quality=edge_quality,
+                presentation_role=policy.presentation_role,
             ),
+            "_edge_policy": policy,
         }
         node["breakdown"] = {
             "fact_financial_year": fact["financial_year"] if fact.get("fy_fallback") else None,
@@ -634,11 +649,8 @@ def build_related_subtree(
         return [], None
 
     mismatch_year = sorted(mismatch_years)[0] if mismatch_years else None
-    compat = (
-        "actual_expense"
-        if meta_source and str(meta_source).startswith("federal_fbo_")
-        else "budget_expense"
-    )
+    first_policy: EdgeSetPolicy = related[0]["policy"]
+    compat = (meta_fact or {}).get("compatibility_group")
     breakdown = {
         "kind": "related_breakdown",
         "source_key": meta_source,
@@ -651,7 +663,9 @@ def build_related_subtree(
         "fallback_reason": "nested_child_year_mismatch" if mismatch_year else None,
         "unit": (meta_fact or {}).get("unit"),
         "match_quality": quality,
-        "edge_set_id": related[0].get("crosswalk_id"),
+        "edge_set_id": first_policy.id,
+        "branch_family": first_policy.branch_family,
+        "folder_label": first_policy.folder_label,
         "fact_financial_year": mismatch_year,
         "banner": banner_for_related(
             meta_source,
@@ -730,7 +744,8 @@ def _relationship_from_breakdown(
         "branch_kind": "related",
         "presentation_role": presentation_role,
         "edge_set_id": breakdown.get("edge_set_id"),
-        "branch_family": breakdown.get("source_family"),
+        "branch_family": breakdown.get("branch_family")
+        or breakdown.get("source_family"),
         "source_key": breakdown.get("source_key"),
         "source_family": breakdown.get("source_family"),
         "compatibility_group": breakdown.get("compatibility_group"),
@@ -787,50 +802,60 @@ def attach_related_to_tree(
         kids = node.setdefault("children", {})
         parent_amount = float(node.get("amount") or 0)
         parent_fact = node.get("fact_id")
-        s6_list, s6_bd = build_related_subtree(
-            conn,
-            nid,
-            financial_year,
-            parent_name=None,
-            source_key_prefixes=("federal_budget_statement_6",),
-        )
-        fbo_list, fbo_bd = build_related_subtree(
-            conn,
-            nid,
-            financial_year,
-            parent_name=None,
-            source_key_prefixes=("federal_fbo_",),
-        )
+        policies = {
+            edge["policy"].id: edge["policy"]
+            for edge in child_edges(
+                conn, nid, "related_breakdown", financial_year
+            )
+        }
+        groups: list[
+            tuple[EdgeSetPolicy, list[dict[str, Any]], dict[str, Any]]
+        ] = []
+        for policy in sorted(
+            policies.values(), key=lambda item: (item.sort_order, item.id)
+        ):
+            related_list, breakdown = build_related_subtree(
+                conn,
+                nid,
+                financial_year,
+                parent_name=None,
+                edge_set_ids=(policy.id,),
+            )
+            if related_list and breakdown:
+                groups.append((policy, related_list, breakdown))
+
         # A related source often repeats the canonical function at its own
         # root (Defence -> Defence).  That attach node is a navigation bridge,
         # not another semantic level; descendants retain their source-native
         # data roles.
-        for item in [*(s6_list or []), *(fbo_list or [])]:
-            if item["name"] == parent_name:
+        for _policy, related_list, _breakdown in groups:
+            for item in related_list:
+                if item["name"] != parent_name:
+                    continue
                 item["node"].setdefault("relationship", {})[
                     "presentation_role"
                 ] = "navigation"
         if as_folders:
-            if s6_list and s6_bd and "Statement 6 (budget estimates)" not in kids:
-                kids["Statement 6 (budget estimates)"] = _related_folder(
-                    related_list=s6_list,
-                    breakdown=s6_bd,
-                    parent_amount=parent_amount,
-                    parent_fact_id=parent_fact,
-                )
-            if fbo_list and fbo_bd and "FBO Appendix A (audited)" not in kids:
-                kids["FBO Appendix A (audited)"] = _related_folder(
-                    related_list=fbo_list,
-                    breakdown=fbo_bd,
+            for policy, related_list, breakdown in groups:
+                label = policy.folder_label or f"Related {policy.branch_family or 'detail'}"
+                if label in kids:
+                    continue
+                kids[label] = _related_folder(
+                    related_list=related_list,
+                    breakdown=breakdown,
                     parent_amount=parent_amount,
                     parent_fact_id=parent_fact,
                 )
             node["children"] = kids
             return
-        # Leaf purpose: S6 children as primary related drill; FBO as folder.
-        if s6_list and s6_bd:
-            node["children"] = {item["name"]: item["node"] for item in s6_list}
-            node["breakdown"] = s6_bd
+        # A leaf exposes the first declared related family directly and keeps
+        # additional families in declared navigation folders.
+        if groups:
+            _primary_policy, primary_list, primary_bd = groups[0]
+            node["children"] = {
+                item["name"]: item["node"] for item in primary_list
+            }
+            node["breakdown"] = primary_bd
             node["relationship"] = {
                 "edge_kind": "same_group",
                 "branch_kind": "additive",
@@ -839,24 +864,16 @@ def attach_related_to_tree(
                 "fact_financial_year": financial_year,
                 "is_year_fallback": False,
             }
-            if fbo_list and fbo_bd:
-                node["children"]["FBO Appendix A (audited)"] = _related_folder(
-                    related_list=fbo_list,
-                    breakdown=fbo_bd,
+            for policy, related_list, breakdown in groups[1:]:
+                label = policy.folder_label or f"Related {policy.branch_family or 'detail'}"
+                if label in node["children"]:
+                    continue
+                node["children"][label] = _related_folder(
+                    related_list=related_list,
+                    breakdown=breakdown,
                     parent_amount=parent_amount,
                     parent_fact_id=parent_fact,
                 )
-        elif fbo_list and fbo_bd:
-            node["children"] = {item["name"]: item["node"] for item in fbo_list}
-            node["breakdown"] = fbo_bd
-            node["relationship"] = {
-                "edge_kind": "same_group",
-                "branch_kind": "additive",
-                "presentation_role": "data",
-                "requested_financial_year": financial_year,
-                "fact_financial_year": financial_year,
-                "is_year_fallback": False,
-            }
 
     def walk(node: dict[str, Any], path_name: str | None = None) -> None:
         kids = node.get("children") or {}
@@ -865,12 +882,13 @@ def attach_related_to_tree(
 
         if kids:
             purpose = path_name or ""
-            if purpose in ABS_PURPOSE_RELATED_TARGETS:
-                nid = resolve_related_parent_node_id(
-                    conn, purpose, node.get("fact_id")
-                )
-                if nid is not None:
-                    _attach(node, nid, as_folders=True, parent_name=purpose)
+            if not purpose and not node.get("fact_id"):
+                return
+            nid = resolve_related_parent_node_id(conn, purpose, node.get("fact_id"))
+            if nid is not None and child_edges(
+                conn, nid, "related_breakdown", financial_year
+            ):
+                _attach(node, nid, as_folders=True, parent_name=purpose)
             return
 
         fact_id = node.get("fact_id")
@@ -890,8 +908,12 @@ def apply_edge_cascade_to_budget_tree(
     financial_year: str,
 ) -> None:
     """
-    For budget-mode federal trees: replace path-collision children with
-    ordered same_group edge children when edges exist for the node's fact.
+    Augment path-derived children with declared same-group edge children.
+
+    Replacement is permitted only when every projected edge belongs to an
+    authoritative edge set. Registry validation requires those sets to name
+    a completeness manifest. Existing projected parent totals are preserved
+    while incomplete path-only rows remain navigable.
     """
 
     def walk(node: dict[str, Any]) -> None:
@@ -914,9 +936,39 @@ def apply_edge_cascade_to_budget_tree(
         )
         if not sg_list:
             return
-        # Prefer edge cascade when it has more depth than path kids, or when
-        # path kids mix sources. Always prefer edges if any same_group exist.
-        node["children"] = {item["name"]: item["node"] for item in sg_list}
+        projected = {item["name"]: item["node"] for item in sg_list}
+        policies = {
+            child["_edge_policy"]
+            for child in projected.values()
+            if child.get("_edge_policy") is not None
+        }
+        authoritative = bool(policies) and all(
+            policy.projection_policy == "authoritative" for policy in policies
+        )
+        projected_total = sum(_projection_amount(child) for child in projected.values())
+        node["children"] = merge_projected_children(
+            kids,
+            projected,
+            authoritative=authoritative,
+            parent_compatibility_group=_node_compatibility_group(node),
+        )
+        # This is the value emitted by the pre-change edge-only cascade. The
+        # additional path rows are visible evidence, not a newly asserted
+        # complete additive partition of the edge-derived parent.
+        node["amount"] = projected_total
+        node["preserve_amount"] = True
+        node.setdefault(
+            "breakdown",
+            {
+                "kind": "same_group",
+                "source_key": node.get("source_key"),
+                "compatibility_group": node.get("compatibility_group"),
+                "banner": (
+                    "Edge-derived partition total preserved; additional path-derived "
+                    "rows remain visible because this edge set is not authoritative."
+                ),
+            },
+        )
 
     # Seed node_ids from facts on leaves first
     def seed(node: dict[str, Any]) -> None:
@@ -926,6 +978,142 @@ def apply_edge_cascade_to_budget_tree(
             nid = primary_node_id(conn, int(node["fact_id"]))
             if nid:
                 node["node_id"] = nid
+        if node.get("node_id") and not node.get("_canonical_key"):
+            row = conn.execute(
+                "SELECT canonical_key FROM nodes WHERE id = ?",
+                (int(node["node_id"]),),
+            ).fetchone()
+            if row and row[0]:
+                node["_canonical_key"] = str(row[0])
 
     seed(tree)
     walk(tree)
+
+
+def _normal_child_name(name: str) -> str:
+    return " / ".join(
+        part.strip().casefold() for part in str(name).split(" / ") if part.strip()
+    )
+
+
+def _node_compatibility_group(node: dict[str, Any]) -> str | None:
+    explicit = (node.get("relationship") or {}).get("compatibility_group")
+    if explicit:
+        return str(explicit)
+    direct = node.get("compatibility_group")
+    if direct:
+        return str(direct)
+    values = sorted(
+        str(value)
+        for value in (node.get("_projection_values") or {}).get(
+            "compatibility_group", set()
+        )
+        if value
+    )
+    return values[0] if len(set(values)) == 1 else None
+
+
+def _mark_cross_compatibility_path(
+    node: dict[str, Any], parent_compatibility_group: str | None
+) -> None:
+    child_compatibility_group = _node_compatibility_group(node)
+    if (
+        not parent_compatibility_group
+        or not child_compatibility_group
+        or parent_compatibility_group == child_compatibility_group
+    ):
+        return
+    values = node.get("_projection_values") or {}
+
+    def one(field: str) -> str | None:
+        candidates = sorted(str(value) for value in values.get(field, set()) if value)
+        return candidates[0] if len(set(candidates)) == 1 else None
+
+    role = "data" if node.get("fact_id") or node.get("amount") else "navigation"
+    node["relationship"] = {
+        "edge_kind": "related_breakdown",
+        "branch_kind": "related",
+        "presentation_role": role,
+        "edge_set_id": "path_augmentation",
+        "branch_family": one("source_family"),
+        "source_key": one("source_key"),
+        "source_family": one("source_family"),
+        "compatibility_group": child_compatibility_group,
+        "accounting_basis": one("accounting_basis"),
+        "estimate_status": one("estimate_status"),
+        "fact_financial_year": one("financial_year"),
+        "is_year_fallback": False,
+        "unit": one("unit"),
+    }
+    node["breakdown"] = {
+        "kind": "related_breakdown",
+        "source_key": one("source_key"),
+        "compatibility_group": child_compatibility_group,
+        "banner": (
+            "Path-derived row from a different measure family; retained for "
+            "navigation and excluded from the budget partition total."
+        ),
+    }
+    node["preserve_amount"] = True
+
+
+def _projection_amount(node: dict[str, Any]) -> float:
+    children = node.get("children") or {}
+    if children and not node.get("preserve_amount"):
+        return sum(_projection_amount(child) for child in children.values())
+    return float(node.get("amount") or 0)
+
+
+def _merge_node(
+    path_node: dict[str, Any], projected_node: dict[str, Any]
+) -> dict[str, Any]:
+    """Prefer the explicit edge fact while retaining unique path descendants."""
+    merged = {**path_node, **projected_node}
+    merged["children"] = merge_projected_children(
+        path_node.get("children") or {},
+        projected_node.get("children") or {},
+        authoritative=False,
+        parent_compatibility_group=_node_compatibility_group(merged),
+    )
+    return merged
+
+
+def merge_projected_children(
+    path_children: dict[str, dict[str, Any]],
+    projected_children: dict[str, dict[str, Any]],
+    *,
+    authoritative: bool = False,
+    parent_compatibility_group: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Deterministically merge children by node ID, canonical key, then label."""
+    if authoritative:
+        return dict(
+            sorted(projected_children.items(), key=lambda item: _normal_child_name(item[0]))
+        )
+
+    items: list[tuple[str, dict[str, Any]]] = []
+    for name, path_node in path_children.items():
+        _mark_cross_compatibility_path(path_node, parent_compatibility_group)
+        items.append((name, path_node))
+    for projected_name, projected_node in projected_children.items():
+        projected_id = projected_node.get("node_id")
+        projected_key = projected_node.get("_canonical_key")
+        match_index: int | None = None
+        for index, (path_name, path_node) in enumerate(items):
+            same_id = projected_id is not None and projected_id == path_node.get("node_id")
+            same_key = projected_key is not None and projected_key == path_node.get(
+                "_canonical_key"
+            )
+            same_name = _normal_child_name(projected_name) == _normal_child_name(path_name)
+            if same_id or same_key or same_name:
+                match_index = index
+                break
+        if match_index is None:
+            items.append((projected_name, projected_node))
+        else:
+            path_name, path_node = items[match_index]
+            items[match_index] = (
+                path_name,
+                _merge_node(path_node, projected_node),
+            )
+    return dict(sorted(items, key=lambda item: _normal_child_name(item[0])))

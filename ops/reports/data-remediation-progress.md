@@ -12,13 +12,13 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | --- | --- | --- | --- | --- |
 | 2.1 Golden projection fixtures | complete | `tests/fixtures/dashboard_projection/baseline.json`; required ten projections | `b6f5c1e` | Review fixture only when semantics intentionally change |
 | 2.2 Depth/visibility audit | complete | `dashboard-depth-audit-20260807T232555Z.{md,json}`: 10 projections, 0 hard failures | `b6f5c1e` | Keep the audit in regression use |
-| 2.3 Graph integrity checks | in_progress | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations | `b6f5c1e` | Add policy-aware child/completeness checks with declarative edge-set registry |
-| 1.1 Relationship/projection API contract | complete | Every non-root dashboard node has typed relationship metadata; roots have projection summaries; rollback flag covered | Contract milestone working tree | Frontend consumption remains in renderer/depth UX milestones |
-| 1.2 Declarative edge-set policy | not_started | Current traversal contains source/name heuristics | — | Add config and policy loader |
-| 1.3 Projection builder | not_started | Projection logic is distributed across dashboard and graph modules | — | Extract pure projection stages |
+| 2.3 Graph integrity checks | complete | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations; registry rejects ambiguous and unmanifested authoritative sets | pending milestone commit | Keep audit in regression use |
+| 1.1 Relationship/projection API contract | complete | Every non-root dashboard node has typed relationship metadata; roots have projection summaries; rollback flag covered | `de70595` | Frontend consumption remains in renderer/depth UX milestones |
+| 1.2 Declarative edge-set policy | complete | `config/breakdowns/edge_sets.yaml`; source selection, fallback, branch semantics, presentation and merge policy are registry-driven | pending milestone commit | Extend registry only with tested source packs |
+| 1.3 Projection builder | in_progress | Pure relationship/depth helpers plus declarative graph traversal and merge stages are implemented | `de70595`; pending milestone commit | Finish extraction while implementing pagination/explorer projection stages |
 | 3.1 Truthful ring values and units | not_started | Plan/current code identifies layout scaling contract defect | — | Implement after relationship contract |
 | 3.2 Per-year availability | not_started | Current `/years` selects basis globally | — | Add availability endpoint and UI metadata |
-| 3.3 Edge-cascade merge safety | not_started | Current budget cascade replacement requires audit | — | Preflight, augment policy, regression tests |
+| 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | pending milestone commit | Keep authoritative replacement gated by a completeness manifest |
 | 3.4 Flat tree pagination/totals | not_started | Current `/v2/tree` is limited and partial-total prone | — | Preserve compatibility and add truthful totals/cursor |
 | 3.5 Edge uniqueness/idempotency | not_started | NULL-safe duplicate handling is audit-only | — | Audit, migration, scoped rebuild support |
 | 3.6 Lineage/registry consistency | not_started | Atlas records revenue/FBO/canonical-ID and alias inconsistencies | — | Correct configs, backfill, invariants and generated ranges |
@@ -145,3 +145,58 @@ Branch-family labels still reflect current source families until the declarative
 ### Next item
 
 Plan section 1.2 and section 3.3 preflight: add the declarative edge-set policy and audit path-versus-edge suppression before changing cascade behavior.
+
+## Milestone: Declarative edge policy and cascade merge safety
+
+### Items
+
+Plan sections 1.2, 2.3, and 3.3, plus the graph-policy portion of section 1.3.
+
+### Previous behavior
+
+`attach_related_to_tree` classified Statement 6 and FBO branches with source-key prefixes, every related branch allowed nearest-year fallback, and the federal budget cascade unconditionally replaced path-derived children whenever any same-group edges existed.
+
+### Root cause
+
+`breakdown_edges` stored topology but had no declarative projection, fallback, branch-family or presentation policy. SQLite edge presence was therefore treated as proof of completeness even though the deployed edge sets are partial.
+
+### Preflight evidence
+
+- [`budget-edge-cascade-preflight-20260807T234606Z.md`](budget-edge-cascade-preflight-20260807T234606Z.md) compares all 15 federal budget years before the behavior change.
+- It found 26 parent/year projections with path-only children and **719 path-only children** that unconditional replacement would suppress.
+- The old replacement behavior changed the raw path root total in six years; those emitted replacement totals were captured as the compatibility baseline for the postflight check.
+
+### Changes
+
+- Added `config/breakdowns/edge_sets.yaml` and a validated registry for edge-set identity, physical edge kind, inherited branch kind, source-family scope, augment/authoritative projection, exact/nearest fallback, presentation role, folder label and deterministic order.
+- Split the shared `cofog_to_budget_function` crosswalk into explicit Statement 6 and FBO policies; historical/audited FBO remains exact-year only.
+- Removed source-prefix classification from related-tree attachment and grouped related branches by registry metadata.
+- Made cross-measure contract, grant and recipient drills explicitly related even where legacy storage uses a physical `same_group` edge.
+- Changed federal budget cascading to augment by default, recursively deduplicate by node ID/canonical key/normalized label, and order deterministically.
+- Preserved pre-change projected parent/root amounts while retaining non-authoritative path evidence; cross-measure path additions are tagged related and excluded from additive reconciliation.
+- Gated authoritative replacement on registry validation requiring a named completeness manifest.
+- Added focused policy and pure merge tests plus a repeatable read-only cascade audit.
+
+### Validation
+
+- Focused graph/policy/API suite: **24 passed**, then projection-contract regression suite passed after intentional edge-set identity updates.
+- Full backend suite: **572 passed**, one dependency deprecation warning.
+- Ruff and diff checks: passed.
+- [`budget-edge-cascade-validation-20260808T001300Z.md`](budget-edge-cascade-validation-20260808T001300Z.md): all **719** at-risk path-only children retained; no year differs from the captured replacement root total.
+- [`dashboard-depth-audit-edge-policy-final-20260808T001300Z.md`](dashboard-depth-audit-edge-policy-final-20260808T001300Z.md): reviewed fixture match, **0 hard failures**, 0 duplicate semantic edges, 0 cycles and complete terminal citations.
+
+### Data impact
+
+None. Both audit passes opened `data/facts.db` read-only. No schema migration, loader, edge write or fact mutation occurred.
+
+### Dashboard impact
+
+Federal budget root totals remain exactly compatible with the prior edge-derived projection while incomplete path rows are no longer silently removed. Cross-measure grant/contract/recipient branches now advertise related semantics instead of appearing additive. Existing Statement 6/PBS depth remains reachable.
+
+### Remaining risks
+
+The retained raw path corpus contains noisy historical labels; this milestone keeps valid evidence reachable without claiming those rows form an additive partition. Source-quality remediation and generic explorer filtering remain separate plan items. No edge set is authoritative today.
+
+### Next item
+
+Plan section 3.1: separate chart layout weight from reported fact value and make unit/percentage rendering relationship-aware.

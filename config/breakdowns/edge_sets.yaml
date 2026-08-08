@@ -1,0 +1,176 @@
+version: 1
+
+defaults:
+  projection_policy: augment
+  fallback_policy: exact_only
+  presentation_role: data
+  sort_order: 100
+
+edge_sets:
+  - id: statement_6_under_abs
+    crosswalk_id: cofog_to_budget_function
+    branch_family: statement_6
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    folder_label: Statement 6 (budget estimates)
+    source_key_prefixes:
+      - federal_budget_statement_6
+    sort_order: 10
+
+  - id: fbo_2024_25_under_abs
+    crosswalk_id: cofog_to_budget_function
+    branch_family: fbo
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: exact_only
+    presentation_role: data
+    folder_label: FBO Appendix A (audited)
+    source_key_prefixes:
+      - federal_fbo_2024_25_function_subfunction
+    sort_order: 20
+
+  # Source-native hierarchy edges predate crosswalk IDs. Declaring their
+  # fallback explicitly keeps nearest-earlier behavior limited to these
+  # known publication families rather than making it a global heuristic.
+  - id: statement_6_source_native
+    crosswalk_id: null
+    branch_family: statement_6
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_budget_statement_6
+    sort_order: 25
+
+  - id: pbs_source_native
+    crosswalk_id: null
+    branch_family: pbs
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_pbs_programs
+      - federal_dss_pbs_programs
+      - federal_health_pbs_programs
+    sort_order: 26
+
+  - id: grants_source_native
+    crosswalk_id: null
+    branch_family: grants
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_grantconnect_awards
+    sort_order: 27
+
+  - id: contracts_source_native
+    crosswalk_id: null
+    branch_family: contracts
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_austender_contracts
+    sort_order: 28
+
+  - id: recipients_source_native
+    crosswalk_id: null
+    branch_family: recipients
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_dss_payment_demographics
+    sort_order: 29
+
+  - id: pbs_programs_all_under_s6
+    crosswalk_id: pbs_programs_all_under_s6
+    branch_family: pbs
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    folder_label: Related PBS program detail
+    source_key_prefixes:
+      - federal_pbs_programs_all
+    sort_order: 30
+
+  - id: statement_6_components
+    crosswalk_id: a61_to_components
+    branch_family: statement_6
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_budget_statement_6_components
+    sort_order: 40
+
+  - id: pbs_dss_bridge
+    crosswalk_id: pbs_dss_bridge
+    branch_family: pbs
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_pbs_programs_s6_bridge
+      - federal_dss_pbs_programs
+      - federal_health_pbs_programs
+    sort_order: 50
+
+  - id: pbs_under_component
+    crosswalk_id: pbs_under_component
+    branch_family: pbs
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_dss_pbs_programs
+      - federal_health_pbs_programs
+    sort_order: 60
+
+  - id: contracts_under_statement_6
+    crosswalk_id: austender_under_s6
+    branch_family: contracts
+    edge_kind: same_group
+    branch_kind: related
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_austender_contracts
+    sort_order: 70
+
+  - id: grants_under_pbs
+    crosswalk_id: grantconnect_under_pbs
+    branch_family: grants
+    edge_kind: same_group
+    branch_kind: related
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_grantconnect_awards
+    sort_order: 80
+
+  - id: recipients_under_pbs
+    crosswalk_id: dss_demo_under_pbs
+    branch_family: recipients
+    edge_kind: same_group
+    branch_kind: related
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_dss_payment_demographics
+    sort_order: 90

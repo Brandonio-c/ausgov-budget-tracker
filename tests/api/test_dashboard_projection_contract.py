@@ -78,7 +78,7 @@ def test_canonical_parent_stays_additive_and_related_edges_are_explicit(
     assert relation["edge_kind"] == "related_breakdown"
     assert relation["branch_kind"] == "related"
     assert relation["presentation_role"] == "navigation"
-    assert relation["edge_set_id"] == "cofog_to_budget_function"
+    assert relation["edge_set_id"] == "statement_6_under_abs"
     assert relation["source_key"] == "federal_budget_statement_6_a61"
 
     descendants = list(_walk(related_defence))
