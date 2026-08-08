@@ -22,8 +22,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.4 Flat tree pagination/totals | complete | Flat shape is explicit; totals are scope-wide; publishability filtering and deterministic cursor traversal are tested | `dde1c08` | Hierarchical explorer remains separate in item 6.1 |
 | 3.5 Edge uniqueness/idempotency | complete | Unique expression index applied with 0 duplicate deletions; all writers conflict-safe; every registered pack delete/rebuild path exercised on a copy | `754c669` | Live reconciliation of surfaced emitter drift requires a separate reviewed deployment |
 | 3.6 Lineage/registry consistency | complete | Revenue/FBO identities corrected; 22,196 canonical facts assigned with 0 mismatches; TAS/QLD aliases and API-derived UI ranges validated | `af0294b` | Maintain ownership registry as canonical families expand |
-| 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | pending | Correct and reattribute quarantined QGIP years in item 7.2 |
-| 4.1 Historical FBO preflight | not_started | 415 archive facts already loaded | — | Exact-year semantic/crosswalk/citation audit |
+| 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | `9dd056f` | Correct and reattribute quarantined QGIP years in item 7.2 |
+| 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | pending | Repair per-edition retrieval/cached-copy provenance before graph deployment |
 | 4.2 Historical FBO graph pack | not_started | No archive edge set exists | — | Add reversible/idempotent exact-only pack |
 | 4.3 Historical traversal regression | not_started | 2022-23/2023-24 stop at two rings | — | Assert totals, years, branches and citations |
 | 4.4 Safe-depth/branch UX | not_started | UI starts at depth two and infers branch semantics | — | Implement semantic controls/badges/disclosure |
@@ -469,3 +469,41 @@ Some in-horizon QGIP years may still require source-file-based reattribution; th
 ### Next item
 
 Plan section 4.1: run the no-write semantic and reconciliation preflight for the 2019-20 through 2023-24 historical FBO archive.
+
+## Milestone: Historical FBO no-write preflight
+
+### Item
+
+Plan section 4.1.
+
+### Result
+
+Conditional pass. The already-loaded archive is semantically suitable for an exact-only related graph pack, but its shared retrieval/cached-copy attribution must be repaired before edge deployment.
+
+### Evidence
+
+- [`fbo-archive-crosswalk-20260808T163747Z.md`](fbo-archive-crosswalk-20260808T163747Z.md) and its JSON companion enumerate all 415 facts across FY2019-20 through FY2023-24.
+- Every edition contains 83 facts: 71 source-native function/subfunction rows and 12 reported totals.
+- All facts are `actual_accrual_expense / accrual / audited_actual`; semantic failures are zero.
+- The existing COFOG crosswalk supplies evidence for all ten mapped budget functions in all five years: 50/50 comparisons, with differences retained strictly as non-additive evidence.
+- `Agriculture, forestry and fishing`, `labour and employment affairs`, and `Other purposes` remain explicit unmapped FBO classifications.
+- Twelve exact-label additions/removals are typographic variants across three subfunction labels; there are no substantive classification changes.
+
+### Citation finding
+
+All 415 fact locators, landing URLs and official resource URLs identify their exact fact year. However, every fact shares one retrieval row: its resolved URL identifies 2019-20 and its local path identifies the 2023-24 PDF. Locator cached paths likewise identify 2023-24 for every fact. Consequently zero facts currently satisfy all six exact-year citation signals.
+
+### Validation
+
+- Audit unit suite: 4 passed.
+- Full backend suite: 595 passed, one dependency deprecation warning.
+- Ruff and diff checks passed.
+- A repeated full audit left the ignored live database byte-identical: SHA-256 `6a3ffc8fd8046a437c5f8104067f6fd5f5613243cdf00a84aafdf54eb7f3a17d` before and after.
+
+### Data impact
+
+None. The audit opens the database with SQLite `mode=ro`.
+
+### Next item
+
+Plan section 4.2: first repair exact per-edition retrieval/cached-copy attribution, then add the reversible, idempotent, exact-only historical FBO graph pack.
