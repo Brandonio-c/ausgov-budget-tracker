@@ -11,7 +11,7 @@ import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
 import RingDepthControl from "@/components/RingDepthControl";
 import DebtNav from "@/components/DebtNav";
-import { maxAdditiveDepth, additiveChildren } from "@/lib/sunburstTree";
+import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
 
 const DEBT_MODE: DashboardMode = "debt";
 
@@ -97,7 +97,7 @@ export default function DebtViewer() {
   );
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
   const maxRingDepth = useMemo(
-    () => Math.max(1, maxAdditiveDepth(rawChildren)),
+    () => Math.max(1, maxVisibleDepth(rawChildren)),
     [rawChildren],
   );
   const centerLabel =

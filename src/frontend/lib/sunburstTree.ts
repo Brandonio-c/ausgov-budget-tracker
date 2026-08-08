@@ -31,6 +31,8 @@ export type SunburstBuild = {
   total: number;
 };
 
+export type BranchChoice = "canonical" | string;
+
 function clampDepth(depth: number, maxDepth = 32): number {
   return Math.min(maxDepth, Math.max(1, Math.round(depth)));
 }
@@ -127,20 +129,28 @@ function prepareRingNodes(nodes: TreeNode[]): TreeNode[] {
  * Top-level ring wedges for the current drill node.
  * When ABS GFS leaves sit beside a Statement 6 pack, expand the pack (deeper).
  */
-export function ringRootChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
-  const s6 = relatedFolderChildren(nodes, "statement_6");
-  if (s6) return prepareRingNodes(s6);
+export function ringRootChildren(
+  nodes: TreeNode[] | null | undefined,
+  branchChoice: BranchChoice = "canonical",
+): TreeNode[] {
+  if (branchChoice !== "canonical") {
+    const related = relatedFolderChildren(nodes, branchChoice);
+    if (related) return prepareRingNodes(related);
+  }
   return prepareRingNodes(additiveChildren(nodes));
 }
 
 /** Deepest nestable path length under these nodes (1 = leaves only / single ring). */
-export function maxAdditiveDepth(nodes: TreeNode[] | null | undefined): number {
-  const kids = ringRootChildren(nodes);
+export function maxVisibleDepth(
+  nodes: TreeNode[] | null | undefined,
+  branchChoice: BranchChoice = "canonical",
+): number {
+  const kids = ringRootChildren(nodes, branchChoice);
   if (kids.length === 0) return 0;
   let deepest = 1;
   for (const n of kids) {
-    const nest = nestableChildren(n);
-    const childDepth = nest.length ? maxAdditiveDepth(nest) : 0;
+    const nest = nestableChildren(n, branchChoice);
+    const childDepth = nest.length ? maxVisibleDepth(nest, branchChoice) : 0;
     deepest = Math.max(deepest, 1 + childDepth);
   }
   return deepest;
@@ -151,15 +161,18 @@ export function pathKey(names: string[]): string {
 }
 
 /** Children safe to draw as an outer ring under `parent` (must roughly partition it). */
-export function nestableChildren(parent: TreeNode): TreeNode[] {
-  // Prefer Statement 6 cascade exclusively — do not mix with ABS siblings (double-count).
-  const s6 = relatedFolderChildren(parent.children, "statement_6");
-  if (s6) return unwrapSameName(parent.name, prepareRingNodes(s6));
+export function nestableChildren(
+  parent: TreeNode,
+  branchChoice: BranchChoice = "canonical",
+): TreeNode[] {
+  if (branchChoice !== "canonical") {
+    const related = relatedFolderChildren(parent.children, branchChoice);
+    if (related) return unwrapSameName(parent.name, prepareRingNodes(related));
+  }
 
   let kids = prepareRingNodes(additiveChildren(parent.children));
   if (kids.length === 0) {
-    const fbo = relatedFolderChildren(parent.children, "fbo");
-    return fbo ? unwrapSameName(parent.name, prepareRingNodes(fbo)) : [];
+    return [];
   }
   kids = unwrapSameName(parent.name, kids);
 
@@ -179,8 +192,7 @@ export function nestableChildren(parent: TreeNode): TreeNode[] {
     const partition = kids.filter((k) => k.value <= parentValue * 1.01);
     if (partition.length > 0) return partition;
 
-    const fbo = relatedFolderChildren(parent.children, "fbo");
-    return fbo ? unwrapSameName(parent.name, prepareRingNodes(fbo)) : [];
+    return [];
   }
   return kids;
 }
@@ -226,6 +238,7 @@ function buildLevel(
   labelDepth: number,
   currentDepth: number,
   reportedParentValue: number | null,
+  branchChoice: BranchChoice,
 ): SunburstDatum[] {
   if (depthRemaining <= 0 || nodes.length === 0) return [];
 
@@ -245,7 +258,7 @@ function buildLevel(
     lookup.set(`${pathKey(pathNames)}\u0001#${i}`, prepared);
 
     const color = topColors[i];
-    const nest = depthRemaining > 1 ? nestableChildren(prepared) : [];
+    const nest = depthRemaining > 1 ? nestableChildren(prepared, branchChoice) : [];
     const rawChildren =
       nest.length > 0
         ? buildLevel(
@@ -258,6 +271,7 @@ function buildLevel(
             labelDepth,
             currentDepth + 1,
             prepared.value,
+            branchChoice,
           )
         : undefined;
 
@@ -311,11 +325,12 @@ export function buildSunburst(
   children: TreeNode[],
   ringDepth: number,
   dark: boolean,
+  branchChoice: BranchChoice = "canonical",
 ): SunburstBuild {
-  const available = Math.max(1, maxAdditiveDepth(children));
+  const available = Math.max(1, maxVisibleDepth(children, branchChoice));
   const depth = clampDepth(ringDepth, available);
   const lookup = new Map<string, TreeNode>();
-  const roots = ringRootChildren(children);
+  const roots = ringRootChildren(children, branchChoice);
   const rootReportedTotal = roots
     .filter(
       (node) =>
@@ -333,6 +348,7 @@ export function buildSunburst(
     depth,
     1,
     rootReportedTotal,
+    branchChoice,
   );
   const total = data.reduce((s, n) => s + n.value, 0);
   return { data, lookup, total };

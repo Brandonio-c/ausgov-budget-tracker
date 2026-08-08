@@ -37,6 +37,7 @@ interface Props {
   valueUnit?: string | null;
   /** When false, do not imply an additive national total. */
   isAdditive?: boolean;
+  branchChoice?: string;
 }
 
 const MIN_CHART_HEIGHT = 360;
@@ -60,6 +61,7 @@ export default function SpendingChart({
   totalLabel = null,
   valueUnit = null,
   isAdditive = true,
+  branchChoice = "canonical",
 }: Props) {
   const { chartMaximized } = useSplitPaneLayout();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,8 +123,8 @@ export default function SpendingChart({
 
   const sunburst = useMemo(() => {
     if (chartType !== "rings") return null;
-    return buildSunburst(nodes, ringDepth, dark);
-  }, [nodes, chartType, ringDepth, dark]);
+    return buildSunburst(nodes, ringDepth, dark, branchChoice);
+  }, [nodes, chartType, ringDepth, dark, branchChoice]);
 
   const lookupRef = useRef(sunburst?.lookup);
   lookupRef.current = sunburst?.lookup;

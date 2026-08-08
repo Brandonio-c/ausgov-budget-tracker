@@ -19,7 +19,7 @@ import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
-import { maxAdditiveDepth, additiveChildren } from "@/lib/sunburstTree";
+import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
 
 function CombinedPageInner() {
   const dark = useDarkMode();
@@ -37,6 +37,7 @@ function CombinedPageInner() {
   const [missingLevels, setMissingLevels] = useState<string[]>([]);
   const [chartType, setChartType] = useState<ChartType>("bar");
   const [ringDepth, setRingDepth] = useState(2);
+  const [branchChoice, setBranchChoice] = useState("canonical");
   const [drillPath, setDrillPath] = useState<TreeNode[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [sourcePrompt, setSourcePrompt] = useState(
@@ -169,9 +170,26 @@ function CombinedPageInner() {
     [rawChildren],
   );
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
+  const branchChoices = useMemo(() => {
+    const found = new Set<string>();
+    const walk = (nodes: TreeNode[] | null | undefined) => {
+      for (const node of nodes ?? []) {
+        const relation = node.relationship;
+        if (relation?.branch_kind === "related" && relation.branch_family) {
+          found.add(relation.branch_family);
+        }
+        walk(node.children);
+      }
+    };
+    walk(rawChildren);
+    return ["canonical", ...Array.from(found).sort()];
+  }, [rawChildren]);
+  const activeBranchChoice = branchChoices.includes(branchChoice)
+    ? branchChoice
+    : "canonical";
   const maxRingDepth = useMemo(
-    () => Math.max(1, maxAdditiveDepth(rawChildren)),
-    [rawChildren],
+    () => Math.max(1, maxVisibleDepth(rawChildren, activeBranchChoice)),
+    [rawChildren, activeBranchChoice],
   );
   const centerLabel =
     chartType === "rings"
@@ -342,6 +360,7 @@ function CombinedPageInner() {
             <RingDepthControl
               depth={ringDepth}
               maxDepth={maxRingDepth}
+              safeDepth={2}
               onChange={setRingDepth}
             />
           )}
@@ -349,11 +368,27 @@ function CombinedPageInner() {
       </div>
 
       {chartType === "rings" && (
-        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-          Outer rings are nested under the matching inner wedge. Click a segment to expand it
-          into the center; use Back or the breadcrumb to zoom out. Use Depth −/+ (up to {maxRingDepth}){" "}
-          for as many rings as this branch has.
-        </p>
+        <div className="mb-3 space-y-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Ring branch">
+            {branchChoices.map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => setBranchChoice(choice)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  activeBranchChoice === choice
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-black/10 bg-white text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
+                }`}
+              >
+                {choice === "canonical" ? "Canonical actual" : choice.replaceAll("_", " ")}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Canonical is the default; related source families are explicit alternatives.
+          </p>
+        </div>
       )}
 
       {(usingUnionYears || missingLevels.length > 0) && (
@@ -415,6 +450,7 @@ function CombinedPageInner() {
                     : null
                 }
                 ringDepth={ringDepth}
+                branchChoice={activeBranchChoice}
                 centerLabel={centerLabel}
               />
             ) : (
@@ -457,4 +493,3 @@ export default function CombinedPage() {
     </Suspense>
   );
 }
-

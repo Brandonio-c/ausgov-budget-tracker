@@ -79,6 +79,36 @@ try {
   );
   assert.match(reportedAriaSummary(sunburst.data, "AUD"), /Published 80: \$80/);
 
+  const fboLeaf = node(
+    "Audited subfunction",
+    60,
+    relationship({
+      branch_kind: "related",
+      branch_family: "fbo",
+      accounting_basis: "accrual",
+      estimate_status: "audited_actual",
+    }),
+  );
+  const fboFolder = node(
+    "Historical FBO Appendix A (audited)",
+    100,
+    relationship({
+      edge_kind: "related_breakdown",
+      branch_kind: "related",
+      branch_family: "fbo",
+      presentation_role: "navigation",
+    }),
+    [node("Health", 60, relationship({ branch_kind: "related", branch_family: "fbo" }), [fboLeaf])],
+  );
+  const purpose = node("Health", 100, relationship(), [
+    node("Canonical health", 100, relationship()),
+    fboFolder,
+  ]);
+  const canonicalRings = buildSunburst([purpose], 3, false, "canonical");
+  assert.equal(canonicalRings.data[0].children[0].name, "Canonical health");
+  const fboRings = buildSunburst([purpose], 3, false, "fbo");
+  assert.equal(fboRings.data[0].children[0].name, "Audited subfunction");
+
   const relatedTooltip = reportedTooltip(
     "Recipients",
     {
@@ -96,6 +126,8 @@ try {
   );
   assert.match(relatedTooltip, /25 recipient_count/);
   assert.match(relatedTooltip, /not a percent of parent/);
+  assert.match(relatedTooltip, /Related · Data/);
+  assert.match(relatedTooltip, /Source FY 2024-25/);
   assert.doesNotMatch(relatedTooltip, /% of parent/);
 
   const additiveTooltip = reportedTooltip(

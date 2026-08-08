@@ -50,10 +50,20 @@ export function reportedTooltip(
   const relationshipNote = related
     ? "<br/><span style='opacity:.75'>Related breakdown — not a percent of parent</span>"
     : "";
+  const relationship = datum.relationship;
+  const semanticBadges = relationship
+    ? `<br/><span style='opacity:.75'>${
+        relationship.branch_kind === "additive" ? "Additive" : "Related"
+      } · ${relationship.presentation_role === "navigation" ? "Navigation" : "Data"}` +
+      `${relationship.requested_financial_year ? ` · Selected FY ${relationship.requested_financial_year}` : ""}` +
+      `${relationship.fact_financial_year ? ` · Source FY ${relationship.fact_financial_year}` : ""}` +
+      `${relationship.accounting_basis ? ` · ${relationship.accounting_basis.toUpperCase()}` : ""}` +
+      `${relationship.estimate_status ? ` · ${relationship.estimate_status.replaceAll("_", " ")}` : ""}</span>`
+    : "";
   const hint = datum.children?.length
     ? "<br/><span style='opacity:.75'>Click to expand</span>"
     : "";
-  return `${name}<br/>${formatMeasureValue(reportedValue, unit)}${percentage}${relationshipNote}${hint}`;
+  return `${name}<br/>${formatMeasureValue(reportedValue, unit)}${percentage}${relationshipNote}${semanticBadges}${hint}`;
 }
 
 export function commonUnit(nodes: TreeNode[], fallback: string | null): string | null {

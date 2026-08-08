@@ -15,7 +15,17 @@ import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
 import DebtViewer from "@/components/DebtViewer";
-import { maxAdditiveDepth, additiveChildren } from "@/lib/sunburstTree";
+import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
+
+const BRANCH_LABELS: Record<string, string> = {
+  canonical: "Canonical actual",
+  fbo: "Audited FBO",
+  statement_6: "Budget Statement 6",
+  contracts: "Contracts",
+  grants: "Grants",
+  pbs: "PBS programs",
+  recipients: "Recipients",
+};
 
 export default function HomeClient() {
   const dark = useDarkMode();
@@ -31,6 +41,7 @@ export default function HomeClient() {
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [chartType, setChartType] = useState<ChartType>("pie");
   const [ringDepth, setRingDepth] = useState(2);
+  const [branchChoice, setBranchChoice] = useState("canonical");
   const [drillPath, setDrillPath] = useState<TreeNode[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
@@ -148,9 +159,27 @@ export default function HomeClient() {
     [rawChildren],
   );
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
+  const safeRingDepth = Math.max(1, tree?.projection?.max_visible_depth ?? 2);
+  const branchChoices = useMemo(() => {
+    const found = new Set<string>();
+    const walk = (nodes: TreeNode[] | null | undefined) => {
+      for (const node of nodes ?? []) {
+        const relation = node.relationship;
+        if (relation?.branch_kind === "related" && relation.branch_family) {
+          found.add(relation.branch_family);
+        }
+        walk(node.children);
+      }
+    };
+    walk(rawChildren);
+    return ["canonical", ...Array.from(found).sort()];
+  }, [rawChildren]);
+  const activeBranchChoice = branchChoices.includes(branchChoice)
+    ? branchChoice
+    : "canonical";
   const maxRingDepth = useMemo(
-    () => Math.max(1, maxAdditiveDepth(rawChildren)),
-    [rawChildren],
+    () => Math.max(1, maxVisibleDepth(rawChildren, activeBranchChoice)),
+    [rawChildren, activeBranchChoice],
   );
   const centerLabel =
     chartType === "rings"
@@ -417,6 +446,7 @@ export default function HomeClient() {
             <RingDepthControl
               depth={ringDepth}
               maxDepth={maxRingDepth}
+              safeDepth={safeRingDepth}
               onChange={setRingDepth}
             />
           )}
@@ -430,11 +460,46 @@ export default function HomeClient() {
       ) : null}
 
       {chartType === "rings" && (
-        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-          Outer rings are nested under the matching inner wedge. Click a segment to expand it
-          into the center; use Back or the breadcrumb to zoom out. Use Depth −/+ (up to {maxRingDepth}){" "}
-          for as many rings as this branch has.
-        </p>
+        <div className="mb-3 space-y-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Ring branch">
+            {branchChoices.map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => setBranchChoice(choice)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  activeBranchChoice === choice
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-black/10 bg-white text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
+                }`}
+              >
+                {BRANCH_LABELS[choice] ?? choice.replaceAll("_", " ")}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Canonical is the default. Related branches are alternatives and never change the canonical total.
+          </p>
+          {selectedNode?.relationship ? (
+            <div className="flex flex-wrap gap-1 text-xs" role="status">
+              <span className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                {selectedNode.relationship.branch_kind === "additive" ? "Additive" : "Related"}
+              </span>
+              <span className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                {selectedNode.relationship.presentation_role === "navigation" ? "Navigation" : "Data"}
+              </span>
+              <span className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                Selected FY {year} · Source FY {selectedNode.relationship.fact_financial_year ?? year}
+              </span>
+              <span className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                {(selectedNode.relationship.accounting_basis ?? selectedAvailability?.selected_basis ?? "basis unknown").toUpperCase()}
+                {selectedNode.relationship.estimate_status
+                  ? ` · ${selectedNode.relationship.estimate_status.replaceAll("_", " ")}`
+                  : ""}
+              </span>
+            </div>
+          ) : null}
+        </div>
       )}
 
       <nav className="mb-4 flex flex-wrap items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -497,6 +562,7 @@ export default function HomeClient() {
                 onNodeHover={handleNodeHover}
                 totalNote={chartTotalNote}
                 ringDepth={ringDepth}
+                branchChoice={activeBranchChoice}
                 centerLabel={centerLabel}
               />
             ) : (

@@ -4,10 +4,16 @@ interface Props {
   depth: number;
   maxDepth: number;
   onChange: (depth: number) => void;
+  safeDepth?: number;
 }
 
 /** Depth stepper: − / value / + up to the tree’s available depth (no hard cap at 3). */
-export default function RingDepthControl({ depth, maxDepth, onChange }: Props) {
+export default function RingDepthControl({
+  depth,
+  maxDepth,
+  onChange,
+  safeDepth = maxDepth,
+}: Props) {
   const max = Math.max(1, maxDepth);
   const current = Math.min(Math.max(1, depth), max);
 
@@ -21,7 +27,7 @@ export default function RingDepthControl({ depth, maxDepth, onChange }: Props) {
       role="group"
       aria-label="Ring depth"
     >
-      <span className="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">Depth</span>
+      <span className="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">Safe levels</span>
       <button
         type="button"
         aria-label="Fewer rings"
@@ -53,8 +59,17 @@ export default function RingDepthControl({ depth, maxDepth, onChange }: Props) {
         +
       </button>
       <span className="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
-        / {max}
+        of {max} · default {Math.min(max, Math.max(1, safeDepth))}
       </span>
+      {current < max ? (
+        <button
+          type="button"
+          onClick={() => set(max)}
+          className="border-l border-black/10 bg-white px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-white/10 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+        >
+          Show maximum
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -25,8 +25,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | `9dd056f` | Correct and reattribute quarantined QGIP years in item 7.2 |
 | 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | `ed3567f` | Repair per-edition retrieval/cached-copy provenance before graph deployment |
 | 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | `3d48680` | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
-| 4.3 Historical traversal regression | complete | Reviewed fixture: unchanged roots, 11 mapped routes/year, exact audited branches, 69/69 leaf citations, explicit exceptions | pending | Surface available related depth and branch choices in item 4.4 |
-| 4.4 Safe-depth/branch UX | not_started | UI starts at depth two and infers branch semantics | — | Implement semantic controls/badges/disclosure |
+| 4.3 Historical traversal regression | complete | Reviewed fixture: unchanged roots, 11 mapped routes/year, exact audited branches, 69/69 leaf citations, explicit exceptions | `468eed2` | Surface available related depth and branch choices in item 4.4 |
+| 4.4 Safe-depth/branch UX | complete | Canonical-default branch chips; selected/available safe depth; semantic/year/basis/status badges; production build clean | pending | Begin Wave 3 historical edition manifest/acquisition |
 | 5 Historical Statement 6/PBS editions | not_started | Required editions need repository/source inventory | — | Acquire/register, bounded adapters, crosswalks, NDIA repair |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
@@ -567,3 +567,32 @@ None beyond item 4.2. This milestone freezes the reviewed deployed projection be
 ### Next item
 
 Plan section 4.4: expose safe versus available depth and related branch families without changing canonical totals.
+
+## Milestone: Safe-depth and branch UX
+
+### Item
+
+Plan section 4.4.
+
+### Changes
+
+- Replaced automatic related-pack preference with canonical-default, user-selected branch families.
+- Renamed frontend maximum traversal depth to visible depth and kept additive depth as separate API metadata.
+- Added selected/available/default safe-level controls and a Show maximum action.
+- Added Additive/Related, Navigation/Data, selected/source year, basis and estimate-status disclosures to hover/click interaction.
+- Added the same explicit branch selection behavior to Combined and retained canonical behavior for debt.
+
+### Validation
+
+- [`safe-depth-branch-ux-20260808T170500Z.md`](safe-depth-branch-ux-20260808T170500Z.md) records safeguards and executable checks.
+- Chart semantic unit suite and TypeScript passed.
+- Accepted lint baseline remained 25 errors / 13 warnings.
+- Production build passed with 12 static pages.
+
+### Data impact
+
+None. Canonical totals, API responses, graph edges and citations are unchanged.
+
+### Next item
+
+Plan section 5.1: inventory/register the required 2022-23 and 2023-24 Statement 6/PBS editions with checksums and original URLs before building a genuine historical third ring.
