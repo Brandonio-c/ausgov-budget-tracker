@@ -19,6 +19,7 @@ from breakdown_pack import (  # noqa: E402
     link_austender_under_s6,
     link_dss_under_pbs,
     link_grants_under_pbs,
+    link_historical_fbo_related,
     link_pbs_to_components,
     link_related_crosswalk,
     link_same_group_from_paths,
@@ -126,6 +127,11 @@ def rebuild_edge_set(conn: sqlite3.Connection, policy: EdgeSetPolicy) -> Any:
                 if round_inserted == 0:
                     break
         return {"inserted": inserted, "source_keys": list(source_keys)}
+    if policy.id == "fbo_archive_under_abs":
+        return {
+            "inserted": link_historical_fbo_related(conn),
+            "source_keys": list(source_keys),
+        }
     if policy.id in {"statement_6_under_abs", "fbo_2024_25_under_abs"}:
         inserted = sum(
             link_related_crosswalk(conn, str(policy.crosswalk_id), source_key)

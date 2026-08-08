@@ -89,9 +89,14 @@ def extract_rows(mapping: dict[str, Any], repo_root: Path = REPO_ROOT) -> list[d
     finally:
         con.close()
 
-    cached = mapping.get("attribution", {}).get("cached_copy_path")
+    attribution = mapping.get("attribution", {})
+    cached = attribution.get("cached_copy_path")
+    cached_by_year = attribution.get("cached_copy_path_by_financial_year") or {}
+    if cached_by_year and not isinstance(cached_by_year, dict):
+        raise ValueError("cached_copy_path_by_financial_year must be a mapping")
+    fallback_cached = cached or mapping["input"]["path"]
     cached_path = resolve_input_path(
-        {"input": {"path": cached or mapping["input"]["path"]}}, repo_root
+        {"input": {"path": fallback_cached}}, repo_root
     )
     sha = file_sha256(cached_path)
     retrieved_at = _utc_now()
@@ -125,6 +130,15 @@ def extract_rows(mapping: dict[str, Any], repo_root: Path = REPO_ROOT) -> list[d
 
         row_cached_path = cached_path
         row_sha = sha
+        configured_year_path = cached_by_year.get(str(row.get("financial_year") or ""))
+        if configured_year_path:
+            resolved = resolve_input_path(
+                {"input": {"path": str(configured_year_path)}}, repo_root
+            )
+            if not resolved.is_file():
+                raise FileNotFoundError(resolved)
+            row_cached_path = resolved
+            row_sha = sha_cache.setdefault(str(resolved), file_sha256(resolved))
         if per_row_path_column:
             raw_path = row.get(per_row_path_column)
             if isinstance(raw_path, str) and raw_path.strip():

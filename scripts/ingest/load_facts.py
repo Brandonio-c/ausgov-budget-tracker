@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -71,6 +72,24 @@ def ensure_retrieval(
         (source_document_id, sha),
     ).fetchone()
     if existing:
+        resolved_url = row.get("original_resource_url") or row["_local_path"]
+        cached_path = row["_cached_copy_path"]
+        conn.execute(
+            """
+            UPDATE source_retrievals
+            SET resolved_url = ?, http_status = 200, content_type = ?,
+                byte_size = ?, local_path = ?, retrieval_status = 'ok',
+                error_message = NULL
+            WHERE id = ?
+            """,
+            (
+                resolved_url,
+                mimetypes.guess_type(str(cached_path))[0] or "application/octet-stream",
+                Path(cached_path).stat().st_size if Path(cached_path).is_file() else None,
+                cached_path,
+                int(existing["id"]),
+            ),
+        )
         return int(existing["id"])
     cur = conn.execute(
         """
@@ -84,7 +103,8 @@ def ensure_retrieval(
             row["_retrieved_at"],
             row.get("original_resource_url") or row["_local_path"],
             200,
-            "text/csv",
+            mimetypes.guess_type(str(row["_cached_copy_path"]))[0]
+            or "application/octet-stream",
             Path(row["_cached_copy_path"]).stat().st_size
             if Path(row["_cached_copy_path"]).is_file()
             else None,

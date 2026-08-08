@@ -115,4 +115,5 @@ def test_crosswalk_selector_includes_each_registered_edge_set() -> None:
     assert {policy.id for policy in policies} == {
         "statement_6_under_abs",
         "fbo_2024_25_under_abs",
+        "fbo_archive_under_abs",
     }

@@ -31,6 +31,29 @@ edge_sets:
       - federal_fbo_2024_25_function_subfunction
     sort_order: 20
 
+  - id: fbo_archive_under_abs
+    crosswalk_id: cofog_to_budget_function
+    branch_family: fbo
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: exact_only
+    presentation_role: navigation
+    folder_label: Historical FBO Appendix A (audited)
+    source_key_prefixes:
+      - federal_budget_archive_function_series
+    sort_order: 21
+
+  - id: fbo_archive_source_native
+    crosswalk_id: null
+    branch_family: fbo
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: exact_only
+    presentation_role: data
+    source_key_prefixes:
+      - federal_budget_archive_function_series
+    sort_order: 22
+
   # Source-native hierarchy edges predate crosswalk IDs. Declaring their
   # fallback explicitly keeps nearest-earlier behavior limited to these
   # known publication families rather than making it a global heuristic.

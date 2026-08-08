@@ -581,8 +581,32 @@ def build_related_subtree(
             financial_year,
             allow_nearest=policy.fallback_policy == "nearest_earlier",
         )
+        sg_kids, _ = build_same_group_subtree(
+            conn,
+            edge["child_node_id"],
+            financial_year,
+            parent_name=edge["child_name"],
+            depth=depth + 1,
+            max_depth=max_depth,
+            allow_nearest_fy=True,
+        )
         if fact is None:
-            continue
+            if policy.presentation_role != "navigation" or not sg_kids:
+                continue
+            first_relationship = sg_kids[0]["node"].get("relationship") or {}
+            fact = {
+                "fact_id": None,
+                "amount_aud": sum(float(kid["node"].get("amount") or 0) for kid in sg_kids),
+                "financial_year": financial_year,
+                "source_key": edge.get("child_source_key"),
+                "source_family": first_relationship.get("source_family"),
+                "compatibility_group": first_relationship.get("compatibility_group"),
+                "accounting_basis": first_relationship.get("accounting_basis"),
+                "estimate_status": first_relationship.get("estimate_status"),
+                "unit": first_relationship.get("unit"),
+                "fy_fallback": False,
+                "fallback_reason": "exact_year_descendants",
+            }
         label = display_name(edge["child_name"], parent_name)
         edge_quality = match_quality_from_notes(edge.get("notes"))
         node: dict[str, Any] = {
@@ -611,15 +635,6 @@ def build_related_subtree(
             "estimate_status": fact.get("estimate_status"),
             "source_key": fact.get("source_key"),
         }
-        sg_kids, _ = build_same_group_subtree(
-            conn,
-            edge["child_node_id"],
-            financial_year,
-            parent_name=edge["child_name"],
-            depth=depth + 1,
-            max_depth=max_depth,
-            allow_nearest_fy=True,
-        )
         if sg_kids:
             node["children"] = {c["name"]: c["node"] for c in sg_kids}
         # Every node beneath (and including) this related attach point -
@@ -836,6 +851,19 @@ def attach_related_to_tree(
                     "presentation_role"
                 ] = "navigation"
         if as_folders:
+            for policy, related_list, breakdown in groups:
+                label = policy.folder_label or f"Related {policy.branch_family or 'detail'}"
+                if label in kids:
+                    continue
+                kids[label] = _related_folder(
+                    related_list=related_list,
+                    breakdown=breakdown,
+                    parent_amount=parent_amount,
+                    parent_fact_id=parent_fact,
+                )
+            node["children"] = kids
+            return
+        if groups and groups[0][0].presentation_role == "navigation":
             for policy, related_list, breakdown in groups:
                 label = policy.folder_label or f"Related {policy.branch_family or 'detail'}"
                 if label in kids:

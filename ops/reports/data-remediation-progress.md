@@ -23,8 +23,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.5 Edge uniqueness/idempotency | complete | Unique expression index applied with 0 duplicate deletions; all writers conflict-safe; every registered pack delete/rebuild path exercised on a copy | `754c669` | Live reconciliation of surfaced emitter drift requires a separate reviewed deployment |
 | 3.6 Lineage/registry consistency | complete | Revenue/FBO identities corrected; 22,196 canonical facts assigned with 0 mismatches; TAS/QLD aliases and API-derived UI ranges validated | `af0294b` | Maintain ownership registry as canonical families expand |
 | 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | `9dd056f` | Correct and reattribute quarantined QGIP years in item 7.2 |
-| 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | pending | Repair per-edition retrieval/cached-copy provenance before graph deployment |
-| 4.2 Historical FBO graph pack | not_started | No archive edge set exists | — | Add reversible/idempotent exact-only pack |
+| 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | `ed3567f` | Repair per-edition retrieval/cached-copy provenance before graph deployment |
+| 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | pending | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
 | 4.3 Historical traversal regression | not_started | 2022-23/2023-24 stop at two rings | — | Assert totals, years, branches and citations |
 | 4.4 Safe-depth/branch UX | not_started | UI starts at depth two and infers branch semantics | — | Implement semantic controls/badges/disclosure |
 | 5 Historical Statement 6/PBS editions | not_started | Required editions need repository/source inventory | — | Acquire/register, bounded adapters, crosswalks, NDIA repair |
@@ -507,3 +507,34 @@ None. The audit opens the database with SQLite `mode=ro`.
 ### Next item
 
 Plan section 4.2: first repair exact per-edition retrieval/cached-copy attribution, then add the reversible, idempotent, exact-only historical FBO graph pack.
+
+## Milestone: Historical FBO exact-only graph pack
+
+### Item
+
+Plan section 4.2.
+
+### Changes
+
+- Added per-financial-year cached-file attribution and corrected stale same-content retrieval metadata during ingestion.
+- Reingested the same 415 facts with five exact source retrievals and zero quarantine or duplication.
+- Registered separate historical FBO related and source-native edge sets, both augmenting and exact-only.
+- Added a reversible rebuilder that attaches ten mapped budget functions while retaining three unmapped classifications as explicit exceptions.
+- Enabled factless related navigation nodes only when exact-year fact descendants exist.
+- Excluded related navigation folders from additive totals using typed relationship metadata.
+
+### Validation
+
+- [`historical-fbo-edge-pack-20260808T165500Z.md`](historical-fbo-edge-pack-20260808T165500Z.md) records exact counts and live/disposable rebuild evidence.
+- Exact-year citation coverage: 415/415 across all six audited signals.
+- Stable live second rebuild: 75 source-native edges and 11 related edges.
+- Dashboard audit: zero hard failures, unchanged FY2022-23/FY2023-24 roots, no fallback facts and complete leaf citations.
+- Graph/data audit: zero hard failures and zero orphans; SQLite integrity `ok`.
+
+### Data impact
+
+Only retrieval attribution, source-native navigation nodes and the two explicitly scoped historical FBO edge sets changed in the ignored live database. Facts and canonical totals are unchanged.
+
+### Next item
+
+Plan section 4.3: freeze historical traversal totals, branch/year semantics, citations and explicit unmapped exceptions as executable regressions.

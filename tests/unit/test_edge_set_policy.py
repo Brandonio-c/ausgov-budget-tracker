@@ -30,6 +30,16 @@ def test_shared_crosswalk_resolves_statement6_and_fbo_separately() -> None:
     assert fbo.fallback_policy == "exact_only"
     assert fbo.branch_family == "fbo"
 
+    archive = registry.resolve(
+        crosswalk_id="cofog_to_budget_function",
+        edge_kind="related_breakdown",
+        source_key="federal_budget_archive_function_series",
+    )
+    assert archive.id == "fbo_archive_under_abs"
+    assert archive.fallback_policy == "exact_only"
+    assert archive.projection_policy == "augment"
+    assert archive.presentation_role == "navigation"
+
 
 def test_cross_measure_drill_is_declared_related_even_on_physical_same_group_edge() -> None:
     policy = load_edge_set_registry().resolve(

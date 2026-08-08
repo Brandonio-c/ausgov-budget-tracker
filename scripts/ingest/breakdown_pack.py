@@ -220,6 +220,77 @@ def link_related_crosswalk(
     return inserted
 
 
+def link_historical_fbo_related(
+    conn: sqlite3.Connection,
+    crosswalk_id: str = "cofog_to_budget_function",
+    child_source_key: str = "federal_budget_archive_function_series",
+) -> int:
+    """Attach ABS Commonwealth purposes to historical FBO function routes."""
+    cw = load_yaml(CROSSWALKS_DIR / f"{crosswalk_id}.yaml")
+    inserted = 0
+    for mapping in cw.get("mappings") or []:
+        abs_name = str(mapping["abs"])
+        budget_fn = str(mapping["budget"])
+        quality = str(mapping.get("quality", cw.get("match_quality_default", "approx")))
+        abs_nodes = conn.execute(
+            """
+            SELECT DISTINCT n.id
+            FROM nodes n JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key LIKE 'abs_gfs_commonwealth%'
+              AND lower(n.name) IN (lower(?), lower(?))
+            """,
+            (abs_name, f"Total {abs_name}"),
+        ).fetchall()
+        if budget_fn == "Defence":
+            child = conn.execute(
+                """
+                SELECT n.id FROM nodes n
+                JOIN source_documents d ON d.id = n.source_document_id
+                WHERE d.source_key = ? AND n.name = 'General public services / Defence'
+                """,
+                (child_source_key,),
+            ).fetchone()
+        else:
+            child = conn.execute(
+                """
+                SELECT n.id FROM nodes n
+                JOIN source_documents d ON d.id = n.source_document_id
+                WHERE d.source_key = ? AND n.name = ?
+                """,
+                (child_source_key, budget_fn),
+            ).fetchone()
+            if child is None:
+                has_children = conn.execute(
+                    """
+                    SELECT 1 FROM nodes n
+                    JOIN source_documents d ON d.id = n.source_document_id
+                    WHERE d.source_key = ? AND n.name LIKE ? LIMIT 1
+                    """,
+                    (child_source_key, f"{budget_fn} / %"),
+                ).fetchone()
+                if has_children:
+                    child = (ensure_node(conn, child_source_key, budget_fn, {}),)
+        if child is None:
+            continue
+        for (parent_id,) in abs_nodes:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO breakdown_edges (
+                    parent_node_id, child_node_id, edge_kind, crosswalk_id,
+                    financial_year, priority, source_document_id, notes
+                ) VALUES (?, ?, 'related_breakdown', ?, NULL, 50, NULL, ?)
+                """,
+                (
+                    int(parent_id),
+                    int(child[0]),
+                    crosswalk_id,
+                    f"{abs_name}→{budget_fn}|{quality}|historical_fbo",
+                ),
+            )
+            inserted += int(conn.execute("SELECT changes()").fetchone()[0])
+    return inserted
+
+
 def _norm_path(name: str) -> str:
     return " / ".join(p.strip().lower() for p in (name or "").split(" / ") if p.strip())
 

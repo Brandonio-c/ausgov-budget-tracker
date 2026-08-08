@@ -637,6 +637,11 @@ def _to_tree_node(
                 and c.breakdown.kind == "related_breakdown"
                 and (
                     c.value == 0
+                    or (
+                        c.relationship
+                        and c.relationship.branch_kind == "related"
+                        and c.relationship.presentation_role == "navigation"
+                    )
                     or c.name.startswith("Statement 6")
                     or c.name.startswith("FBO Appendix A")
                 )

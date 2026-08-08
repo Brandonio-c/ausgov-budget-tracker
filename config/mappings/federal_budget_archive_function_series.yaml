@@ -21,7 +21,12 @@ columns:
 attribution:
   landing_url_column: landing_url
   original_resource_url_column: resource_url
-  cached_copy_path: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T025923Z/files/2023-24_05_appendix_a.pdf
+  cached_copy_path_by_financial_year:
+    2019-20: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T025923Z/files/2019-20_05_appendix_a.pdf
+    2020-21: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T025923Z/files/2020-21_05_appendix_a.pdf
+    2021-22: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T025923Z/files/2021-22_05_appendix_a.pdf
+    2022-23: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T031046Z/files/2022-23_05_appendix_a.pdf
+    2023-24: data/raw/federal/federal_budget_archive_function_series/snapshots/20260723T025923Z/files/2023-24_05_appendix_a.pdf
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
 notes: >
   Tier A extract of Table A.1 from digital Appendix A PDFs in the archive series

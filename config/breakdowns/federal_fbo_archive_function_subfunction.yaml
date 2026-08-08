@@ -1,0 +1,11 @@
+id: federal_fbo_archive_function_subfunction
+title: Historical FBO Appendix A expenses by function/sub-function (audited actuals)
+source_key: federal_budget_archive_function_series
+compatibility_group: actual_expense
+edge_kind: same_group
+related_crosswalk_id: cofog_to_budget_function
+mapping: config/mappings/federal_budget_archive_function_series.yaml
+notes: >
+  Uses the already-published FY2019-20 through FY2023-24 facts. Related projection
+  is augmenting and exact-year only; FBO and ABS GFS amounts are evidence from
+  distinct classification/accounting systems and are never additively reconciled.
