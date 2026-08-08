@@ -90,7 +90,22 @@ def export_qgip() -> dict:
         amount_col = next((cols[k] for k in cols if "amount" in k or "expenditure" in k or "value" in k or "total" in k), None)
         agency_col = next((cols[k] for k in cols if "agency" in k or "department" in k or "entity" in k), None)
         cat_col = next((cols[k] for k in cols if "category" in k or "description" in k or "supplier" in k or "program" in k), None)
-        fy_col = next((cols[k] for k in cols if k in {"fy","financial year","year"} or "financial year" in k), None)
+        fy_col = next(
+            (cols[k] for k in cols if k in {"fy", "financial year", "year"}),
+            None,
+        )
+        if fy_col is None:
+            fy_col = next(
+                (
+                    cols[k]
+                    for k in cols
+                    if "financial year" in k
+                    and not any(
+                        token in k for token in ("amount", "expenditure", "value", "total")
+                    )
+                ),
+                None,
+            )
         fy_guess = None
         m = re.search(r"(20\d{2})\D?(\d{2})", a.get("original_filename") or fp.name)
         if m:

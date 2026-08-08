@@ -21,8 +21,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | `be1f25b` | Keep authoritative replacement gated by a completeness manifest |
 | 3.4 Flat tree pagination/totals | complete | Flat shape is explicit; totals are scope-wide; publishability filtering and deterministic cursor traversal are tested | `dde1c08` | Hierarchical explorer remains separate in item 6.1 |
 | 3.5 Edge uniqueness/idempotency | complete | Unique expression index applied with 0 duplicate deletions; all writers conflict-safe; every registered pack delete/rebuild path exercised on a copy | `754c669` | Live reconciliation of surfaced emitter drift requires a separate reviewed deployment |
-| 3.6 Lineage/registry consistency | complete | Revenue/FBO identities corrected; 22,196 canonical facts assigned with 0 mismatches; TAS/QLD aliases and API-derived UI ranges validated | pending | Maintain ownership registry as canonical families expand |
-| 3.7 Source-aware fiscal-year validation | not_started | `2099-00` QGIP/state actual outlier confirmed | — | Trace source, add bounded validation/quarantine |
+| 3.6 Lineage/registry consistency | complete | Revenue/FBO identities corrected; 22,196 canonical facts assigned with 0 mismatches; TAS/QLD aliases and API-derived UI ranges validated | `af0294b` | Maintain ownership registry as canonical families expand |
+| 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | pending | Correct and reattribute quarantined QGIP years in item 7.2 |
 | 4.1 Historical FBO preflight | not_started | 415 archive facts already loaded | — | Exact-year semantic/crosswalk/citation audit |
 | 4.2 Historical FBO graph pack | not_started | No archive edge set exists | — | Add reversible/idempotent exact-only pack |
 | 4.3 Historical traversal regression | not_started | 2022-23/2023-24 stop at two rings | — | Assert totals, years, branches and citations |
@@ -428,3 +428,44 @@ Future bespoke loaders for newly canonicalized families must call the shared lin
 ### Next item
 
 Plan section 3.7: investigate the `2099-00` outlier and add source-declared publication-horizon validation/quarantine.
+
+## Milestone: Source-declared fiscal-year horizons
+
+### Item
+
+Plan section 3.7.
+
+### Previous behavior
+
+Validation accepted any syntactically shaped fiscal year. The QGIP exporter could mistake `Financial year expenditure` for the actual year column, turning amounts such as 2,099 into FY `2099-00` and publishing them.
+
+### Root cause
+
+Fuzzy year-column matching did not exclude monetary columns, and validation had no source-specific publication boundary. A global maximum would hide the immediate symptom but incorrectly reject legitimate long-horizon sources.
+
+### Changes
+
+- Corrected QGIP year-column selection and added a regression for amount 2,099 versus real FY2022-23.
+- Added optional mapping-declared minimum/maximum financial years to the generic validation gate.
+- Added machine-readable source-horizon quarantine reasons without imposing a global cap.
+- Added a preview-by-default transactional remediation command that preserves full provenance and cleans only newly orphaned source nodes.
+- Moved all existing out-of-horizon QGIP facts to recoverable quarantine.
+
+### Validation
+
+- [`source-horizon-validation-20260808T163200Z.md`](source-horizon-validation-20260808T163200Z.md) records root-cause samples and exact data impact.
+- Preflight 4,198 outliers across 80 years; postflight 0 published outliers; second apply changed 0 rows.
+- Focused suite: 9 passed; registry suite: 11 passed; full backend suite: 591 passed.
+- Graph/data integrity audit: 0 hard failures and 0 orphans; SQLite integrity `ok`.
+
+### Data impact
+
+4,198 invalid QGIP facts were moved from publication to `facts_pending_attribution`; 3,522 exclusive orphan nodes were removed. All moved facts retain source provenance and a deterministic reason.
+
+### Remaining risks
+
+Some in-horizon QGIP years may still require source-file-based reattribution; the horizon prevents impossible publication but does not replace the comprehensive QGIP reconciliation in item 7.2.
+
+### Next item
+
+Plan section 4.1: run the no-write semantic and reconciliation preflight for the 2019-20 through 2023-24 historical FBO archive.

@@ -8,6 +8,9 @@ measure_type: actual_accrual_expense
 accounting_basis: accrual
 estimate_status: actual
 period_granularity: financial_year
+publication_horizon:
+  min_financial_year: 2012-13
+  max_financial_year: 2024-25
 input:
   path: data/staging/m7/qld_qgip_expenditure.csv
   format: csv

@@ -54,6 +54,31 @@ def gate3_period(row: dict[str, Any]) -> GateResult:
     return GateResult(3, "period", True)
 
 
+def gate3_source_horizon(mapping: dict[str, Any], row: dict[str, Any]) -> GateResult:
+    horizon = mapping.get("publication_horizon")
+    if not horizon:
+        return GateResult(3, "source_horizon", True)
+    minimum = str(horizon.get("min_financial_year") or "").strip()
+    maximum = str(horizon.get("max_financial_year") or "").strip()
+    if not FY_RE.fullmatch(minimum) or not FY_RE.fullmatch(maximum) or minimum > maximum:
+        return GateResult(
+            3,
+            "source_horizon",
+            False,
+            "source_horizon_config_invalid",
+        )
+    financial_year = str(row.get("financial_year") or "").strip()
+    if FY_RE.fullmatch(financial_year) and not minimum <= financial_year <= maximum:
+        return GateResult(
+            3,
+            "source_horizon",
+            False,
+            "source_horizon_outlier:"
+            f"financial_year={financial_year};allowed={minimum}..{maximum}",
+        )
+    return GateResult(3, "source_horizon", True)
+
+
 def gate4_node(row: dict[str, Any]) -> GateResult:
     name = row.get("node_name") or row.get("category")
     if name is None or not str(name).strip():
@@ -95,6 +120,7 @@ def validate_row(mapping: dict[str, Any], row: dict[str, Any]) -> RowDecision:
         lambda: gate1_schema(mapping, row),
         lambda: gate2_types(row),
         lambda: gate3_period(row),
+        lambda: gate3_source_horizon(mapping, row),
         lambda: gate4_node(row),
         lambda: gate5_measure(mapping),
     ):

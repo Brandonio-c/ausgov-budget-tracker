@@ -134,3 +134,18 @@ def test_same_source_loaded_twice_produces_identical_rows(tmp_path, monkeypatch)
     df2 = _run_export(tmp_path, monkeypatch)
     assert df1["category"].tolist() == df2["category"].tolist()
     assert df1["amount"].tolist() == df2["amount"].tolist()
+
+
+def test_expenditure_amount_is_never_used_as_financial_year(tmp_path, monkeypatch):
+    rows = [
+        {
+            "Legal Entity Name": "Swifts Hockey Club Inc",
+            "Program title": "Fair Play",
+            "Financial year expenditure": "2099",
+            "Financial Year": "2022-23",
+        }
+    ]
+    _write_source(tmp_path, rows, filename="2022-23-expenditure-consolidated.csv")
+    df = _run_export(tmp_path, monkeypatch)
+    assert df["fy"].tolist() == ["2022-23"]
+    assert df["amount"].tolist() == [2099.0]
