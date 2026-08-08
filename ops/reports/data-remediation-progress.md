@@ -26,8 +26,9 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | `ed3567f` | Repair per-edition retrieval/cached-copy provenance before graph deployment |
 | 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | `3d48680` | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
 | 4.3 Historical traversal regression | complete | Reviewed fixture: unchanged roots, 11 mapped routes/year, exact audited branches, 69/69 leaf citations, explicit exceptions | `468eed2` | Surface available related depth and branch choices in item 4.4 |
-| 4.4 Safe-depth/branch UX | complete | Canonical-default branch chips; selected/available safe depth; semantic/year/basis/status badges; production build clean | pending | Begin Wave 3 historical edition manifest/acquisition |
-| 5 Historical Statement 6/PBS editions | not_started | Required editions need repository/source inventory | — | Acquire/register, bounded adapters, crosswalks, NDIA repair |
+| 4.4 Safe-depth/branch UX | complete | Canonical-default branch chips; selected/available safe depth; semantic/year/basis/status badges; production build clean | `d3446b3` | Begin Wave 3 historical edition manifest/acquisition |
+| 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | pending commit | Build bounded Statement 6 edition adapters in item 5.2 |
+| 5.2-5.5 Historical Statement 6/PBS pipeline | not_started | Acquired edition corpus is ready; broader all-portfolio URLs remain unresolved | — | Edition adapters, crosswalks, graph, NDIA/current PBS repair |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -596,3 +597,35 @@ None. Canonical totals, API responses, graph edges and citations are unchanged.
 ### Next item
 
 Plan section 5.1: inventory/register the required 2022-23 and 2023-24 Statement 6/PBS editions with checksums and original URLs before building a genuine historical third ring.
+
+## Milestone: Historical Statement 6/PBS edition acquisition
+
+### Item
+
+Plan section 5.1.
+
+### Changes
+
+- Registered separate source identities for March 2022-23, October 2022-23 and 2023-24 Budget Paper No. 1/Statement 6 editions.
+- Registered a directly archived Treasury PBS representative for each target vintage.
+- Acquired all six official PDFs through the standard procurement snapshot pipeline with original URLs and SHA-256 manifests.
+- Reused the already-deployed historical FBO acquisitions rather than duplicating them.
+- Added registry regressions that prevent March and October 2022-23 from collapsing into one source identity.
+
+### Validation
+
+- [`historical-budget-edition-acquisition-20260808T170741Z.md`](historical-budget-edition-acquisition-20260808T170741Z.md) records all six URLs, byte counts, page counts and checksums.
+- Procurement run: 6 downloaded, 0 failed; all PDFs readable; 2,409 pages total.
+- Registry loaded 373 unique sources.
+
+### Scope boundary
+
+The archive pages expose direct Treasury PBS files but only name the other portfolios as externally hosted at release. This milestone does not claim complete all-portfolio coverage; unresolved portfolios require verified official URLs and separate edition-bearing identities.
+
+### Data impact
+
+Raw acquisition only. No facts, edges, totals or API behavior changed.
+
+### Next item
+
+Plan section 5.2: add edition fixtures and bounded Statement 6 adapters before extracting any historical rows.

@@ -706,6 +706,224 @@ sources:
   title: 'Budget Paper No. 1, Statement 6: Expenses and Net Capital Investment 2026-27'
   landing_url: https://budget.gov.au/content/bp1/index.htm
   source_family: budget_function_program
+- priority: P0
+  id: federal_budget_statement_6_2022_23_march
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: 'March 2022-23 Budget Paper No. 1, Statement 6: Expenses and Net Capital Investment'
+  landing_url: https://archive.budget.gov.au/2022-23/
+  resource_url: https://archive.budget.gov.au/2022-23/bp1/download/bp1_2022-23.pdf
+  source_family: budget_function_program
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2022-23 March Budget
+  publication_vintage: '2022-03'
+  time_coverage: March 2022-23 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  - revised_estimate
+  accounting_basis:
+  - accrual
+  - cash
+  granularity:
+  - function
+  - subfunction
+  - component
+  - financial year
+  storage:
+    canonical_filename: bp1_2022-23_march.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use an edition-specific Statement 6 adapter and preserve the March
+    2022-23 publication vintage independently of the October 2022-23 Budget.
+  caveats:
+  - Do not merge March and October rows solely because their financial-year labels overlap.
+  traceability_tier: 2
+- priority: P0
+  id: federal_budget_statement_6_2022_23_october
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: 'October 2022-23 Budget Paper No. 1, Statement 6: Expenses and Net Capital Investment'
+  landing_url: https://archive.budget.gov.au/2022-23-october/
+  resource_url: https://archive.budget.gov.au/2022-23-october/bp1/download/bp1_2022-23.pdf
+  source_family: budget_function_program
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2022-23 October Budget
+  publication_vintage: '2022-10'
+  time_coverage: October 2022-23 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  - revised_estimate
+  accounting_basis:
+  - accrual
+  - cash
+  granularity:
+  - function
+  - subfunction
+  - component
+  - financial year
+  storage:
+    canonical_filename: bp1_2022-23_october.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use an edition-specific Statement 6 adapter and preserve the October
+    2022-23 publication vintage independently of the March 2022-23 Budget.
+  caveats:
+  - Do not merge March and October rows solely because their financial-year labels overlap.
+  traceability_tier: 2
+- priority: P0
+  id: federal_budget_statement_6_2023_24
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: '2023-24 Budget Paper No. 1, Statement 6: Expenses and Net Capital Investment'
+  landing_url: https://archive.budget.gov.au/2023-24/index.htm
+  resource_url: https://archive.budget.gov.au/2023-24/bp1/download/bp1_2023-24.pdf
+  source_family: budget_function_program
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2023-24 Budget
+  publication_vintage: '2023-05'
+  time_coverage: 2023-24 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  - revised_estimate
+  accounting_basis:
+  - accrual
+  - cash
+  granularity:
+  - function
+  - subfunction
+  - component
+  - financial year
+  storage:
+    canonical_filename: bp1_2023-24.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use an edition-specific Statement 6 adapter and preserve the 2023-24
+    publication edition on every extracted fact.
+  caveats: []
+  traceability_tier: 2
+- priority: P0
+  id: federal_pbs_2022_23_march_treasury
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: March 2022-23 Treasury Portfolio Budget Statements
+  landing_url: https://archive.budget.gov.au/2022-23/
+  resource_url: https://treasury.gov.au/sites/default/files/2022-03/tsy_pbs_2022-23.pdf
+  source_family: portfolio_budget_statements
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2022-23 March Budget
+  publication_vintage: '2022-03'
+  time_coverage: March 2022-23 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  storage:
+    canonical_filename: treasury_pbs_2022-23_march.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use the generalized PBS classifier only after adding an edition-specific
+    layout fixture; preserve the March vintage and page/table locator.
+  caveats:
+  - This is the directly archived Treasury representative, not complete portfolio coverage.
+  traceability_tier: 3
+- priority: P0
+  id: federal_pbs_2022_23_october_treasury
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: October 2022-23 Treasury Portfolio Budget Statements
+  landing_url: https://archive.budget.gov.au/2022-23-october/
+  resource_url: https://treasury.gov.au/sites/default/files/2022-10/tsy_pbs_october-2022-23.pdf
+  source_family: portfolio_budget_statements
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2022-23 October Budget
+  publication_vintage: '2022-10'
+  time_coverage: October 2022-23 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  storage:
+    canonical_filename: treasury_pbs_2022-23_october.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use the generalized PBS classifier only after adding an edition-specific
+    layout fixture; preserve the October vintage and page/table locator.
+  caveats:
+  - This is the directly archived Treasury representative, not complete portfolio coverage.
+  traceability_tier: 3
+- priority: P0
+  id: federal_pbs_2023_24_treasury
+  jurisdiction: Commonwealth
+  government_level: federal
+  publisher: Australian Government Treasury
+  title: 2023-24 Treasury Portfolio Budget Statements
+  landing_url: https://archive.budget.gov.au/2023-24/index.htm
+  resource_url: https://treasury.gov.au/sites/default/files/2023-07/tsy_pbs_2023-24_230727.pdf
+  source_family: portfolio_budget_statements
+  access_method: direct_file
+  automation: high
+  formats:
+  - pdf
+  publication_edition: 2023-24 Budget
+  publication_vintage: '2023-05'
+  time_coverage: 2023-24 Budget estimates and forward estimates
+  measure_types:
+  - budget_estimate
+  granularity:
+  - portfolio
+  - entity
+  - outcome
+  - program
+  - component
+  storage:
+    canonical_filename: treasury_pbs_2023-24.pdf
+  validation:
+    expected_mime_types:
+    - application/pdf
+    min_bytes: 1000000
+  parser_strategy: Use the generalized PBS classifier only after adding an edition-specific
+    layout fixture; preserve the 2023-24 edition and page/table locator.
+  caveats:
+  - This is the directly archived Treasury representative, not complete portfolio coverage.
+  traceability_tier: 3
 - priority: P2
   resource_url: https://budget.gov.au/content/bp2/download/bp2_2026-27.pdf
   formats:
