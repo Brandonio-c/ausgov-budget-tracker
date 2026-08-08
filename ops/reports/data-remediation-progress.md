@@ -27,8 +27,9 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | `3d48680` | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
 | 4.3 Historical traversal regression | complete | Reviewed fixture: unchanged roots, 11 mapped routes/year, exact audited branches, 69/69 leaf citations, explicit exceptions | `468eed2` | Surface available related depth and branch choices in item 4.4 |
 | 4.4 Safe-depth/branch UX | complete | Canonical-default branch chips; selected/available safe depth; semantic/year/basis/status badges; production build clean | `d3446b3` | Begin Wave 3 historical edition manifest/acquisition |
-| 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | pending commit | Build bounded Statement 6 edition adapters in item 5.2 |
-| 5.2-5.5 Historical Statement 6/PBS pipeline | not_started | Acquired edition corpus is ready; broader all-portfolio URLs remain unresolved | — | Edition adapters, crosswalks, graph, NDIA/current PBS repair |
+| 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | `3ec6d55` | Build bounded Statement 6 edition adapters in item 5.2 |
+| 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | pending commit | Add historical PBS fixtures/adapters in item 5.3 |
+| 5.3-5.5 Historical PBS/graph pipeline | not_started | Three Treasury PBS representatives acquired; broader all-portfolio URLs remain unresolved | — | PBS adapters, crosswalks, edge-scoped deployment, NDIA/current PBS repair |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -629,3 +630,32 @@ Raw acquisition only. No facts, edges, totals or API behavior changed.
 ### Next item
 
 Plan section 5.2: add edition fixtures and bounded Statement 6 adapters before extracting any historical rows.
+
+## Milestone: Historical Budget Paper expense adapters
+
+### Item
+
+Plan section 5.2.
+
+### Changes
+
+- Added one edition-configured adapter for March 2022-23 Statement 5/Table 5A.1 and the October 2022-23/2023-24 Statement 6/Table 6A.1 layouts.
+- Extracted function, subfunction and all 13 published component tables per edition with exact page/table/year/vintage locators.
+- Excluded historical actual columns from the budget-estimate mappings; audited actual coverage remains in FBO.
+- Added three source-specific mappings and executable published-total/layout regressions.
+
+### Validation
+
+- [`historical-statement-expense-adapters-20260808T172116Z.md`](historical-statement-expense-adapters-20260808T172116Z.md) records edition contracts, counts and totals.
+- 2,146 rows loaded twice on an isolated database copy: zero quarantine, 2,146 distinct fact keys, one retrieval/checksum per edition, integrity `ok`.
+- Real-PDF regression suite: 5 passed.
+- Full backend regression suite: 605 passed, one dependency deprecation warning.
+- Live probe exposed flat additive projection risk; exact probe rows were removed and the restored dashboard fixture matches with zero hard failures.
+
+### Data impact
+
+Acquired PDFs and reproducible staging CSVs only. Historical mappings are marked adapter-only pending graph visibility; no historical Statement expense facts remain deployed in `data/facts.db` and dashboard behavior is unchanged.
+
+### Next item
+
+Plan section 5.3: historical Treasury PBS edition fixtures/adapters, still withheld from dashboard deployment until item 5.4.
