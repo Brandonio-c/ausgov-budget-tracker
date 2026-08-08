@@ -4,7 +4,13 @@ import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { TreeNode } from "@/lib/types";
-import { colorsFor, formatAud, formatAudFull, formatMeasureValue } from "@/lib/colors";
+import { colorsFor, formatMeasureValue } from "@/lib/colors";
+import {
+  additiveSiblingTotal,
+  commonUnit,
+  reportedAriaSummary,
+  reportedTooltip,
+} from "@/lib/chartSemantics";
 import {
   buildSunburst,
   resolveSunburstNode,
@@ -52,7 +58,7 @@ export default function SpendingChart({
   centerLabel = null,
   showTotal = true,
   totalLabel = null,
-  valueUnit = "AUD",
+  valueUnit = null,
   isAdditive = true,
 }: Props) {
   const { chartMaximized } = useSplitPaneLayout();
@@ -124,6 +130,20 @@ export default function SpendingChart({
   const option: EChartsOption = useMemo(() => {
     const textColor = dark ? "#ffffff" : "#0b0b0b";
     const mutedColor = "#898781";
+    const chartUnit = commonUnit(nodes, valueUnit);
+    const accessibleSummary = nodes
+      .map(
+        (node) =>
+          `${node.name}: ${formatMeasureValue(
+            node.value,
+            node.relationship?.unit ?? node.unit ?? chartUnit,
+          )}`,
+      )
+      .join("; ");
+    const semanticAccessibleSummary =
+      chartType === "rings" && sunburst
+        ? reportedAriaSummary(sunburst.data, chartUnit)
+        : accessibleSummary;
 
     if (chartType === "rings" && sunburst) {
       const depth = Math.max(1, Math.round(ringDepth));
@@ -139,15 +159,17 @@ export default function SpendingChart({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .map((x: any) => x.name)
               .join(" › ");
-            const val = p.value ?? 0;
-            const pct =
-              typeof p.percent === "number" ? ` (${p.percent.toFixed(1)}%)` : "";
-            const hint =
-              p.data?.children?.length > 0
-                ? "<br/><span style='opacity:.75'>Click to expand</span>"
-                : "";
-            return `${treePath || p.name}<br/>${formatAudFull(val)}${pct}${hint}`;
+            return reportedTooltip(
+              treePath || p.name,
+              p.data ?? {},
+              p.value ?? 0,
+              chartUnit,
+            );
           },
+        },
+        aria: {
+          enabled: true,
+          label: { description: `Spending rings. ${semanticAccessibleSummary}` },
         },
         series: [
           {
@@ -177,7 +199,11 @@ export default function SpendingChart({
                 left: "center",
                 top: "middle",
                 style: {
-                  text: `${centerLabel}\n${formatAud(sunburst.total)}`,
+                  text: `${centerLabel}\n${
+                    chartUnit === "mixed_units"
+                      ? "Mixed units"
+                      : formatMeasureValue(sunburst.total, chartUnit)
+                  }`,
                   fill: textColor,
                   fontSize: 14,
                   fontWeight: 600,
@@ -197,7 +223,12 @@ export default function SpendingChart({
         tooltip: {
           trigger: "item",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter: (p: any) => `${p.name}<br/>${formatAudFull(p.value ?? 0)} (${p.percent}%)`,
+          formatter: (p: any) =>
+            reportedTooltip(p.name, p.data ?? {}, p.value ?? 0, chartUnit),
+        },
+        aria: {
+          enabled: true,
+          label: { description: `Spending pie chart. ${accessibleSummary}` },
         },
         series: [
           {
@@ -213,13 +244,24 @@ export default function SpendingChart({
             label: {
               color: textColor,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter: (p: any) => `${p.name}\n${formatAud(p.value ?? 0)}`,
+              formatter: (p: any) =>
+                `${p.name}\n${formatMeasureValue(
+                  p.data?.reportedValue ?? p.value ?? 0,
+                  p.data?.reportedUnit ?? chartUnit,
+                )}`,
               fontSize: chartMaximized ? 13 : 12,
             },
             labelLine: { lineStyle: { color: mutedColor } },
             data: nodes.map((n, i) => ({
               name: n.name,
               value: n.value,
+              reportedValue: n.value,
+              reportedUnit: n.relationship?.unit ?? n.unit ?? chartUnit,
+              reportedParentValue: additiveSiblingTotal(nodes, n),
+              relationship: n.relationship,
+              isRelated:
+                n.relationship?.branch_kind === "related" ||
+                n.breakdown?.kind === "related_breakdown",
               itemStyle: { color: colors[i] },
             })),
           },
@@ -235,7 +277,10 @@ export default function SpendingChart({
       grid: { left: "2%", right: "12%", top: "4%", bottom: "4%", containLabel: true },
       xAxis: {
         type: "value",
-        axisLabel: { color: mutedColor, formatter: (v: number) => formatAud(v) },
+        axisLabel: {
+          color: mutedColor,
+          formatter: (v: number) => formatMeasureValue(v, chartUnit),
+        },
         axisLine: { lineStyle: { color: dark ? "#383835" : "#c3c2b7" } },
         splitLine: { lineStyle: { color: dark ? "#2c2c2a" : "#e1e0d9" } },
       },
@@ -248,13 +293,24 @@ export default function SpendingChart({
       tooltip: {
         trigger: "item",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        formatter: (p: any) => `${p.name}<br/>${formatAudFull(p.value ?? 0)}`,
+        formatter: (p: any) =>
+          reportedTooltip(p.name, p.data ?? {}, p.value ?? 0, chartUnit),
+      },
+      aria: {
+        enabled: true,
+        label: { description: `Spending bar chart. ${accessibleSummary}` },
       },
       series: [
         {
           type: "bar",
           data: sorted.map((n, i) => ({
             value: n.value,
+            reportedValue: n.value,
+            reportedUnit: n.relationship?.unit ?? n.unit ?? chartUnit,
+            relationship: n.relationship,
+            isRelated:
+              n.relationship?.branch_kind === "related" ||
+              n.breakdown?.kind === "related_breakdown",
             itemStyle: { color: sortedColors[i], borderRadius: [0, 4, 4, 0] },
           })),
           label: {
@@ -262,13 +318,27 @@ export default function SpendingChart({
             position: "right",
             color: mutedColor,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter: (p: any) => formatAud(p.value ?? 0),
+            formatter: (p: any) =>
+              formatMeasureValue(
+                p.data?.reportedValue ?? p.value ?? 0,
+                p.data?.reportedUnit ?? chartUnit,
+              ),
           },
           barMaxWidth: 28,
         },
       ],
     };
-  }, [nodes, chartType, dark, colors, sunburst, ringDepth, centerLabel, chartMaximized]);
+  }, [
+    nodes,
+    chartType,
+    dark,
+    colors,
+    sunburst,
+    ringDepth,
+    centerLabel,
+    chartMaximized,
+    valueUnit,
+  ]);
 
   const nodeForPieBar = (params: { dataIndex: number }) => {
     if (chartType === "bar") {
@@ -344,8 +414,16 @@ export default function SpendingChart({
   }
 
   const displayTotal = chartType === "rings" && sunburst ? sunburst.total : total;
-  const fmt = (v: number) => formatMeasureValue(v, valueUnit);
-  const showTotalLine = showTotal && isAdditive && valueUnit !== "percent";
+  const displayUnit = commonUnit(nodes, valueUnit);
+  const fmt = (v: number) =>
+    displayUnit === "mixed_units"
+      ? "Mixed units — no total"
+      : formatMeasureValue(v, displayUnit);
+  const showTotalLine =
+    showTotal &&
+    isAdditive &&
+    displayUnit !== "percent" &&
+    displayUnit !== "mixed_units";
 
   return (
     <div

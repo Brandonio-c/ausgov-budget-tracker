@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:ci": "node scripts/check-eslint-baseline.mjs",
+    "test:unit": "node scripts/test-chart-semantics.mjs",
     "test:e2e": "playwright test",
     "build:vibefactory": "NEXT_PUBLIC_API_BASE=https://ausgov-budget-api.vibefactory.app next build",
     "deploy:vibefactory": "npm run build:vibefactory && wrangler deploy --config wrangler.vibefactory.toml"

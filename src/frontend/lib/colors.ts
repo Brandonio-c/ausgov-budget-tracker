@@ -1,4 +1,4 @@
-import { TreeNode } from "./types";
+import type { RelationshipMeta, TreeNode } from "./types";
 
 // Validated categorical palette (dataviz skill reference palette, unmodified —
 // fixed hue order, validated with scripts/validate_palette.js for both modes).
@@ -26,27 +26,101 @@ export const MUTED = "#898781"; // "Other" bucket — neutral, never a real cate
 
 const TOP_N = 7;
 
-/** Sort children by value desc; fold anything past the token ceiling into a
- *  single "Other" node whose own children are the folded nodes, so drilling
- *  into "Other" is just another (honest) level of the same tree. */
+function semanticFoldKey(node: TreeNode): string {
+  const relationship = node.relationship;
+  return JSON.stringify({
+    edgeKind:
+      relationship?.edge_kind ??
+      (node.breakdown?.kind === "related_breakdown"
+        ? "related_breakdown"
+        : "same_group"),
+    branchKind: relationship?.branch_kind ?? "additive",
+    presentationRole: relationship?.presentation_role ?? "data",
+    unit: relationship?.unit ?? node.unit ?? "AUD",
+    factYear:
+      relationship?.fact_financial_year ?? node.breakdown?.fact_financial_year ?? null,
+    compatibilityGroup:
+      relationship?.compatibility_group ?? node.breakdown?.compatibility_group ?? null,
+    accountingBasis: relationship?.accounting_basis ?? null,
+  });
+}
+
+function commonValue<T>(values: T[]): T | null {
+  return values.every((value) => value === values[0]) ? values[0] : null;
+}
+
+function aggregateRelationship(nodes: TreeNode[]): RelationshipMeta | null {
+  const relationships = nodes.map((node): RelationshipMeta => {
+    if (node.relationship) return node.relationship;
+    const related = node.breakdown?.kind === "related_breakdown";
+    return {
+      edge_kind: related ? "related_breakdown" : "same_group",
+      branch_kind: related ? "related" : "additive",
+      presentation_role: "data",
+      source_key: node.breakdown?.source_key,
+      compatibility_group: node.breakdown?.compatibility_group,
+      fact_financial_year: node.breakdown?.fact_financial_year,
+      is_year_fallback: Boolean(node.breakdown?.is_year_fallback),
+      fallback_reason: node.breakdown?.fallback_reason,
+      match_quality: node.breakdown?.match_quality,
+      unit: node.unit,
+    };
+  });
+  if (relationships.length === 0) return null;
+  const first = relationships[0];
+  return {
+    ...first,
+    edge_set_id: commonValue(relationships.map((item) => item.edge_set_id)),
+    branch_family: commonValue(relationships.map((item) => item.branch_family)),
+    source_key: commonValue(relationships.map((item) => item.source_key)),
+    source_family: commonValue(relationships.map((item) => item.source_family)),
+    accounting_basis: commonValue(relationships.map((item) => item.accounting_basis)),
+    estimate_status: commonValue(relationships.map((item) => item.estimate_status)),
+    fallback_reason: commonValue(relationships.map((item) => item.fallback_reason)),
+    match_quality: commonValue(relationships.map((item) => item.match_quality)),
+    is_year_fallback: relationships.some((item) => item.is_year_fallback),
+  };
+}
+
+/** Sort children by value desc and fold the tail without crossing semantic
+ * boundaries. Each synthetic node is a drillable aggregate of one branch
+ * kind/unit/source-year/compatibility group only. */
 export function foldToTopN(children: TreeNode[], n = TOP_N): TreeNode[] {
   const sorted = [...children].sort((a, b) => b.value - a.value);
   if (sorted.length <= n + 1) return sorted;
   const head = sorted.slice(0, n);
   const tail = sorted.slice(n);
-  const otherValue = tail.reduce((sum, node) => sum + node.value, 0);
-  const other: TreeNode = {
-    name: `Other (${tail.length})`,
-    value: otherValue,
-    id: null,
-    children: tail,
-  };
-  return [...head, other];
+  const groups = new Map<string, TreeNode[]>();
+  for (const node of tail) {
+    const key = semanticFoldKey(node);
+    groups.set(key, [...(groups.get(key) ?? []), node]);
+  }
+  const multipleSemanticGroups = groups.size > 1;
+  const others = [...groups.values()].map((nodes) => {
+    if (nodes.length === 1) return nodes[0];
+    const first = nodes[0];
+    const relationship = aggregateRelationship(nodes);
+    const unit = relationship?.unit ?? first.unit ?? null;
+    const qualifier = multipleSemanticGroups
+      ? ` — ${relationship?.branch_kind ?? "additive"}, ${unit ?? "AUD"}`
+      : "";
+    const other: TreeNode = {
+      name: `Other${qualifier} (${nodes.length})`,
+      value: nodes.reduce((sum, node) => sum + node.value, 0),
+      id: null,
+      children: nodes,
+      relationship,
+      breakdown: first.breakdown ?? null,
+      unit,
+    };
+    return other;
+  });
+  return [...head, ...others].sort((a, b) => b.value - a.value);
 }
 
 export function colorsFor(nodes: TreeNode[], dark: boolean): string[] {
   const palette = dark ? CATEGORICAL_DARK : CATEGORICAL_LIGHT;
-  return nodes.map((node, i) => (node.name.startsWith("Other (") ? MUTED : palette[i % palette.length]));
+  return nodes.map((node, i) => (node.name.startsWith("Other") ? MUTED : palette[i % palette.length]));
 }
 
 export function formatAud(value: number): string {

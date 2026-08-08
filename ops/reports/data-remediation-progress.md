@@ -12,13 +12,13 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | --- | --- | --- | --- | --- |
 | 2.1 Golden projection fixtures | complete | `tests/fixtures/dashboard_projection/baseline.json`; required ten projections | `b6f5c1e` | Review fixture only when semantics intentionally change |
 | 2.2 Depth/visibility audit | complete | `dashboard-depth-audit-20260807T232555Z.{md,json}`: 10 projections, 0 hard failures | `b6f5c1e` | Keep the audit in regression use |
-| 2.3 Graph integrity checks | complete | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations; registry rejects ambiguous and unmanifested authoritative sets | pending milestone commit | Keep audit in regression use |
+| 2.3 Graph integrity checks | complete | Audit covers NULL-safe duplicates, cycles, projected compatibility/unit transitions, fallback metadata, related inheritance and citations; registry rejects ambiguous and unmanifested authoritative sets | `be1f25b` | Keep audit in regression use |
 | 1.1 Relationship/projection API contract | complete | Every non-root dashboard node has typed relationship metadata; roots have projection summaries; rollback flag covered | `de70595` | Frontend consumption remains in renderer/depth UX milestones |
-| 1.2 Declarative edge-set policy | complete | `config/breakdowns/edge_sets.yaml`; source selection, fallback, branch semantics, presentation and merge policy are registry-driven | pending milestone commit | Extend registry only with tested source packs |
-| 1.3 Projection builder | in_progress | Pure relationship/depth helpers plus declarative graph traversal and merge stages are implemented | `de70595`; pending milestone commit | Finish extraction while implementing pagination/explorer projection stages |
-| 3.1 Truthful ring values and units | not_started | Plan/current code identifies layout scaling contract defect | — | Implement after relationship contract |
+| 1.2 Declarative edge-set policy | complete | `config/breakdowns/edge_sets.yaml`; source selection, fallback, branch semantics, presentation and merge policy are registry-driven | `be1f25b` | Extend registry only with tested source packs |
+| 1.3 Projection builder | in_progress | Pure relationship/depth helpers plus declarative graph traversal and merge stages are implemented | `de70595`; `be1f25b` | Finish extraction while implementing pagination/explorer projection stages |
+| 3.1 Truthful ring values and units | complete | Layout weights are isolated from reported values; all chart text is unit-aware; related percentages and mixed-semantic folding are guarded by executable tests | pending milestone commit | Browser depth/badge controls remain in item 4.4 |
 | 3.2 Per-year availability | not_started | Current `/years` selects basis globally | — | Add availability endpoint and UI metadata |
-| 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | pending milestone commit | Keep authoritative replacement gated by a completeness manifest |
+| 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | `be1f25b` | Keep authoritative replacement gated by a completeness manifest |
 | 3.4 Flat tree pagination/totals | not_started | Current `/v2/tree` is limited and partial-total prone | — | Preserve compatibility and add truthful totals/cursor |
 | 3.5 Edge uniqueness/idempotency | not_started | NULL-safe duplicate handling is audit-only | — | Audit, migration, scoped rebuild support |
 | 3.6 Lineage/registry consistency | not_started | Atlas records revenue/FBO/canonical-ID and alias inconsistencies | — | Correct configs, backfill, invariants and generated ranges |
@@ -200,3 +200,52 @@ The retained raw path corpus contains noisy historical labels; this milestone ke
 ### Next item
 
 Plan section 3.1: separate chart layout weight from reported fact value and make unit/percentage rendering relationship-aware.
+
+## Milestone: Truthful chart values and semantic units
+
+### Item
+
+Plan section 3.1.
+
+### Previous behavior
+
+The sunburst recursively rescaled child `value` fields to make ECharts arcs fit their parent, then tooltips displayed that scaled value. Pie, bar, ring and center text used AUD-only formatters, ECharts percentages were shown without branch semantics, and one `Other` bucket could combine unrelated units, years and compatibility groups.
+
+### Root cause
+
+One numeric field served both layout and evidence. Presentation code also lacked a shared semantic tooltip/percentage contract and folded solely by rank.
+
+### Changes
+
+- Added exact `reportedValue`, `reportedUnit`, `reportedParentValue`, relationship and related-state fields to sunburst data while retaining `value` strictly as layout weight.
+- Changed every chart tooltip, label, axis, center label and accessibility description to use `formatMeasureValue` and reported fields.
+- Added real additive-cohort percent-of-parent calculation and explicit suppression/disclosure for related branches.
+- Suppressed aggregate totals for mixed-unit charts.
+- Made `Other` folding semantic across branch/edge kind, presentation role, unit, source year, compatibility group and accounting basis; retained typed relationship metadata on synthetic aggregates.
+- Replaced active Statement 6/FBO label classification with relationship metadata while retaining a legacy fallback for rollback compatibility.
+- Added a dependency-free executable TypeScript unit harness covering scaling truthfulness, semantic units, percentage rules and folding.
+
+### Validation
+
+- [`renderer-correctness-20260808T151835Z.md`](renderer-correctness-20260808T151835Z.md) records the acceptance evidence.
+- Frontend semantic unit tests: passed.
+- TypeScript: passed.
+- Frontend lint baseline: unchanged at 25 errors / 13 warnings.
+- Production build: passed, 12 static pages.
+- Backend suite immediately before this frontend-only milestone: 572 passed.
+
+### Data impact
+
+None.
+
+### Dashboard impact
+
+Rendered arc geometry remains stable, but displayed amounts now remain identical to cited facts even when layout weights are scaled. Non-AUD measures keep their units; related branches no longer imply a percentage of an unrelated parent; mixed semantic tails cannot be hidden in one untyped `Other` wedge.
+
+### Remaining risks
+
+This milestone corrects chart semantics but does not yet expose branch badges, source-year badges or maximum-depth controls; those remain item 4.4. Full browser interaction coverage will be expanded with that UX milestone.
+
+### Next item
+
+Plan section 3.2: make federal accounting-basis selection per year and expose explicit availability metadata to the frontend.

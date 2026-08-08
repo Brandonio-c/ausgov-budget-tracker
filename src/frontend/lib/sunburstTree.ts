@@ -1,9 +1,17 @@
-import { TreeNode } from "./types";
+import type { RelationshipMeta, TreeNode } from "./types";
 import { CATEGORICAL_DARK, CATEGORICAL_LIGHT, MUTED, colorsFor, foldToTopN } from "./colors";
+import { additiveSiblingTotal } from "./chartSemantics";
 
 export type SunburstDatum = {
   name: string;
+  /** ECharts layout weight. It may be scaled to keep nested arcs aligned. */
   value: number;
+  /** Exact published/aggregated amount shown to people and assistive tech. */
+  reportedValue: number;
+  reportedUnit: string | null;
+  reportedParentValue: number | null;
+  relationship: RelationshipMeta | null;
+  isRelated: boolean;
   /** Stable key for click/hover → TreeNode lookup (survives ECharts events). */
   nodeKey: string;
   itemStyle?: { color?: string; borderColor?: string; borderWidth?: number };
@@ -53,21 +61,34 @@ export function lightenHex(hex: string, amount: number): string {
 export function additiveChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
   return (nodes ?? []).filter((n) => {
     if (!(n.value > 0)) return false;
-    if (n.breakdown?.kind !== "related_breakdown") return true;
-    // Synthetic related navigation folders only
-    if (n.name.startsWith("Statement 6")) return false;
-    if (n.name.startsWith("FBO Appendix A")) return false;
-    return true;
+    return !(
+      (n.children?.length ?? 0) > 0 &&
+      ((n.relationship?.branch_kind === "related" &&
+        n.relationship.presentation_role === "navigation") ||
+        (!n.relationship &&
+          n.breakdown?.kind === "related_breakdown" &&
+          (n.name.startsWith("Statement 6") ||
+            n.name.startsWith("FBO Appendix A"))))
+    );
   });
 }
 
-/** Positive-value children of a Statement 6 / FBO navigation folder, if present. */
+/** Positive-value children of a declared related navigation folder, if present. */
 function relatedFolderChildren(
   nodes: TreeNode[] | null | undefined,
-  prefix: string,
+  branchFamily: string,
 ): TreeNode[] | null {
   const folder = (nodes ?? []).find(
-    (n) => n.name.startsWith(prefix) && (n.children?.length ?? 0) > 0,
+    (n) =>
+      ((n.relationship?.branch_kind === "related" &&
+        n.relationship.presentation_role === "navigation" &&
+        n.relationship.branch_family === branchFamily) ||
+        (!n.relationship &&
+          n.breakdown?.kind === "related_breakdown" &&
+          (branchFamily === "statement_6"
+            ? n.name.startsWith("Statement 6")
+            : n.name.startsWith("FBO Appendix A")))) &&
+      (n.children?.length ?? 0) > 0,
   );
   if (!folder?.children?.length) return null;
   const positive = folder.children.filter((c) => c.value > 0);
@@ -90,6 +111,8 @@ export function collapseSameNameChain(node: TreeNode): TreeNode {
       ...cur,
       id: inner.id ?? cur.id,
       breakdown: inner.breakdown ?? cur.breakdown,
+      relationship: inner.relationship ?? cur.relationship,
+      unit: inner.unit ?? cur.unit,
       children: inner.children,
     };
   }
@@ -105,7 +128,7 @@ function prepareRingNodes(nodes: TreeNode[]): TreeNode[] {
  * When ABS GFS leaves sit beside a Statement 6 pack, expand the pack (deeper).
  */
 export function ringRootChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
-  const s6 = relatedFolderChildren(nodes, "Statement 6");
+  const s6 = relatedFolderChildren(nodes, "statement_6");
   if (s6) return prepareRingNodes(s6);
   return prepareRingNodes(additiveChildren(nodes));
 }
@@ -130,12 +153,12 @@ export function pathKey(names: string[]): string {
 /** Children safe to draw as an outer ring under `parent` (must roughly partition it). */
 export function nestableChildren(parent: TreeNode): TreeNode[] {
   // Prefer Statement 6 cascade exclusively — do not mix with ABS siblings (double-count).
-  const s6 = relatedFolderChildren(parent.children, "Statement 6");
+  const s6 = relatedFolderChildren(parent.children, "statement_6");
   if (s6) return unwrapSameName(parent.name, prepareRingNodes(s6));
 
   let kids = prepareRingNodes(additiveChildren(parent.children));
   if (kids.length === 0) {
-    const fbo = relatedFolderChildren(parent.children, "FBO Appendix A");
+    const fbo = relatedFolderChildren(parent.children, "fbo");
     return fbo ? unwrapSameName(parent.name, prepareRingNodes(fbo)) : [];
   }
   kids = unwrapSameName(parent.name, kids);
@@ -156,7 +179,7 @@ export function nestableChildren(parent: TreeNode): TreeNode[] {
     const partition = kids.filter((k) => k.value <= parentValue * 1.01);
     if (partition.length > 0) return partition;
 
-    const fbo = relatedFolderChildren(parent.children, "FBO Appendix A");
+    const fbo = relatedFolderChildren(parent.children, "fbo");
     return fbo ? unwrapSameName(parent.name, prepareRingNodes(fbo)) : [];
   }
   return kids;
@@ -202,6 +225,7 @@ function buildLevel(
   dark: boolean,
   labelDepth: number,
   currentDepth: number,
+  reportedParentValue: number | null,
 ): SunburstDatum[] {
   if (depthRemaining <= 0 || nodes.length === 0) return [];
 
@@ -209,7 +233,7 @@ function buildLevel(
   const folded = foldToTopN(nodes.filter((n) => n.value > 0));
   const topColors = parentColor
     ? folded.map((n) =>
-        n.name.startsWith("Other (") ? MUTED : lightenHex(parentColor, Math.min(0.55, 0.15 + currentDepth * 0.08)),
+        n.name.startsWith("Other") ? MUTED : lightenHex(parentColor, Math.min(0.55, 0.15 + currentDepth * 0.08)),
       )
     : colorsFor(folded, dark);
 
@@ -233,6 +257,7 @@ function buildLevel(
             dark,
             labelDepth,
             currentDepth + 1,
+            prepared.value,
           )
         : undefined;
 
@@ -247,6 +272,19 @@ function buildLevel(
     return {
       name: prepared.name,
       value,
+      reportedValue: prepared.value,
+      reportedUnit: prepared.relationship?.unit ?? prepared.unit ?? null,
+      reportedParentValue:
+        prepared.relationship?.branch_kind === "related" ||
+        prepared.breakdown?.kind === "related_breakdown"
+          ? null
+          : currentDepth === 1
+            ? additiveSiblingTotal(folded, prepared)
+            : reportedParentValue,
+      relationship: prepared.relationship ?? null,
+      isRelated:
+        prepared.relationship?.branch_kind === "related" ||
+        prepared.breakdown?.kind === "related_breakdown",
       nodeKey,
       itemStyle: {
         color,
@@ -278,7 +316,24 @@ export function buildSunburst(
   const depth = clampDepth(ringDepth, available);
   const lookup = new Map<string, TreeNode>();
   const roots = ringRootChildren(children);
-  const data = buildLevel(roots, depth, [], lookup, null, dark, depth, 1);
+  const rootReportedTotal = roots
+    .filter(
+      (node) =>
+        node.relationship?.branch_kind !== "related" &&
+        node.breakdown?.kind !== "related_breakdown",
+    )
+    .reduce((sum, node) => sum + node.value, 0);
+  const data = buildLevel(
+    roots,
+    depth,
+    [],
+    lookup,
+    null,
+    dark,
+    depth,
+    1,
+    rootReportedTotal,
+  );
   const total = data.reduce((s, n) => s + n.value, 0);
   return { data, lookup, total };
 }
