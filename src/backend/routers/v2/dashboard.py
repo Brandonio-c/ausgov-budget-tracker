@@ -48,7 +48,7 @@ from ...evidence_locator import (
 )
 from ...facts_db import get_facts_connection
 from ...gdp_hierarchy import gdp_hierarchy_path
-from ...schemas import BreakdownMeta, TreeNode
+from ...schemas import BreakdownMeta, DashboardAvailability, TreeNode
 from .citation import build_citation
 
 router = APIRouter(prefix="/dashboard", tags=["v2-dashboard"])
@@ -189,10 +189,12 @@ def _preferred_basis(
         return None
     filt = _mode_filters(mode)
     est_sql, est_params = _estatus_clause(filt["estimate_statuses"])
+    eco_sql, eco_params = _economy_measure_clause(filt.get("economy_mode"))
     params: list[Any] = [
         filt["compatibility_group"],
         level,
         *est_params,
+        *eco_params,
     ]
     sql = f"""
         SELECT DISTINCT f.accounting_basis
@@ -203,16 +205,78 @@ def _preferred_basis(
           AND CASE d.government_level WHEN 'national' THEN 'federal'
               ELSE d.government_level END = ?
           AND f.estimate_status {est_sql}
+          {eco_sql}
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
     """
     if year:
         sql += " AND f.financial_year = ?"
         params.append(year)
     bases = {r[0] for r in conn.execute(sql, params).fetchall()}
-    if "gfs" in bases:
-        return "gfs"
-    if "accrual" in bases:
-        return "accrual"
+    return _select_basis(mode, {str(basis) for basis in bases if basis})
+
+
+def _select_basis(mode: Mode, bases: set[str]) -> str | None:
+    if mode == "actuals":
+        for candidate in ("gfs", "accrual"):
+            if candidate in bases:
+                return candidate
+    if len(bases) == 1:
+        return next(iter(bases))
     return None
+
+
+def _availability_for_level(
+    conn, mode: Mode, level: str
+) -> list[DashboardAvailability]:
+    """All queryable year/basis pairs, with basis preference applied per year."""
+    filt = _mode_filters(mode)
+    est_sql, est_params = _estatus_clause(filt["estimate_statuses"])
+    eco_sql, eco_params = _economy_measure_clause(filt.get("economy_mode"))
+    rows = conn.execute(
+        f"""
+        SELECT DISTINCT
+            f.financial_year,
+            f.accounting_basis,
+            d.source_family
+        FROM facts f
+        JOIN source_documents d ON d.id = f.source_document_id
+        JOIN measure_definitions m ON m.measure_type = f.measure_type
+        WHERE m.compatibility_group = ?
+          AND CASE d.government_level WHEN 'national' THEN 'federal'
+              ELSE d.government_level END = ?
+          AND f.estimate_status {est_sql}
+          {eco_sql}
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+        ORDER BY f.financial_year, f.accounting_basis, d.source_family
+        """,
+        (
+            filt["compatibility_group"],
+            level,
+            *est_params,
+            *eco_params,
+        ),
+    ).fetchall()
+    by_year: dict[str, dict[str, set[str]]] = {}
+    for row in rows:
+        year = str(row["financial_year"])
+        basis = str(row["accounting_basis"])
+        families = by_year.setdefault(year, {}).setdefault(basis, set())
+        if row["source_family"]:
+            families.add(str(row["source_family"]))
+    result: list[DashboardAvailability] = []
+    for year, by_basis in sorted(by_year.items()):
+        bases = set(by_basis)
+        result.append(
+            DashboardAvailability(
+                financial_year=year,
+                selected_basis=_select_basis(mode, bases),
+                available_bases=sorted(bases),
+                source_families=sorted(
+                    {family for families in by_basis.values() for family in families}
+                ),
+            )
+        )
+    return result
 
 
 def _fact_rows(
@@ -633,35 +697,25 @@ def dashboard_levels(mode: Mode = Query(...)) -> list[dict]:
 
 @router.get("/years")
 def dashboard_years(mode: Mode = Query(...), level: str = Query(...)) -> list[str]:
-    filt = _mode_filters(mode)
     level = _normalize_level(level)
-    est_sql, est_params = _estatus_clause(filt["estimate_statuses"])
     conn = _facts_conn()
     try:
-        preferred = _preferred_basis(conn, mode, level, None)
-        params: list[Any] = [
-            filt["compatibility_group"],
-            level,
-            *est_params,
-        ]
-        sql = f"""
-            SELECT DISTINCT f.financial_year
-            FROM facts f
-            JOIN source_documents d ON d.id = f.source_document_id
-            JOIN measure_definitions m ON m.measure_type = f.measure_type
-            WHERE m.compatibility_group = ?
-              AND CASE d.government_level WHEN 'national' THEN 'federal'
-                  ELSE d.government_level END = ?
-              AND f.estimate_status {est_sql}
-        """
-        if preferred:
-            sql += " AND f.accounting_basis = ?"
-            params.append(preferred)
-        sql += " ORDER BY f.financial_year"
-        rows = conn.execute(sql, params).fetchall()
+        availability = _availability_for_level(conn, mode, level)
     finally:
         conn.close()
-    return [r[0] for r in rows]
+    return [item.financial_year for item in availability]
+
+
+@router.get("/availability", response_model=list[DashboardAvailability])
+def dashboard_availability(
+    mode: Mode = Query(...), level: str = Query(...)
+) -> list[DashboardAvailability]:
+    level = _normalize_level(level)
+    conn = _facts_conn()
+    try:
+        return _availability_for_level(conn, mode, level)
+    finally:
+        conn.close()
 
 
 @router.get("/tree", response_model=TreeNode)
@@ -785,25 +839,9 @@ def _parse_levels_param(levels: str) -> list[str]:
 
 
 def _years_for_level(conn, mode: Mode, level: str) -> list[str]:
-    filt = _mode_filters(mode)
-    preferred = _preferred_basis(conn, mode, level, None)
-    est_sql, est_params = _estatus_clause(filt["estimate_statuses"])
-    params: list[Any] = [filt["compatibility_group"], level, *est_params]
-    sql = f"""
-        SELECT DISTINCT f.financial_year
-        FROM facts f
-        JOIN source_documents d ON d.id = f.source_document_id
-        JOIN measure_definitions m ON m.measure_type = f.measure_type
-        WHERE m.compatibility_group = ?
-          AND CASE d.government_level WHEN 'national' THEN 'federal'
-              ELSE d.government_level END = ?
-          AND f.estimate_status {est_sql}
-    """
-    if preferred:
-        sql += " AND f.accounting_basis = ?"
-        params.append(preferred)
-    sql += " ORDER BY f.financial_year"
-    return [r[0] for r in conn.execute(sql, params).fetchall()]
+    return [
+        item.financial_year for item in _availability_for_level(conn, mode, level)
+    ]
 
 
 def _first_fact_id(node: TreeNode) -> int | None:

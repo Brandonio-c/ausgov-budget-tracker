@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiDashboard, DashboardMode } from "@/lib/api";
-import { LevelSummary, TreeNode } from "@/lib/types";
+import { DashboardAvailability, LevelSummary, TreeNode } from "@/lib/types";
 import { foldToTopN } from "@/lib/colors";
 import { LEVEL_LABELS } from "@/lib/combineTrees";
 import { DASHBOARD_MODES, isDashboardMode, modeLabel } from "@/lib/dashboardMode";
@@ -26,6 +26,7 @@ export default function HomeClient() {
   const [levels, setLevels] = useState<LevelSummary[]>([]);
   const [level, setLevel] = useState<string>("");
   const [years, setYears] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<DashboardAvailability[]>([]);
   const [year, setYear] = useState<string>("");
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [chartType, setChartType] = useState<ChartType>("pie");
@@ -62,6 +63,7 @@ export default function HomeClient() {
     let cancelled = false;
     setTree(null);
     setYears([]);
+    setAvailability([]);
     // Keep deep-linked level/year if present; otherwise reset.
     const linkedLevel = searchParams.get("level");
     const linkedYear = searchParams.get("year");
@@ -92,14 +94,25 @@ export default function HomeClient() {
     let cancelled = false;
     const linkedYear = searchParams.get("year");
     apiDashboard
-      .years(mode, level)
+      .availability(mode, level)
+      .catch(async () => {
+        const legacyYears = await apiDashboard.years(mode, level);
+        return legacyYears.map((financialYear) => ({
+          financial_year: financialYear,
+          selected_basis: null,
+          available_bases: [],
+          source_families: [],
+        }));
+      })
       .then(async (data) => {
         if (cancelled) return;
-        setYears(data);
+        setAvailability(data);
+        const availableYears = data.map((item) => item.financial_year);
+        setYears(availableYears);
         const preferred =
-          linkedYear && data.includes(linkedYear)
+          linkedYear && availableYears.includes(linkedYear)
             ? linkedYear
-            : data[data.length - 1] ?? "";
+            : availableYears[availableYears.length - 1] ?? "";
         setYear(preferred);
         if (preferred) setTree(await apiDashboard.tree(mode, level, preferred));
         setError(null);
@@ -145,6 +158,23 @@ export default function HomeClient() {
         ? drillPath[drillPath.length - 1].name
         : `${LEVEL_LABELS[level] ?? level}`
       : null;
+  const selectedAvailability = availability.find(
+    (item) => item.financial_year === year,
+  );
+  const availabilityNote = useMemo(() => {
+    if (!selectedAvailability?.selected_basis) return null;
+    const selected = selectedAvailability.selected_basis.toUpperCase();
+    const alternatives = selectedAvailability.available_bases.filter(
+      (basis) => basis !== selectedAvailability.selected_basis,
+    );
+    if (alternatives.length) {
+      return `FY ${year} uses ${selected} (preferred); also available: ${alternatives.join(", ")}.`;
+    }
+    if (mode === "actuals" && selectedAvailability.selected_basis !== "gfs") {
+      return `FY ${year} uses ${selected}; GFS figures are not available for this year.`;
+    }
+    return `FY ${year} uses ${selected}.`;
+  }, [mode, selectedAvailability, year]);
 
   useEffect(() => {
     if (ringDepth > maxRingDepth) setRingDepth(maxRingDepth);
@@ -238,7 +268,7 @@ export default function HomeClient() {
     }
     setSelectedItemId(null);
     setSourcePrompt(
-      node.name.startsWith("Other (")
+      node.name.startsWith("Other")
         ? `Drill into ${node.name} to see citations for each included category`
         : "Drill into this segment to reach its source citation",
     );
@@ -357,6 +387,11 @@ export default function HomeClient() {
           {years.map((y) => (
             <option key={y} value={y}>
               FY {y}
+              {availability.find((item) => item.financial_year === y)?.selected_basis
+                ? ` · ${availability
+                    .find((item) => item.financial_year === y)
+                    ?.selected_basis?.toUpperCase()}`
+                : ""}
             </option>
           ))}
         </select>
@@ -387,6 +422,12 @@ export default function HomeClient() {
           )}
         </div>
       </div>
+
+      {availabilityNote ? (
+        <p className="-mt-3 mb-4 text-xs text-zinc-500 dark:text-zinc-400" role="status">
+          {availabilityNote}
+        </p>
+      ) : null}
 
       {chartType === "rings" && (
         <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">

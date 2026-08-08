@@ -47,6 +47,50 @@ def test_dashboard_tree_actuals_federal(client: TestClient) -> None:
     assert names
 
 
+def test_dashboard_availability_selects_basis_per_federal_actual_year(
+    client: TestClient,
+) -> None:
+    response = client.get(
+        "/v2/dashboard/availability",
+        params={"mode": "actuals", "level": "federal"},
+    )
+    assert response.status_code == 200
+    availability = response.json()
+    by_year = {item["financial_year"]: item for item in availability}
+
+    for year in ("2005-06", "2006-07", "2007-08"):
+        assert by_year[year]["selected_basis"] == "accrual"
+        assert by_year[year]["available_bases"] == ["accrual"]
+        assert by_year[year]["source_families"]
+
+    assert by_year["2008-09"]["selected_basis"] == "gfs"
+    assert by_year["2008-09"]["available_bases"] == ["accrual", "gfs"]
+    assert by_year["2024-25"]["selected_basis"] == "gfs"
+
+    years = client.get(
+        "/v2/dashboard/years",
+        params={"mode": "actuals", "level": "federal"},
+    ).json()
+    assert years == [item["financial_year"] for item in availability]
+
+
+def test_every_returned_federal_actual_year_is_queryable(client: TestClient) -> None:
+    years = client.get(
+        "/v2/dashboard/years",
+        params={"mode": "actuals", "level": "federal"},
+    ).json()
+    for year in years:
+        response = client.get(
+            "/v2/dashboard/tree",
+            params={"mode": "actuals", "level": "federal", "year": year},
+        )
+        assert response.status_code == 200, (year, response.text)
+        assert response.json()["projection"]["selected_accounting_basis"] in {
+            "gfs",
+            "accrual",
+        }
+
+
 def test_dashboard_tree_budget(client: TestClient) -> None:
     levels = client.get("/v2/dashboard/levels", params={"mode": "budget"}).json()
     assert levels

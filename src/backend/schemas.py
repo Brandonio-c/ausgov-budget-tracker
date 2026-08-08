@@ -70,6 +70,13 @@ class ProjectionMeta(BaseModel):
     branch_summaries: list[ProjectionBranchSummary] = Field(default_factory=list)
 
 
+class DashboardAvailability(BaseModel):
+    financial_year: str
+    selected_basis: Optional[str] = None
+    available_bases: list[str] = Field(default_factory=list)
+    source_families: list[str] = Field(default_factory=list)
+
+
 class TreeNode(BaseModel):
     name: str
     value: float

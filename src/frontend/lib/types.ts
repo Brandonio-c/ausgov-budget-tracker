@@ -52,6 +52,13 @@ export interface ProjectionMeta {
   branch_summaries: ProjectionBranchSummary[];
 }
 
+export interface DashboardAvailability {
+  financial_year: string;
+  selected_basis: string | null;
+  available_bases: string[];
+  source_families: string[];
+}
+
 export interface TreeNode {
   name: string;
   value: number;

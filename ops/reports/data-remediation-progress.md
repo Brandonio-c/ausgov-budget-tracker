@@ -16,8 +16,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 1.1 Relationship/projection API contract | complete | Every non-root dashboard node has typed relationship metadata; roots have projection summaries; rollback flag covered | `de70595` | Frontend consumption remains in renderer/depth UX milestones |
 | 1.2 Declarative edge-set policy | complete | `config/breakdowns/edge_sets.yaml`; source selection, fallback, branch semantics, presentation and merge policy are registry-driven | `be1f25b` | Extend registry only with tested source packs |
 | 1.3 Projection builder | in_progress | Pure relationship/depth helpers plus declarative graph traversal and merge stages are implemented | `de70595`; `be1f25b` | Finish extraction while implementing pagination/explorer projection stages |
-| 3.1 Truthful ring values and units | complete | Layout weights are isolated from reported values; all chart text is unit-aware; related percentages and mixed-semantic folding are guarded by executable tests | pending milestone commit | Browser depth/badge controls remain in item 4.4 |
-| 3.2 Per-year availability | not_started | Current `/years` selects basis globally | — | Add availability endpoint and UI metadata |
+| 3.1 Truthful ring values and units | complete | Layout weights are isolated from reported values; all chart text is unit-aware; related percentages and mixed-semantic folding are guarded by executable tests | `e106772` | Browser depth/badge controls remain in item 4.4 |
+| 3.2 Per-year availability | complete | 30 federal actual years exposed; basis is selected per year; availability metadata drives labels/warnings; every returned year is queryable | pending milestone commit | Generate future coverage prose from this endpoint in item 3.6 |
 | 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | `be1f25b` | Keep authoritative replacement gated by a completeness manifest |
 | 3.4 Flat tree pagination/totals | not_started | Current `/v2/tree` is limited and partial-total prone | — | Preserve compatibility and add truthful totals/cursor |
 | 3.5 Edge uniqueness/idempotency | not_started | NULL-safe duplicate handling is audit-only | — | Audit, migration, scoped rebuild support |
@@ -249,3 +249,50 @@ This milestone corrects chart semantics but does not yet expose branch badges, s
 ### Next item
 
 Plan section 3.2: make federal accounting-basis selection per year and expose explicit availability metadata to the frontend.
+
+## Milestone: Per-year accounting-basis availability
+
+### Item
+
+Plan section 3.2.
+
+### Previous behavior
+
+`/v2/dashboard/years` called `_preferred_basis` without a year. Because GFS existed anywhere in the federal actual series, the endpoint filtered the entire list to GFS and hid accrual-only years. Tree requests already selected basis using the requested year, so the list and tree contracts disagreed.
+
+### Root cause
+
+Basis preference was treated as a property of a government level instead of a year/measure projection. The frontend consumed only strings and could not explain which basis had been selected.
+
+### Changes
+
+- Added typed `DashboardAvailability` API objects with year, selected basis, available bases and source families.
+- Added `/v2/dashboard/availability` and projected legacy `/years` strings from the same quality-filtered, mode-aware query.
+- Applied GFS-over-accrual preference independently per actual year and reused the availability calculation for multi-level series year discovery.
+- Tightened tree basis discovery to use the same quality and economy-mode filters.
+- Updated the frontend selector to consume availability, label basis per year and disclose alternatives or GFS absence, with a legacy endpoint fallback for rollback compatibility.
+- Added real-database tests for the 2005–06 through 2007–08 accrual window, dual-basis GFS preference and every-returned-year queryability.
+
+### Validation
+
+- [`dashboard-availability-validation-20260808T152859Z.md`](dashboard-availability-validation-20260808T152859Z.md) records the sample matrix and endpoint contract.
+- Focused backend suite: 16 passed.
+- Full backend suite: 574 passed.
+- Ruff, frontend semantic unit tests, TypeScript and production build: passed.
+- Frontend lint baseline remained unchanged at 25 errors / 13 warnings.
+
+### Data impact
+
+None.
+
+### Dashboard impact
+
+Accrual-only historical actual years are selectable without changing GFS preference in overlapping years. The UI now tells users which basis is active and why.
+
+### Remaining risks
+
+Coverage prose elsewhere in the UI is still partially hard-coded; item 3.6 will generate those ranges from availability. The endpoint reports all source families available in a year, not a per-source completeness claim.
+
+### Next item
+
+Plan section 3.4: make the compatibility flat tree truthful with independent totals and cursor pagination.

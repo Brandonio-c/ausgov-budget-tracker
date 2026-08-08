@@ -1,4 +1,11 @@
-import { BreakdownMeta, LevelSummary, SourceContext, SpendingItem, TreeNode } from "./types";
+import {
+  BreakdownMeta,
+  DashboardAvailability,
+  LevelSummary,
+  SourceContext,
+  SpendingItem,
+  TreeNode,
+} from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
@@ -233,6 +240,10 @@ export const apiDashboard = {
   years: (mode: DashboardMode, level: string) =>
     getJson<string[]>(
       `/v2/dashboard/years?mode=${encodeURIComponent(mode)}&level=${encodeURIComponent(level)}`,
+    ),
+  availability: (mode: DashboardMode, level: string) =>
+    getJson<DashboardAvailability[]>(
+      `/v2/dashboard/availability?mode=${encodeURIComponent(mode)}&level=${encodeURIComponent(level)}`,
     ),
   tree: (mode: DashboardMode, level: string, year: string) =>
     getJson<TreeNode>(
