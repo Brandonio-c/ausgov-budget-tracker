@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from canonical_lineage import canonical_dataset_for_source
 from duckdb_etl import build_fact_key
 from validate import RowDecision
 
@@ -181,6 +182,7 @@ def upsert_fact(
     )
     valuation_basis = row.get("valuation_basis") or mapping.get("valuation_basis")
     amount_granularity = row.get("amount_granularity") or mapping.get("amount_granularity")
+    canonical_dataset_id = canonical_dataset_for_source(mapping["source_id"])
     conn.execute(
         """
         INSERT INTO facts (
@@ -188,8 +190,8 @@ def upsert_fact(
             accounting_basis, estimate_status, amount_aud, unit, currency,
             source_document_id, source_retrieval_id, source_locator_json,
             retrieved_at, observation_date, publication_date,
-            valuation_basis, amount_granularity
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, ?, ?, ?, ?, ?)
+            valuation_basis, amount_granularity, canonical_dataset_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(fact_key) DO UPDATE SET
             amount_aud = excluded.amount_aud,
             source_retrieval_id = excluded.source_retrieval_id,
@@ -198,7 +200,8 @@ def upsert_fact(
             observation_date = COALESCE(excluded.observation_date, facts.observation_date),
             publication_date = COALESCE(excluded.publication_date, facts.publication_date),
             valuation_basis = COALESCE(excluded.valuation_basis, facts.valuation_basis),
-            amount_granularity = COALESCE(excluded.amount_granularity, facts.amount_granularity)
+            amount_granularity = COALESCE(excluded.amount_granularity, facts.amount_granularity),
+            canonical_dataset_id = excluded.canonical_dataset_id
         """,
         (
             fact_key,
@@ -216,6 +219,7 @@ def upsert_fact(
             publication_date,
             valuation_basis,
             amount_granularity,
+            canonical_dataset_id,
         ),
     )
     fact_id = conn.execute(

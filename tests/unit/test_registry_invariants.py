@@ -22,6 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest"))
 
+from canonical_lineage import audit_assignments, load_canonical_lineage  # noqa: E402
 from procure.registry import load_registry  # noqa: E402
 
 FACTS_DB = REPO_ROOT / "data" / "facts.db"
@@ -86,6 +87,14 @@ def test_canonical_datasets_fact_source_keys_reference_real_source_documents(fac
         if status in ("fully_ingested", "partially_ingested"):
             keys = ds.get("fact_source_keys") or []
             assert keys, f"{ds['canonical_dataset_id']} claims {status} but declares no fact_source_keys"
+
+
+def test_canonical_fact_ownership_is_single_valued_and_fully_backfilled(facts_conn):
+    lineage = load_canonical_lineage()
+    assert len(lineage.source_owners) == len(set(lineage.source_owners))
+    audit = audit_assignments(facts_conn, lineage)
+    assert audit["mismatched_facts"] == 0
+    assert audit["noncanonical_assigned_facts"] == 0
 
 
 def test_status_buckets_sum_to_registry_total(registry_sources, facts_conn):

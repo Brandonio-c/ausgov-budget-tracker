@@ -5408,7 +5408,7 @@ sources:
   handoff_data_domain: actuals
   handoff_fills_gap: state_actual_agency_service
   handoff_already_on_disk: true
-  handoff_repo_source_key: tas_treasurers_annual_financial_reports
+  handoff_repo_source_key: tas_treasurer_annual_financial_reports
   handoff_verification_status: ALREADY_ON_DISK
   parser_strategy: Repository holds a large report archive. Parse the latest actual
     service/agency tables before fetching again.
@@ -9951,7 +9951,7 @@ sources:
   handoff_data_domain: actuals
   handoff_fills_gap: state_actual_agency_service
   handoff_already_on_disk: true
-  handoff_repo_source_key: qld_report_on_state_finances
+  handoff_repo_source_key: qld_report_on_state_finances_actuals
   handoff_verification_status: ALREADY_ON_DISK
   parser_strategy: Inventory the latest annual report and table companions for actual-year
     reconciliation.

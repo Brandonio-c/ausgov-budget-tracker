@@ -25,6 +25,7 @@ import {
 import { CitationPanel } from "@/components/CitationPanel";
 import DashboardNav from "@/components/DashboardNav";
 import DebtNav from "@/components/DebtNav";
+import { formatApiAvailability } from "@/lib/availability";
 
 type GfsView = "expenses" | "liabilities" | "vic_afs" | "vic_bpo" | "tas_ggs" | "qld_rsf" | "qld_myfer";
 
@@ -69,14 +70,14 @@ function GfsExplorerInner() {
   const [vicAfsMeasures, setVicAfsMeasures] = useState<VicAfsMeasureInfo[]>([]);
   const [vicAfsMeasureType, setVicAfsMeasureType] = useState("vic_afs_revenue");
   const [vicAfsRows, setVicAfsRows] = useState<
-    Array<{ name: string; value: number; id: string; citation: VicAfsCitation; financial_year: string; period_end: string }>
+    Array<{ name: string; value: number; id: string; citation: VicAfsCitation; financial_year: string; estimate_status: string; period_end: string }>
   >([]);
   const [vicAfsSelected, setVicAfsSelected] = useState<VicAfsCitation | null>(null);
 
   const [vicBpoMeasures, setVicBpoMeasures] = useState<VicBpoMeasureInfo[]>([]);
   const [vicBpoMeasureType, setVicBpoMeasureType] = useState("vic_bpo_revenue");
   const [vicBpoRows, setVicBpoRows] = useState<
-    Array<{ name: string; value: number; id: string; citation: VicBpoCitation; estimate_status: string; period_end: string }>
+    Array<{ name: string; value: number; id: string; citation: VicBpoCitation; financial_year: string; estimate_status: string; period_end: string }>
   >([]);
   const [vicBpoSelected, setVicBpoSelected] = useState<VicBpoCitation | null>(null);
   // SOCE/Admin measure_types served by the separate vic-bpo-soce-admin
@@ -87,21 +88,21 @@ function GfsExplorerInner() {
   const [tasGgsMeasures, setTasGgsMeasures] = useState<TasGgsMeasureInfo[]>([]);
   const [tasGgsMeasureType, setTasGgsMeasureType] = useState("tas_ggs_revenue");
   const [tasGgsRows, setTasGgsRows] = useState<
-    Array<{ name: string; value: number; id: string; citation: TasGgsCitation; estimate_status: string; period_end: string }>
+    Array<{ name: string; value: number; id: string; citation: TasGgsCitation; financial_year: string; estimate_status: string; period_end: string }>
   >([]);
   const [tasGgsSelected, setTasGgsSelected] = useState<TasGgsCitation | null>(null);
 
   const [qldRsfMeasures, setQldRsfMeasures] = useState<QldRsfMeasureInfo[]>([]);
   const [qldRsfMeasureType, setQldRsfMeasureType] = useState("qld_rsf_revenue");
   const [qldRsfRows, setQldRsfRows] = useState<
-    Array<{ name: string; value: number; id: string; citation: QldRsfCitation; estimate_status: string; period_end: string }>
+    Array<{ name: string; value: number; id: string; citation: QldRsfCitation; financial_year: string; estimate_status: string; period_end: string }>
   >([]);
   const [qldRsfSelected, setQldRsfSelected] = useState<QldRsfCitation | null>(null);
 
   const [qldMyferMeasures, setQldMyferMeasures] = useState<QldMyferMeasureInfo[]>([]);
   const [qldMyferMeasureType, setQldMyferMeasureType] = useState("qld_myfer_revenue");
   const [qldMyferRows, setQldMyferRows] = useState<
-    Array<{ name: string; value: number; id: string; citation: QldMyferCitation; source_budget_year: string; period_end: string }>
+    Array<{ name: string; value: number; id: string; citation: QldMyferCitation; financial_year: string; estimate_status: string; source_budget_year: string; period_end: string }>
   >([]);
   const [qldMyferSelected, setQldMyferSelected] = useState<QldMyferCitation | null>(null);
 
@@ -142,6 +143,7 @@ function GfsExplorerInner() {
           value: f.amount_aud,
           id: `${f.measure_type}|${f.financial_year}`,
           financial_year: f.financial_year,
+          estimate_status: f.estimate_status,
           period_end: f.period_end,
           citation: f.citation,
         }));
@@ -162,6 +164,7 @@ function GfsExplorerInner() {
           name: `${f.estimate_status === "actual" ? "Actual" : "Budget"} — ${f.label}`,
           value: f.amount_aud,
           id: `${f.measure_type}|${f.estimate_status}`,
+          financial_year: f.financial_year,
           estimate_status: f.estimate_status,
           period_end: f.period_end,
           citation: f.citation,
@@ -182,6 +185,7 @@ function GfsExplorerInner() {
           name: `${f.financial_year} (${f.estimate_status.replace("_", " ")}) — ${f.label}`,
           value: f.amount_aud,
           id: `${f.measure_type}|${f.financial_year}`,
+          financial_year: f.financial_year,
           estimate_status: f.estimate_status,
           period_end: f.period_end,
           citation: f.citation,
@@ -202,6 +206,7 @@ function GfsExplorerInner() {
           name: `${f.financial_year} (${f.estimate_status.replace("_", " ")}) — ${f.label}`,
           value: f.amount_aud,
           id: `${f.measure_type}|${f.financial_year}|${f.estimate_status}`,
+          financial_year: f.financial_year,
           estimate_status: f.estimate_status,
           period_end: f.period_end,
           citation: f.citation,
@@ -222,6 +227,8 @@ function GfsExplorerInner() {
           name: `${f.financial_year} MYFER (${f.estimate_status.replace("_", " ")}) — ${f.label}`,
           value: f.amount_aud,
           id: `${f.measure_type}|${f.source_budget_year}|${f.financial_year}`,
+          financial_year: f.financial_year,
+          estimate_status: f.estimate_status,
           source_budget_year: f.source_budget_year,
           period_end: f.period_end,
           citation: f.citation,
@@ -276,13 +283,13 @@ function GfsExplorerInner() {
         ) : view === "vic_afs" ? (
           <>
             Victorian Department of Treasury and Finance&apos;s own departmental annual financial
-            statements (2024-25) - department-level detail, not whole-of-Victorian-government. Each
+            statements - department-level detail, not whole-of-Victorian-government. Each
             measure has its own dedicated compatibility group; never summed into any additive tree.
           </>
         ) : view === "vic_bpo" ? (
           <>
             Victorian Department of Treasury and Finance&apos;s own Budget Portfolio Outcomes
-            (2024-25) - an actual-vs-budget variance comparison for one year, not a multi-year
+            - an actual-vs-budget variance comparison, not an assumed multi-year
             series. Includes the department&apos;s own controlled-operations measures (Operating
             Statement / Balance Sheet / Cash Flow Statement) plus administered items and equity
             movements (Admin / Statement of Changes in Equity) - each on its own dedicated
@@ -292,7 +299,7 @@ function GfsExplorerInner() {
         ) : view === "tas_ggs" ? (
           <>
             Tasmanian Department of Treasury and Finance&apos;s own General Government Sector Key
-            Fiscal Measures Time Series (2013-14 to 2028-29) - a genuine multi-year series, each
+            Fiscal Measures Time Series - a genuine multi-year series whose API reports each
             year carrying one vintage (actual, revised estimate, or forward estimate). Never
             conflated with the ABS&apos;s own independently-compiled GFS series for Tasmania - a
             different publisher and methodology, despite similar-sounding measure names.
@@ -300,8 +307,8 @@ function GfsExplorerInner() {
         ) : view === "qld_rsf" ? (
           <>
             Queensland Treasury&apos;s own Report on State Finances - &quot;Key UPF Financial
-            Aggregates&quot; table, General Government Sector only (2018-19 to 2024-25). Each
-            year carries two vintages: <code>estimated actual</code> (the outcome as projected in
+            Aggregates&quot; table, General Government Sector only. Each API-reported year can carry
+            two vintages: <code>estimated actual</code> (the outcome as projected in
             a later budget-cycle document) and <code>actual</code> (the audited outcome) - a
             different vintage concept from TAS&apos;s budget/actual pair. Never conflated with the
             ABS&apos;s own independently-compiled GFS series for Queensland.
@@ -463,7 +470,7 @@ function GfsExplorerInner() {
                   {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-                  Source vintage: current (single acquired 2024-25 edition)
+                  {formatApiAvailability(vicAfsRows)}
                 </span>
               </>
             );
@@ -487,7 +494,7 @@ function GfsExplorerInner() {
                   {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-                  Vintage: actual vs budget, FY2024-25 (both shown below)
+                  {formatApiAvailability(vicBpoRows)}
                 </span>
               </>
             );
@@ -511,8 +518,7 @@ function GfsExplorerInner() {
                   {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-                  Vintage: actual (2013-14 to 2024-25), revised estimate (2025-26), forward estimate
-                  (2026-27 to 2028-29) - all years shown below
+                  {formatApiAvailability(tasGgsRows)}
                 </span>
               </>
             );
@@ -536,7 +542,7 @@ function GfsExplorerInner() {
                   {isStock ? "Stock (point-in-time)" : "Flow (financial year)"}
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-                  Vintage: estimated actual and actual, 2018-19 to 2024-25 (both shown below)
+                  {formatApiAvailability(qldRsfRows)}
                 </span>
               </>
             );
@@ -553,7 +559,7 @@ function GfsExplorerInner() {
                   {info.flow_or_stock === "flow" ? "Flow (financial year)" : "Balance (financial year)"}
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
-                  Vintage: each listed MYFER edition; status: revised estimate
+                  {formatApiAvailability(qldMyferRows)}
                 </span>
               </>
             );

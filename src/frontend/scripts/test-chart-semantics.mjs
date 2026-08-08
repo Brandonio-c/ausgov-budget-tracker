@@ -24,12 +24,14 @@ try {
       "lib/colors.ts",
       "lib/sunburstTree.ts",
       "lib/chartSemantics.ts",
+      "lib/availability.ts",
     ],
     { stdio: "inherit" },
   );
 
   const { foldToTopN, formatMeasureValue } = require(path.join(buildDir, "colors.js"));
   const { buildSunburst } = require(path.join(buildDir, "sunburstTree.js"));
+  const { formatApiAvailability } = require(path.join(buildDir, "availability.js"));
   const { additiveSiblingTotal, commonUnit, reportedAriaSummary, reportedTooltip } = require(
     path.join(buildDir, "chartSemantics.js"),
   );
@@ -44,6 +46,15 @@ try {
     unit: "AUD",
     ...overrides,
   });
+
+  assert.equal(
+    formatApiAvailability([
+      { financial_year: "2025-26", estimate_status: "revised_estimate" },
+      { financial_year: "2024-25", estimate_status: "actual" },
+      { financial_year: "2024-25", estimate_status: "actual" },
+    ]),
+    "API availability: FY2024-25 to FY2025-26; revised estimate, actual",
+  );
   const node = (name, value, relation, children = null) => ({
     name,
     value,

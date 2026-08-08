@@ -64,6 +64,8 @@ DUPLICATE_ALIASES: dict[str, str] = {
     "abs_gfs_tas_local_2024_25": "abs_gfs_local_tas_336",
     "abs_gfs_nt_local_2024_25": "abs_gfs_local_nt_337",
     "federal_fbo_appendix_a_2024_25": "federal_fbo_2024_25_function_subfunction",
+    "qld_report_on_state_finances": "qld_report_on_state_finances_actuals",
+    "tas_treasurers_annual_financial_reports": "tas_treasurer_annual_financial_reports",
     "federal_social_services_pbs_2025_26_archive": "federal_pbs_programs_all",
     "federal_pbs_2025_26_social_services_portfolio": "federal_pbs_programs_all",
     # Earlier handoff IDs duplicate the later canonical 2026-27 registry
@@ -316,6 +318,19 @@ def _family_coverage(
     return None
 
 
+def _canonical_source_coverage(
+    source_id: str, datasets: list[dict[str, Any]]
+) -> tuple[str, str] | None:
+    """Return declared coverage for an exact published fact source key."""
+    for dataset in datasets:
+        if source_id in (dataset.get("fact_source_keys") or []):
+            return (
+                str(dataset["canonical_dataset_id"]),
+                str(dataset.get("coverage_status") or "partially_ingested"),
+            )
+    return None
+
+
 def _value_rank(source_id: str) -> tuple[int, str]:
     for rank, pattern, label in VALUE_RANK_RULES:
         if pattern.search(source_id):
@@ -345,6 +360,9 @@ def classify(
     has_files = acquired is not None and acquired.get("asset_count", 0) > 0
 
     family = None
+    canonical_source = _canonical_source_coverage(
+        source_id, canonical_datasets or []
+    )
     origin_fact_info = (origin_facts or {}).get(source_id) or {}
     if fact_count == 0 and origin_fact_info:
         fact_count = int(origin_fact_info.get("fact_count") or 0)
@@ -381,6 +399,15 @@ def classify(
         status = family_status
         reason = f"covered_via_family_adapter:{canonical_dataset_id}"
         next_action = "maintain_family_adapter"
+    elif canonical_source is not None and fact_count > 0:
+        canonical_dataset_id, declared_status = canonical_source
+        status = declared_status
+        reason = f"declared_canonical_coverage:{canonical_dataset_id}"
+        next_action = (
+            "maintain"
+            if declared_status == "fully_ingested"
+            else "continue_canonical_dataset_ingestion"
+        )
     elif fact_count > 0 and has_mapping:
         # Heuristic: PBS aggregator covers many PDFs — treat portfolio PBS as partial if only via aggregator
         if source_id.startswith("federal_pbs_") and source_id not in (

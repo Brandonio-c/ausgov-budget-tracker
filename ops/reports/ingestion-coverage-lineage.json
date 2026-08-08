@@ -13,12 +13,12 @@
     {
       "canonical_dataset_id": "abs_gfs_table1_revenue",
       "coverage_status": "partially_ingested",
-      "fact_count": 230,
+      "fact_count": 80,
       "fact_source_keys": [
-        "abs_gfs_commonwealth_130"
+        "abs_gfs_commonwealth_130_revenue"
       ],
       "extractor_name": "m4_gfs_revenue.py",
-      "notes": "Revenue mode uses gfs_revenue; detailed tax is separate dataset below."
+      "notes": "Table 1 revenue has its own published fact source identity; detailed tax is separate below."
     },
     {
       "canonical_dataset_id": "abs_taxation_revenue_detail",
@@ -57,14 +57,24 @@
       "notes": null
     },
     {
-      "canonical_dataset_id": "federal_fbo_appendix_a",
+      "canonical_dataset_id": "federal_fbo_appendix_a_2024_25",
       "coverage_status": "fully_ingested",
       "fact_count": 85,
       "fact_source_keys": [
         "federal_fbo_2024_25_function_subfunction"
       ],
       "extractor_name": "extractors/fbo_appendix_a.py",
-      "notes": null
+      "notes": "Full coverage applies only to the single FY2024-25 Appendix A target."
+    },
+    {
+      "canonical_dataset_id": "federal_fbo_historical_archive",
+      "coverage_status": "partially_ingested",
+      "fact_count": 415,
+      "fact_source_keys": [
+        "federal_budget_archive_function_series"
+      ],
+      "extractor_name": "extractors/fbo_appendix_a.py",
+      "notes": "2019-20 through 2023-24 are loaded; earlier acquired editions remain incomplete."
     },
     {
       "canonical_dataset_id": "state_borrowing_authorities",
@@ -87,5 +97,5 @@
     }
   ],
   "alias_count": 2,
-  "facts_source_keys_observed": 129
+  "facts_source_keys_observed": 130
 }

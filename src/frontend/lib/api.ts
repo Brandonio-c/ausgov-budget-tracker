@@ -544,8 +544,9 @@ export const apiTasGgs = {
 };
 
 // Queensland Treasury's "Report on State Finances" - "Key UPF
-// Financial Aggregates" table, General Government Sector only
-// (2018-19 to 2024-25). Its own dedicated toggle on the GFS explorer
+// Financial Aggregates" table, General Government Sector only. Its
+// available years are reported by the series response and formatted by
+// the GFS explorer rather than duplicated here. Its own dedicated toggle on the GFS explorer
 // page (not merged into an existing dropdown - a genuinely new
 // jurisdiction/measure family). Vintage is "estimated_actual" (the
 // outcome as projected in a LATER budget-cycle document) vs "actual" -
