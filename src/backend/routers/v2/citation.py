@@ -66,6 +66,12 @@ def build_citation(fact_id: int) -> dict:
         # Distinguish missing vs quarantined by fact_key lookup is not available by id
         raise HTTPException(status_code=404, detail="Fact not found or not publishable")
 
+    return build_citation_from_row(row)
+
+
+def build_citation_from_row(row) -> dict:
+    """Build a citation from an already selected fact/document/retrieval row."""
+
     locator_obj = {}
     try:
         locator_obj = json.loads(row["source_locator_json"] or "{}")

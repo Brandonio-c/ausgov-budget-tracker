@@ -17,9 +17,9 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 1.2 Declarative edge-set policy | complete | `config/breakdowns/edge_sets.yaml`; source selection, fallback, branch semantics, presentation and merge policy are registry-driven | `be1f25b` | Extend registry only with tested source packs |
 | 1.3 Projection builder | in_progress | Pure relationship/depth helpers plus declarative graph traversal and merge stages are implemented | `de70595`; `be1f25b` | Finish extraction while implementing pagination/explorer projection stages |
 | 3.1 Truthful ring values and units | complete | Layout weights are isolated from reported values; all chart text is unit-aware; related percentages and mixed-semantic folding are guarded by executable tests | `e106772` | Browser depth/badge controls remain in item 4.4 |
-| 3.2 Per-year availability | complete | 30 federal actual years exposed; basis is selected per year; availability metadata drives labels/warnings; every returned year is queryable | pending milestone commit | Generate future coverage prose from this endpoint in item 3.6 |
+| 3.2 Per-year availability | complete | 30 federal actual years exposed; basis is selected per year; availability metadata drives labels/warnings; every returned year is queryable | `34a36bc` | Generate future coverage prose from this endpoint in item 3.6 |
 | 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | `be1f25b` | Keep authoritative replacement gated by a completeness manifest |
-| 3.4 Flat tree pagination/totals | not_started | Current `/v2/tree` is limited and partial-total prone | — | Preserve compatibility and add truthful totals/cursor |
+| 3.4 Flat tree pagination/totals | complete | Flat shape is explicit; totals are scope-wide; publishability filtering and deterministic cursor traversal are tested | pending | Hierarchical explorer remains separate in item 6.1 |
 | 3.5 Edge uniqueness/idempotency | not_started | NULL-safe duplicate handling is audit-only | — | Audit, migration, scoped rebuild support |
 | 3.6 Lineage/registry consistency | not_started | Atlas records revenue/FBO/canonical-ID and alias inconsistencies | — | Correct configs, backfill, invariants and generated ranges |
 | 3.7 Source-aware fiscal-year validation | not_started | `2099-00` QGIP/state actual outlier confirmed | — | Trace source, add bounded validation/quarantine |
@@ -296,3 +296,51 @@ Coverage prose elsewhere in the UI is still partially hard-coded; item 3.6 will 
 ### Next item
 
 Plan section 3.4: make the compatibility flat tree truthful with independent totals and cursor pagination.
+
+## Milestone: Truthful flat-tree totals and cursor pagination
+
+### Item
+
+Plan section 3.4.
+
+### Previous behavior
+
+`/v2/tree` returned a limited flat list but labeled the sum of that page as the family root value. It exposed neither the full matching count nor a way to continue beyond the limit, and did not consistently apply the publication-quality filter.
+
+### Root cause
+
+The compatibility route combined page retrieval and aggregation in one limited query. Its response shape did not distinguish a flat fact list from a hierarchy, and citation construction reopened the facts database for every returned row.
+
+### Changes
+
+- Declared the route's compatibility shape as `flat` without overloading it with hierarchical explorer behavior.
+- Added independent full-scope `total_count` and `total_value`; retained `value` as a truthful alias of the full total.
+- Added opaque, versioned keyset cursor pagination with deterministic amount/fact-ID ordering and null handling.
+- Applied the same rejected/quarantined exclusion to totals and page rows.
+- Exposed `next_cursor` and added optional cursor support to the frontend client contract.
+- Built citations from the page query to remove per-row database connection/query overhead.
+- Added real-database tests for limit-independent totals, complete bounded traversal and invalid cursors.
+
+### Validation
+
+- [`flat-tree-pagination-validation-20260808T154539Z.md`](flat-tree-pagination-validation-20260808T154539Z.md) records the API contract and real-data traversal.
+- Focused API/citation suite: 5 passed.
+- Full backend suite: 577 passed.
+- Ruff, frontend semantic unit tests, TypeScript and production build: passed.
+- Frontend lint baseline remained unchanged at 25 errors / 13 warnings.
+
+### Data impact
+
+None.
+
+### API impact
+
+Existing `name`, `value` and `children` fields remain. `value` no longer misrepresents a page sum as a complete total; consumers gain explicit totals and continuation metadata.
+
+### Remaining risks
+
+The generic route intentionally remains a flat compatibility surface. Family registry, hierarchy, facets and search belong to the reusable explorer API in item 6.1.
+
+### Next item
+
+Plan section 3.5: audit and enforce NULL-safe edge uniqueness, conflict-safe writes and scoped reversible graph rebuilds.

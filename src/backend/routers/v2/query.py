@@ -3,10 +3,14 @@
 
 from __future__ import annotations
 
+import base64
+import json
+import math
+
 from fastapi import APIRouter, HTTPException, Query
 
 from ...facts_db import get_facts_connection
-from .citation import build_citation
+from .citation import build_citation, build_citation_from_row
 
 
 def _facts_conn():
@@ -16,6 +20,32 @@ def _facts_conn():
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 router = APIRouter()
+
+
+def _encode_tree_cursor(amount_aud: float | None, fact_id: int) -> str:
+    raw = json.dumps(
+        {"v": 1, "amount_aud": amount_aud, "fact_id": fact_id},
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_tree_cursor(cursor: str) -> tuple[float | None, int]:
+    try:
+        padded = cursor + "=" * (-len(cursor) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError
+        if payload.get("v") != 1 or not isinstance(payload.get("fact_id"), int):
+            raise ValueError
+        amount = payload.get("amount_aud")
+        if amount is not None and not isinstance(amount, (int, float)):
+            raise ValueError
+        if amount is not None and not math.isfinite(float(amount)):
+            raise ValueError
+        return (float(amount) if amount is not None else None, int(payload["fact_id"]))
+    except (ValueError, TypeError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid tree cursor") from exc
 
 
 def _require_triple(
@@ -138,46 +168,107 @@ def tree(
     estimate_status: str = Query(...),
     financial_year: str = Query(...),
     limit: int = Query(default=100, ge=1, le=1000),
+    cursor: str | None = Query(default=None),
 ) -> dict:
-    """Flat tree of primary nodes for one compatibility triple."""
+    """Truthful, cursor-paginated flat list for one compatibility triple."""
     conn = _facts_conn()
     try:
-        rows = conn.execute(
-            """
-            SELECT f.id, n.name AS node_name, f.amount_aud
+        from_where = """
             FROM facts f
             JOIN measure_definitions m ON m.measure_type = f.measure_type
             JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
             JOIN nodes n ON n.id = fn.node_id
+            JOIN source_documents d ON d.id = f.source_document_id
+            LEFT JOIN source_retrievals r ON r.id = f.source_retrieval_id
             WHERE m.compatibility_group = ?
               AND f.accounting_basis = ?
               AND f.estimate_status = ?
               AND f.financial_year = ?
-            ORDER BY f.amount_aud DESC
+              AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+        """
+        scope_params: list = [
+            compatibility_group,
+            accounting_basis,
+            estimate_status,
+            financial_year,
+        ]
+        totals = conn.execute(
+            f"""
+            SELECT COUNT(*) AS total_count,
+                   COALESCE(SUM(f.amount_aud), 0) AS total_value
+            {from_where}
+            """,
+            scope_params,
+        ).fetchone()
+
+        cursor_sql = ""
+        page_params = list(scope_params)
+        if cursor:
+            cursor_amount, cursor_id = _decode_tree_cursor(cursor)
+            if cursor_amount is None:
+                cursor_sql = " AND f.amount_aud IS NULL AND f.id > ?"
+                page_params.append(cursor_id)
+            else:
+                cursor_sql = """
+                    AND (
+                        f.amount_aud < ?
+                        OR (f.amount_aud = ? AND f.id > ?)
+                        OR f.amount_aud IS NULL
+                    )
+                """
+                page_params.extend((cursor_amount, cursor_amount, cursor_id))
+        page_params.append(limit + 1)
+        rows = conn.execute(
+            f"""
+            SELECT
+                f.id AS fact_id,
+                n.name AS node_name,
+                f.amount_aud,
+                f.fact_key,
+                f.financial_year,
+                f.measure_type,
+                f.source_locator_json,
+                f.retrieved_at AS fact_retrieved_at,
+                d.landing_url AS doc_landing_url,
+                d.canonical_resource_url,
+                r.sha256,
+                r.retrieved_at AS retrieval_retrieved_at,
+                r.local_path,
+                r.resolved_url
+            {from_where}
+            {cursor_sql}
+            ORDER BY f.amount_aud IS NULL, f.amount_aud DESC, f.id
             LIMIT ?
             """,
-            (
-                compatibility_group,
-                accounting_basis,
-                estimate_status,
-                financial_year,
-                limit,
-            ),
+            page_params,
         ).fetchall()
+        has_more = len(rows) > limit
+        page_rows = rows[:limit]
         children = []
-        for r in rows:
+        for r in page_rows:
             children.append(
                 {
                     "name": r["node_name"],
                     "value": r["amount_aud"],
-                    "id": r["id"],
-                    "citation": build_citation(int(r["id"])),
+                    "id": r["fact_id"],
+                    "citation": build_citation_from_row(r),
                 }
             )
-        total = sum(c["value"] or 0 for c in children)
+        next_cursor = None
+        if has_more and page_rows:
+            last = page_rows[-1]
+            next_cursor = _encode_tree_cursor(
+                last["amount_aud"], int(last["fact_id"])
+            )
+        total_count = int(totals["total_count"] if totals else 0)
+        total_value = float(totals["total_value"] if totals else 0)
         return {
             "name": f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}",
-            "value": total,
+            "shape": "flat",
+            "value": total_value,
+            "total_count": total_count,
+            "total_value": total_value,
+            "next_cursor": next_cursor,
             "children": children,
         }
     finally:

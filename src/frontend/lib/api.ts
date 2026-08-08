@@ -122,7 +122,11 @@ export type FactEvidence = {
 
 export type V2Tree = {
   name: string;
+  shape: "flat";
   value: number;
+  total_count: number;
+  total_value: number;
+  next_cursor: string | null;
   children: Array<{ name: string; value: number; id: number; citation: Citation }>;
 };
 
@@ -304,6 +308,7 @@ export const apiV2 = {
     estimate_status: string;
     financial_year: string;
     limit?: number;
+    cursor?: string | null;
   }) => {
     const q = new URLSearchParams({
       compatibility_group: params.compatibility_group,
@@ -312,6 +317,7 @@ export const apiV2 = {
       financial_year: params.financial_year,
       limit: String(params.limit ?? 50),
     });
+    if (params.cursor) q.set("cursor", params.cursor);
     return getJson<V2Tree>(`/v2/tree?${q.toString()}`);
   },
 };
