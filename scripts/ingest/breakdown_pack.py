@@ -99,36 +99,16 @@ def link_same_group_from_paths(
         if parent_id is None:
             parent_id = ensure_node(conn, source_key, parent_name, mapping_meta)
             by_name[parent_name] = parent_id
-        try:
-            # INSERT OR IGNORE alone is not enough here: breakdown_edges'
-            # UNIQUE constraint includes crosswalk_id and financial_year,
-            # both NULL for these edges, and SQL NULLs are never equal to
-            # each other even inside a UNIQUE constraint - SQLite (like
-            # standard SQL) would happily insert unlimited duplicate rows
-            # on repeated runs. Check-then-insert with IS (which treats
-            # NULL IS NULL as true) instead.
-            exists = conn.execute(
-                """
-                SELECT 1 FROM breakdown_edges
-                WHERE parent_node_id = ? AND child_node_id = ? AND edge_kind = 'same_group'
-                  AND crosswalk_id IS NULL AND financial_year IS NULL
-                """,
-                (parent_id, child_id),
-            ).fetchone()
-            if exists:
-                continue
-            conn.execute(
-                """
-                INSERT INTO breakdown_edges (
-                    parent_node_id, child_node_id, edge_kind, crosswalk_id,
-                    financial_year, priority, source_document_id, notes
-                ) VALUES (?, ?, 'same_group', NULL, NULL, 100, ?, ?)
-                """,
-                (parent_id, child_id, doc_id, f"path:{parent_name}"),
-            )
-            inserted += conn.execute("SELECT changes()").fetchone()[0]
-        except sqlite3.Error:
-            continue
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO breakdown_edges (
+                parent_node_id, child_node_id, edge_kind, crosswalk_id,
+                financial_year, priority, source_document_id, notes
+            ) VALUES (?, ?, 'same_group', NULL, NULL, 100, ?, ?)
+            """,
+            (parent_id, child_id, doc_id, f"path:{parent_name}"),
+        )
+        inserted += conn.execute("SELECT changes()").fetchone()[0]
     return inserted
 
 
@@ -222,22 +202,9 @@ def link_related_crosswalk(
 
         for (parent_id,) in abs_nodes:
             for child_id, child_name in subfunctions:
-                # financial_year is NULL here too - see _insert_same_group's
-                # comment; INSERT OR IGNORE does not dedupe across NULLs.
-                exists = conn.execute(
-                    """
-                    SELECT 1 FROM breakdown_edges
-                    WHERE parent_node_id = ? AND child_node_id = ?
-                      AND edge_kind = 'related_breakdown' AND crosswalk_id = ?
-                      AND financial_year IS NULL
-                    """,
-                    (parent_id, child_id, crosswalk_id),
-                ).fetchone()
-                if exists:
-                    continue
                 conn.execute(
                     """
-                    INSERT INTO breakdown_edges (
+                    INSERT OR IGNORE INTO breakdown_edges (
                         parent_node_id, child_node_id, edge_kind, crosswalk_id,
                         financial_year, priority, source_document_id, notes
                     ) VALUES (?, ?, 'related_breakdown', ?, NULL, 50, NULL, ?)
@@ -265,24 +232,9 @@ def _insert_same_group(
     priority: int,
     notes: str,
 ) -> int:
-    # financial_year is always NULL here, and SQL NULLs are never equal to
-    # each other even inside breakdown_edges' UNIQUE constraint - INSERT OR
-    # IGNORE alone does not dedupe across repeated runs. Check first with
-    # IS (NULL IS NULL is true) and, since crosswalk_id can also be NULL for
-    # some callers, compare it with IS too rather than =.
-    exists = conn.execute(
-        """
-        SELECT 1 FROM breakdown_edges
-        WHERE parent_node_id = ? AND child_node_id = ? AND edge_kind = 'same_group'
-          AND crosswalk_id IS ? AND financial_year IS NULL
-        """,
-        (parent_id, child_id, crosswalk_id),
-    ).fetchone()
-    if exists:
-        return 0
     conn.execute(
         """
-        INSERT INTO breakdown_edges (
+        INSERT OR IGNORE INTO breakdown_edges (
             parent_node_id, child_node_id, edge_kind, crosswalk_id,
             financial_year, priority, source_document_id, notes
         ) VALUES (?, ?, 'same_group', ?, NULL, ?, NULL, ?)

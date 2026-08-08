@@ -97,3 +97,33 @@ def test_facts_pending_attribution_requires_reason(tmp_db: Path) -> None:
             """
         )
     conn.close()
+
+
+def test_breakdown_edge_identity_is_null_safe(tmp_db: Path) -> None:
+    result = migrate(tmp_db)
+    assert result["migrations"]["017_breakdown_edge_uniqueness"] == "applied"
+    conn = sqlite3.connect(str(tmp_db))
+    conn.execute(
+        """
+        INSERT INTO breakdown_edges
+            (parent_node_id, child_node_id, edge_kind, financial_year, crosswalk_id)
+        VALUES (1, 2, 'same_group', NULL, NULL)
+        """
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            """
+            INSERT INTO breakdown_edges
+                (parent_node_id, child_node_id, edge_kind, financial_year, crosswalk_id)
+            VALUES (1, 2, 'same_group', NULL, NULL)
+            """
+        )
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO breakdown_edges
+            (parent_node_id, child_node_id, edge_kind, financial_year, crosswalk_id)
+        VALUES (1, 2, 'same_group', NULL, NULL)
+        """
+    )
+    assert conn.execute("SELECT COUNT(*) FROM breakdown_edges").fetchone()[0] == 1
+    conn.close()

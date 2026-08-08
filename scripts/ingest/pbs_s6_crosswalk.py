@@ -362,42 +362,22 @@ def load_edges(conn: sqlite3.Connection, crosswalk: dict[str, Any]) -> dict[str,
         for parent_id in target_ids:
             if parent_id == child_node_id:
                 continue
-            try:
-                # financial_year is NULL on every edge this crosswalk
-                # creates (year-agnostic; resolved per-year at render
-                # time). SQL NULLs are never equal to each other even
-                # inside a UNIQUE constraint, so INSERT OR IGNORE alone
-                # would not dedupe across repeated runs - check first with
-                # IS (which treats NULL IS NULL as true).
-                exists = conn.execute(
-                    """
-                    SELECT 1 FROM breakdown_edges
-                    WHERE parent_node_id = ? AND child_node_id = ?
-                      AND edge_kind = 'related_breakdown' AND crosswalk_id = ?
-                      AND financial_year IS NULL
-                    """,
-                    (parent_id, child_node_id, CROSSWALK_ID),
-                ).fetchone()
-                if exists:
-                    continue
-                conn.execute(
-                    """
-                    INSERT INTO breakdown_edges (
-                        parent_node_id, child_node_id, edge_kind, crosswalk_id,
-                        financial_year, priority, source_document_id, notes
-                    ) VALUES (?, ?, 'related_breakdown', ?, NULL, 100, ?, ?)
-                    """,
-                    (
-                        parent_id,
-                        child_node_id,
-                        CROSSWALK_ID,
-                        doc_id,
-                        f"{decision['match_source']}|{decision.get('confidence')}",
-                    ),
-                )
-                related_inserted += conn.execute("SELECT changes()").fetchone()[0]
-            except sqlite3.IntegrityError:
-                continue
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO breakdown_edges (
+                    parent_node_id, child_node_id, edge_kind, crosswalk_id,
+                    financial_year, priority, source_document_id, notes
+                ) VALUES (?, ?, 'related_breakdown', ?, NULL, 100, ?, ?)
+                """,
+                (
+                    parent_id,
+                    child_node_id,
+                    CROSSWALK_ID,
+                    doc_id,
+                    f"{decision['match_source']}|{decision.get('confidence')}",
+                ),
+            )
+            related_inserted += conn.execute("SELECT changes()").fetchone()[0]
 
     return {
         "same_group_inserted": same_group_inserted,

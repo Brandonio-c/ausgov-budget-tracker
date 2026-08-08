@@ -190,7 +190,7 @@ def test_partition_does_not_match_a_group_with_a_different_amount(db):
 # ---- duplicate_breakdown_edges -----------------------------------------
 
 
-def test_duplicate_breakdown_edges_detects_null_safe_duplicate(db):
+def test_null_safe_duplicate_breakdown_edge_is_rejected(db):
     doc = _add_source_document(db, "src_a")
     parent = _add_node(db, doc, "Parent")
     child = _add_node(db, doc, "Child")
@@ -198,14 +198,13 @@ def test_duplicate_breakdown_edges_detects_null_safe_duplicate(db):
         "INSERT INTO breakdown_edges (parent_node_id, child_node_id, edge_kind) VALUES (?, ?, 'related_breakdown')",
         (parent, child),
     )
-    db.execute(
-        "INSERT INTO breakdown_edges (parent_node_id, child_node_id, edge_kind) VALUES (?, ?, 'related_breakdown')",
-        (parent, child),
-    )
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO breakdown_edges (parent_node_id, child_node_id, edge_kind) VALUES (?, ?, 'related_breakdown')",
+            (parent, child),
+        )
     db.commit()
-    found = task9.duplicate_breakdown_edges(db)
-    assert len(found) == 1
-    assert found[0]["count"] == 2
+    assert task9.duplicate_breakdown_edges(db) == []
 
 
 def test_duplicate_breakdown_edges_finds_nothing_for_a_single_edge(db):

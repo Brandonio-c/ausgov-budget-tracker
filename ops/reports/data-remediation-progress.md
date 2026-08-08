@@ -19,8 +19,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.1 Truthful ring values and units | complete | Layout weights are isolated from reported values; all chart text is unit-aware; related percentages and mixed-semantic folding are guarded by executable tests | `e106772` | Browser depth/badge controls remain in item 4.4 |
 | 3.2 Per-year availability | complete | 30 federal actual years exposed; basis is selected per year; availability metadata drives labels/warnings; every returned year is queryable | `34a36bc` | Generate future coverage prose from this endpoint in item 3.6 |
 | 3.3 Edge-cascade merge safety | complete | Preflight found 719 suppressed path children; validation retains all 719 with zero root-total delta and zero semantic failures | `be1f25b` | Keep authoritative replacement gated by a completeness manifest |
-| 3.4 Flat tree pagination/totals | complete | Flat shape is explicit; totals are scope-wide; publishability filtering and deterministic cursor traversal are tested | pending | Hierarchical explorer remains separate in item 6.1 |
-| 3.5 Edge uniqueness/idempotency | not_started | NULL-safe duplicate handling is audit-only | — | Audit, migration, scoped rebuild support |
+| 3.4 Flat tree pagination/totals | complete | Flat shape is explicit; totals are scope-wide; publishability filtering and deterministic cursor traversal are tested | `dde1c08` | Hierarchical explorer remains separate in item 6.1 |
+| 3.5 Edge uniqueness/idempotency | complete | Unique expression index applied with 0 duplicate deletions; all writers conflict-safe; every registered pack delete/rebuild path exercised on a copy | pending | Live reconciliation of surfaced emitter drift requires a separate reviewed deployment |
 | 3.6 Lineage/registry consistency | not_started | Atlas records revenue/FBO/canonical-ID and alias inconsistencies | — | Correct configs, backfill, invariants and generated ranges |
 | 3.7 Source-aware fiscal-year validation | not_started | `2099-00` QGIP/state actual outlier confirmed | — | Trace source, add bounded validation/quarantine |
 | 4.1 Historical FBO preflight | not_started | 415 archive facts already loaded | — | Exact-year semantic/crosswalk/citation audit |
@@ -344,3 +344,45 @@ The generic route intentionally remains a flat compatibility surface. Family reg
 ### Next item
 
 Plan section 3.5: audit and enforce NULL-safe edge uniqueness, conflict-safe writes and scoped reversible graph rebuilds.
+
+## Milestone: NULL-safe edge identity and reversible graph packs
+
+### Item
+
+Plan section 3.5.
+
+### Previous behavior
+
+The table-level unique constraint treated NULL year/crosswalk values as distinct. Writers used manual existence checks, and graph packs had no consistent, scope-aware removal/rebuild command.
+
+### Root cause
+
+SQLite's NULL uniqueness semantics did not match the logical edge identity. Idempotency lived in individual loader implementations rather than the schema, while edge-set projection metadata was not reused for operational ownership.
+
+### Changes
+
+- Added migration 017 with defensive duplicate cleanup and a unique expression index using `COALESCE(financial_year, '')` and `COALESCE(crosswalk_id, '')`.
+- Replaced every production check-then-insert edge writer with conflict-safe insertion.
+- Added an edge-set/crosswalk-aware preview, delete and transactional rebuild command with explicit `--apply` mutation gating.
+- Registered rebuild behavior for every current declarative edge set, including shared-crosswalk source scoping and source-native families.
+- Updated integrity tests to assert that NULL-safe duplicates are rejected at insertion time.
+
+### Validation
+
+- [`edge-uniqueness-idempotency-validation-20260808T160231Z.md`](edge-uniqueness-idempotency-validation-20260808T160231Z.md) records the preflight, live schema verification and every disposable rebuild delta.
+- Live preflight/postflight: 14,167 edges, 0 duplicate groups, 0 rows deleted, integrity check `ok`.
+- Repository graph integrity audit: 0 hard failures.
+- Focused suite: 60 passed; full backend suite: 581 passed.
+- Ruff and diff checks passed.
+
+### Data impact
+
+Migration 017 is applied to the ignored live facts database. No live edge was removed or rebuilt; edge count remained unchanged. Destructive operations were validated only on disposable copies.
+
+### Remaining risks
+
+The disposable audit exposed deterministic rule drift in five edge sets. Those deltas are documented and were deliberately not deployed implicitly. A future graph deployment can now preview and apply each exact scope transactionally.
+
+### Next item
+
+Plan section 3.6: correct source identities, canonical dataset lineage, uniqueness invariants and generated coverage ranges.
