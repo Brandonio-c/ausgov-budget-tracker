@@ -24,8 +24,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 3.6 Lineage/registry consistency | complete | Revenue/FBO identities corrected; 22,196 canonical facts assigned with 0 mismatches; TAS/QLD aliases and API-derived UI ranges validated | `af0294b` | Maintain ownership registry as canonical families expand |
 | 3.7 Source-aware fiscal-year validation | complete | QGIP amount/year column collision fixed; 4,198 horizon outliers recoverably quarantined; 0 remain published | `9dd056f` | Correct and reattribute quarantined QGIP years in item 7.2 |
 | 4.1 Historical FBO preflight | complete | 415 facts; 0 semantic failures; 50/50 mapped comparisons; official locator years exact; retrieval attribution defect explicit | `ed3567f` | Repair per-edition retrieval/cached-copy provenance before graph deployment |
-| 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | pending | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
-| 4.3 Historical traversal regression | not_started | 2022-23/2023-24 stop at two rings | — | Assert totals, years, branches and citations |
+| 4.2 Historical FBO graph pack | complete | 415/415 exact-year citations; 75 source-native + 11 related edges; stable rebuild; ABS totals unchanged | `3d48680` | Freeze 2022-23/2023-24 traversal regressions in item 4.3 |
+| 4.3 Historical traversal regression | complete | Reviewed fixture: unchanged roots, 11 mapped routes/year, exact audited branches, 69/69 leaf citations, explicit exceptions | pending | Surface available related depth and branch choices in item 4.4 |
 | 4.4 Safe-depth/branch UX | not_started | UI starts at depth two and infers branch semantics | — | Implement semantic controls/badges/disclosure |
 | 5 Historical Statement 6/PBS editions | not_started | Required editions need repository/source inventory | — | Acquire/register, bounded adapters, crosswalks, NDIA repair |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
@@ -538,3 +538,32 @@ Only retrieval attribution, source-native navigation nodes and the two explicitl
 ### Next item
 
 Plan section 4.3: freeze historical traversal totals, branch/year semantics, citations and explicit unmapped exceptions as executable regressions.
+
+## Milestone: Historical FBO traversal regression
+
+### Item
+
+Plan section 4.3.
+
+### Changes
+
+- Updated the reviewed dashboard projection fixture for the intentionally deployed historical FBO edges.
+- Added API regressions for FY2022-23 and FY2023-24 root totals, first-ring count, safe-depth contract, FBO branch summaries, exact years, accrual/audited semantics and non-additive relationship inheritance.
+- Added a database regression proving the three documented unmapped FBO classifications are not silently wired.
+
+### Validation
+
+- [`historical-fbo-traversal-20260808T170000Z.md`](historical-fbo-traversal-20260808T170000Z.md) and JSON: fixture match, zero hard failures, zero duplicate semantic edges and zero cycles.
+- FY2022-23 root remains $639.703b; FY2023-24 remains $687.277b.
+- Both years retain eleven canonical first-ring functions, gain eleven exact-only FBO routes, use zero fallback facts and have 69/69 cited fact-bearing leaves.
+- API safe visible depth remains 2 pending item 4.4; typed branch metadata reports audited FBO related depth 2 without claiming a third FBO semantic ring.
+- Focused traversal suite: 10 passed; full backend suite: 598 passed, one dependency deprecation warning.
+- Ruff and diff checks passed.
+
+### Data impact
+
+None beyond item 4.2. This milestone freezes the reviewed deployed projection behavior.
+
+### Next item
+
+Plan section 4.4: expose safe versus available depth and related branch families without changing canonical totals.

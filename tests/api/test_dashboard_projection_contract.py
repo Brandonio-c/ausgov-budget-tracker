@@ -87,16 +87,59 @@ def test_canonical_parent_stays_additive_and_related_edges_are_explicit(
     assert any(node["relationship"]["edge_kind"] == "same_group" for node in descendants)
 
 
-def test_historical_projection_remains_exact_and_additive(client: TestClient) -> None:
+@pytest.mark.parametrize(
+    ("year", "root_total"),
+    (("2022-23", 639703000000.0), ("2023-24", 687277000000.0)),
+)
+def test_historical_fbo_projection_is_exact_related_and_non_additive(
+    client: TestClient, year: str, root_total: float
+) -> None:
     body = client.get(
         "/v2/dashboard/tree",
-        params={"mode": "actuals", "level": "federal", "year": "2022-23"},
+        params={"mode": "actuals", "level": "federal", "year": year},
     ).json()
     projection = body["projection"]
     assert projection["max_visible_depth"] == 2
     assert projection["max_additive_depth"] == 2
-    assert projection["contains_related_branches"] is False
+    assert projection["contains_related_branches"] is True
+    fbo_summary = next(
+        summary
+        for summary in projection["branch_summaries"]
+        if summary["branch_family"] == "fbo"
+    )
+    assert fbo_summary == {
+        "branch_family": "fbo",
+        "branch_kind": "related",
+        "node_count": 79,
+        "max_depth": 2,
+    }
     assert all(node["relationship"]["is_year_fallback"] is False for node in _walk(body))
+
+    commonwealth = next(child for child in body["children"] if child["name"] == "Commonwealth")
+    assert commonwealth["value"] == root_total
+    assert len(commonwealth["children"]) == 11
+    folders = [
+        child
+        for purpose in commonwealth["children"]
+        for child in purpose.get("children") or []
+        if child["name"] == "Historical FBO Appendix A (audited)"
+    ]
+    assert len(folders) == 11
+    assert all(folder["relationship"]["edge_set_id"] == "fbo_archive_under_abs" for folder in folders)
+    assert all(folder["relationship"]["presentation_role"] == "navigation" for folder in folders)
+
+    fbo_nodes = [
+        node
+        for folder in folders
+        for node in _walk(folder)
+        if node["relationship"].get("source_key")
+        == "federal_budget_archive_function_series"
+    ]
+    assert fbo_nodes
+    assert all(node["relationship"]["branch_kind"] == "related" for node in fbo_nodes)
+    assert all(node["relationship"]["fact_financial_year"] == year for node in fbo_nodes)
+    assert all(node["relationship"]["accounting_basis"] == "accrual" for node in fbo_nodes)
+    assert all(node["relationship"]["estimate_status"] == "audited_actual" for node in fbo_nodes)
 
 
 def test_projection_contract_has_rollback_flag(
