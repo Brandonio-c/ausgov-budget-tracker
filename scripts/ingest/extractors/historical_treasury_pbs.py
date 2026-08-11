@@ -21,6 +21,30 @@ PROGRAM_RE = re.compile(
     re.I,
 )
 OUTCOME_RE = re.compile(r"Budgeted expenses for Outcome\s+(?P<number>\d+)", re.I)
+OUTCOME_TOTALS_RE = re.compile(r"^Outcome\s+\d+\s+Totals by appropriation type$", re.I)
+
+# Standard PGPA Act appropriation-type headings used verbatim across every
+# entity/program table. Several of these introduce more than one indented
+# line item (e.g. "Ordinary annual services" often lists two-plus specific
+# appropriations), so the heading must persist across siblings rather than
+# being consumed by only the first one.
+KNOWN_HEADINGS = {
+    "ordinary annual services (appropriation bill no. 1)": "Ordinary annual services (Appropriation Bill No. 1)",
+    "other services (appropriation bill no. 2)": "Other services (Appropriation Bill No. 2)",
+    "special appropriations": "Special appropriations",
+    "special accounts": "Special accounts",
+}
+# This scope-wide memo line always appears standalone, never nested beneath
+# one of the appropriation-type headings above.
+STANDALONE_LABEL_PREFIXES = ("expenses not requiring appropriation",)
+
+
+def _heading_prefix(label: str) -> str | None:
+    lowered = label.lower()
+    for key, canonical in KNOWN_HEADINGS.items():
+        if lowered.startswith(key):
+            return canonical
+    return None
 
 
 @dataclass(frozen=True)
@@ -105,19 +129,68 @@ def _entity_from_page(lines: list[str]) -> str | None:
     return usable[0] if usable else None
 
 
-def _amount_line(line: str) -> tuple[str, list[int]] | None:
-    match = re.match(rf"^(?P<label>.*?)(?P<nums>(?:\s+{TOKEN}){{5}})\s*$", line)
-    if not match or not _norm(match.group("label")):
-        return None
+BARE_AMOUNTS_RE = re.compile(rf"^{TOKEN}(?:\s+{TOKEN}){{4}}$")
+
+
+def _parse_amount_tokens(text: str) -> list[int]:
     amounts = []
-    for token in match.group("nums").split():
+    for token in text.split():
         if token == "-":
             amounts.append(0)
         else:
             negative = token.startswith("(") and token.endswith(")")
             value = int(token.strip("()").replace(",", "")) * 1000
             amounts.append(-value if negative else value)
-    return _norm(match.group("label")), amounts
+    return amounts
+
+
+def _amount_line(line: str) -> tuple[str, list[int]] | None:
+    match = re.match(rf"^(?P<label>.*?)(?P<nums>(?:\s+{TOKEN}){{5}})\s*$", line)
+    if match and _norm(match.group("label")):
+        return _norm(match.group("label")), _parse_amount_tokens(match.group("nums"))
+    if BARE_AMOUNTS_RE.match(line):
+        # A label wrapped onto enough physical lines that its five year
+        # columns land on a separate, label-free line entirely.
+        return "", _parse_amount_tokens(line)
+    return None
+
+
+def _merge_wrapped_amount_lines(lines: list[str]) -> list[str]:
+    """Reassemble rows whose five year columns pypdf split across more than
+    one physical line (observed for a small number of long-label rows, e.g.
+    ATO "Taxation Administration Act 1953 - section 16 (Non-refund items)").
+
+    Only a line that does NOT already satisfy the normal five-token row
+    pattern is a merge candidate, and only pure numeric continuation lines
+    are absorbed, so ordinary single-line rows are never touched.
+    """
+    merged: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if _amount_line(line) is not None:
+            merged.append(line)
+            i += 1
+            continue
+        match = re.match(rf"^(?P<label>.+?)(?P<nums>(?:\s+{TOKEN}){{1,4}})\s*$", line)
+        if match and _norm(match.group("label")):
+            nums = match.group("nums").split()
+            j = i + 1
+            while len(nums) < 5 and j < len(lines):
+                tail_tokens = lines[j].split()
+                if not tail_tokens or not all(re.fullmatch(TOKEN, t) for t in tail_tokens):
+                    break
+                if len(nums) + len(tail_tokens) > 5:
+                    break
+                nums.extend(tail_tokens)
+                j += 1
+            if len(nums) == 5:
+                merged.append(_norm(f"{match.group('label')} {' '.join(nums)}"))
+                i = j
+                continue
+        merged.append(line)
+        i += 1
+    return merged
 
 
 def _rows(
@@ -175,11 +248,13 @@ def extract_edition(edition: PbsEdition, pdf: Path | None = None) -> list[dict]:
     program_number: str | None = None
     program_names: dict[tuple[str, str], str] = {}
     scope: str | None = None
+    heading: str | None = None
     pending: list[str] = []
     in_outcome_table = False
 
     for page_no, page in enumerate(PdfReader(str(source_pdf)).pages, start=1):
         lines = [_norm(line) for line in (page.extract_text() or "").splitlines() if _norm(line)]
+        lines = _merge_wrapped_amount_lines(lines)
         page_entity = _entity_from_page(lines)
         if page_entity:
             entity = page_entity
@@ -190,9 +265,13 @@ def extract_edition(edition: PbsEdition, pdf: Path | None = None) -> list[dict]:
             in_outcome_table = True
 
         for line in lines:
-            if re.match(r"^(?:Section 3|Budgeted financial statements)", line, re.I):
+            if re.match(r"^(?:Section 3|Budgeted financial statements|Movement of administered)", line, re.I):
+                # "Movement of administered funds between years" is a
+                # distinct reconciliation memo table, not program expense
+                # detail; its rows must not be attributed to a program.
                 in_outcome_table = False
                 program_number = None
+                heading = None
                 pending = []
                 continue
             program_match = PROGRAM_RE.match(line)
@@ -200,16 +279,27 @@ def extract_edition(edition: PbsEdition, pdf: Path | None = None) -> list[dict]:
                 program_number = program_match.group("number")
                 program_names[(entity, program_number)] = _norm(program_match.group("name"))
                 scope = None
+                heading = None
                 pending = []
                 continue
             if not in_outcome_table or not entity or not outcome or not program_number:
                 continue
             if re.match(r"^Administered expenses$", line, re.I):
                 scope = "Administered"
+                heading = None
                 pending = []
                 continue
             if re.match(r"^Departmental expenses$", line, re.I):
                 scope = "Departmental"
+                heading = None
+                pending = []
+                continue
+            if OUTCOME_TOTALS_RE.match(line):
+                # Cross-program outcome reconciliation table, not a program
+                # component; stop attributing lines to the previous program.
+                program_number = None
+                scope = None
+                heading = None
                 pending = []
                 continue
             parsed = _amount_line(line)
@@ -222,6 +312,25 @@ def extract_edition(edition: PbsEdition, pdf: Path | None = None) -> list[dict]:
             label_part, amounts = parsed
             label = _norm(" ".join([*pending, label_part])) if pending else label_part
             pending = []
+            if not label:
+                continue
+            is_total_line = (
+                TOTAL_RE.match(label) is not None
+                or label.lower().endswith(" total")
+                or re.match(r"^Total expenses for Outcome", label, re.I) is not None
+            )
+            if is_total_line:
+                # Program/scope/outcome summary rows always stand alone and
+                # end the current appropriation-type grouping.
+                heading = None
+            else:
+                heading_here = _heading_prefix(label)
+                if heading_here:
+                    heading = heading_here
+                elif label.lower().startswith(STANDALONE_LABEL_PREFIXES):
+                    heading = None
+                elif heading and not label.lower().startswith(heading.lower()):
+                    label = _norm(f"{heading} {label}")
             total_match = TOTAL_RE.match(label)
             if total_match:
                 number = total_match.group("number")

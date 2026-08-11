@@ -29,7 +29,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 4.4 Safe-depth/branch UX | complete | Canonical-default branch chips; selected/available safe depth; semantic/year/basis/status badges; production build clean | `d3446b3` | Begin Wave 3 historical edition manifest/acquisition |
 | 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | `3ec6d55` | Build bounded Statement 6 edition adapters in item 5.2 |
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
-| 5.3-5.5 Historical PBS/graph pipeline | not_started | Three Treasury PBS representatives acquired; broader all-portfolio URLs remain unresolved | — | PBS adapters, crosswalks, edge-scoped deployment, NDIA/current PBS repair |
+| 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | pending commit | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
+| 5.4-5.5 Historical PBS crosswalk/graph, NDIA repair | not_started | Staged, edition-bounded PBS rows exist in `data/staging/breakdowns/`; deliberately withheld from `data/facts.db`/graph per Wave 3 sequencing | — | Statement 6 crosswalk, exact-only related edges, NDIA repair, current-PBS coverage report, quarantine precision review |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -659,3 +660,44 @@ Acquired PDFs and reproducible staging CSVs only. Historical mappings are marked
 ### Next item
 
 Plan section 5.3: historical Treasury PBS edition fixtures/adapters, still withheld from dashboard deployment until item 5.4.
+
+## Milestone: Historical Treasury PBS adapter
+
+### Item
+
+Plan section 5.3.
+
+### Previous behavior
+
+An uncommitted-to-the-ledger extractor (`scripts/ingest/extractors/historical_treasury_pbs.py`, commit `4efd5e8`) existed for the three acquired Treasury PBS editions but had never run successfully: every edition raised `duplicate year/category/status rows` on first execution, with no test or report.
+
+### Root cause
+
+Four distinct defects, each verified against the raw PDF text before being changed: (1) the "Outcome N Totals by appropriation type" cross-program reconciliation table was misattributed to the last-seen program; (2) multi-item appropriation-type headings (e.g. "Ordinary annual services") only reached their first child line, leaving siblings under an unqualified label; (3) two ATO programs' five year-columns were split by pypdf across 2-3 physical lines and silently dropped entirely; (4) a three-line label wrap left its bare numeric line orphaned, and a separate "Movement of administered funds between years" memo table reused the program-header pattern and corrupted Treasury Program 1.9.
+
+### Changes
+
+- Added `OUTCOME_TOTALS_RE` and a "Movement of administered" boundary to stop attributing reconciliation-table rows to a program.
+- Added persistent `heading` state (`KNOWN_HEADINGS`, `STANDALONE_LABEL_PREFIXES`) so multi-item appropriation-type headings apply to every sibling, not just the first.
+- Added a bounded `_merge_wrapped_amount_lines` pre-pass that reassembles rows whose amount columns pypdf split across lines, provably only touching lines that do not already match the standard five-token pattern.
+- Allowed `_amount_line` to recognise a label-free, fully numeric line so an already-buffered multi-line label is not orphaned from its amounts.
+- Added `tests/ingest/test_historical_treasury_pbs.py` (12 tests): layout/count fixtures per edition, uniqueness, vintage distinctness (March vs October 2022-23), component-sum-to-published-total reconciliation with an explicit, reviewed rounding-exception whitelist, exclusion of reconciliation-table content, and exact-year citation/locator completeness.
+
+### Validation
+
+- [`historical-treasury-pbs-adapter-20260811T173656Z.md`](historical-treasury-pbs-adapter-20260811T173656Z.md) records full per-edition evidence.
+- All three editions extract with zero exceptions: 710/675/620 rows; program-row counts exactly equal programs×5 years (215/215/195); component sums reconcile to every published program total except 3 rows (Treasury 1.1, March edition) within the documents' own documented $1,000 rounding.
+- New suite: 12 passed. Full backend/ingest suite: 617 passed (605 baseline + 12 new), 0 failures, 0 regressions. `ruff check` on extractor and test file: passed.
+- Real-PDF regression only; no facts.db or graph write performed.
+
+### Data impact
+
+Staging only. Wrote `data/staging/breakdowns/federal_pbs_2022_23_{march,october}_treasury.csv` and `federal_pbs_2023_24_treasury.csv` (gitignored, not part of `data/facts.db`). No fact, edge, canonical lineage or dashboard-visible content changed; root totals and existing PBS graph are untouched.
+
+### Remaining risks
+
+Per the 5.2 milestone's boundary and Wave 3 sequencing, these rows remain deliberately withheld from `data/facts.db`/graph deployment until item 5.4 builds the Statement 6 crosswalk and exact-only related edges. Item 5.5 (NDIA repair, current-PBS coverage-by-portfolio report, quarantine precision review) remains not started.
+
+### Next item
+
+Plan section 5.4: crosswalk historical PBS program detail beneath matched Statement 6 nodes and expose it as an exact-only related branch.
