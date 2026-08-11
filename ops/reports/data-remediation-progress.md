@@ -31,7 +31,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
-| 5.5 NDIA repair / current-PBS coverage | not_started | — | — | NDIA repair, current-PBS coverage-by-portfolio report, quarantine precision review |
+| 5.5 NDIA repair / current-PBS coverage | in_progress | NDIA repaired: bounded source-specific extractor (50 facts, 0 reconciliation mismatches), critical additivity defect found/fixed (isolated measure type, same pattern as 5.4), deployed live with 0 dashboard impact; 8 new tests passed | pending commit | Coverage-by-portfolio report, malformed-label classifier precision, quarantine precision review remain |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -795,3 +795,48 @@ Scope is Treasury-only, two editions, function-level, deliberately satisfying th
 ### Next item
 
 Plan section 5.5: NDIA repair, current-PBS coverage-by-portfolio report, and quarantine precision review - or continue to Wave 4 (reusable explorer platform) per priority order.
+
+## Milestone: NDIA PBS repair (item 5.5, part 1 of 4)
+
+### Item
+
+Plan section 5.5, sub-item 1: "Repair `federal_pbs_2026_27_ndia` with a source-specific fixture."
+
+### Previous behavior
+
+A real, acquired 22-page NDIA PBS PDF published zero facts via the generalized `pbs_programs_all.py` adapter, recorded as `adapter_broken` across several prior reports.
+
+### Root cause
+
+Two defects: (1) the generalized extractor's multi-portfolio Table 2.1 layout assumptions do not match this document's single-entity, "Revenue from Government"/"Total for Program N" structure; (2) `main()`'s cross-document dedupe key `(portfolio, program_label, fy, status, amount)` has no source_id component, and NDIA is assigned the same portfolio label ("Health Disability and Ageing") as an unrelated, larger, separately-loaded document - even the 86 rows the generalized extractor *could* parse were silently discarded as apparent duplicates.
+
+### Changes
+
+- Added `scripts/ingest/extractors/federal_pbs_2026_27_ndia.py`, a bounded source-specific adapter (1 entity, 1 outcome, 2 programs, Table 2.1.1), excluding the "Outcome 1 totals by resource type" reconciliation section using the same pattern fixed for Treasury in item 5.3.
+- Found and fixed a second, more serious defect before deployment: NDIA's "Payment from related entities" revenue (~$38-40b) overlaps with the portfolio department's own already-loaded "Program 3.2 – National Disability Insurance Scheme" administered expense (~$34-38b) under `federal_pbs_programs_all` - confirmed directly against the live database. Loading NDIA under the shared `budget_estimate` measure was verified on a disposable copy to add NDIA's entire $56.5b FY2029-30 outcome total on top of the existing root total.
+- Added migration `019_ndia_pbs_measure.sql`, isolating NDIA facts under their own `federal_pbs_2026_27_ndia_expense` measure/compatibility group (`additive_across_nodes=0`, `root_total_allowed=0`), the same pattern established in item 5.4.
+- Added `tests/ingest/test_federal_pbs_2026_27_ndia.py` (5 tests) and `tests/api/test_ndia_pbs_isolation.py` (3 tests).
+
+### Validation
+
+- [`ndia-pbs-repair-20260811T230253Z.md`](ndia-pbs-repair-20260811T230253Z.md) records full evidence.
+- Extractor: 50 rows (40 component + 10 program), component sums reconcile exactly (0 mismatches, no rounding needed) to every published "Total for Program N" row.
+- Disposable-copy dry run under the naive measure type reproduced the $56.5b inflation (proof of the defect); the corrected isolated measure type left every one of the 10 required projections byte-identical to the reviewed baseline.
+- Live deployment: backup taken first; 50 facts loaded (289,268 → 289,318); idempotent second run; `task9_sql_integrity_checks.py` 0 hard failures; `dashboard_depth_audit.py --check-fixture`: **true**.
+- New suites: 8 passed. Full backend suite: 637 passed (629 + 8 new), 0 regressions. `ruff check`: passed.
+
+### Data impact
+
+`data/facts.db`: +1 `measure_definitions` row, +50 facts under the new mode-invisible compatibility group. No existing fact, node, edge, or canonical assignment changed.
+
+### Dashboard impact
+
+None observable - NDIA facts are correctly extracted and safely loaded but, like historical Statement 6/PBS before its crosswalk, remain structurally unreachable until a future related_breakdown edge deliberately attaches them.
+
+### Remaining risks
+
+Only sub-item 1 of item 5.5's four sub-asks is complete. Still open: current-PBS coverage-by-portfolio report, malformed-label classifier precision improvements (documented recurring across many portfolios in `ops/reports/pbs-semantic-quality-audit-20260803T200915Z.md`, a substantial separate task against the 597-line generalized extractor), and quarantine precision review (page/table-evidence-only, never bulk promote).
+
+### Next item
+
+Plan section 5.5, sub-items 2-4: current-PBS coverage-by-portfolio report, classifier precision improvements, quarantine precision review.

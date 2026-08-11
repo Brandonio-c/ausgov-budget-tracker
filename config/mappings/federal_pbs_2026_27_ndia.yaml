@@ -1,0 +1,33 @@
+source_id: federal_pbs_2026_27_ndia
+title: 2026-27 National Disability Insurance Agency Portfolio Budget Statements
+publisher: National Disability Insurance Agency
+jurisdiction: Commonwealth
+government_level: federal
+source_family: budget
+deployment_status: related_evidence_isolated
+measure_type: federal_pbs_2026_27_ndia_expense
+accounting_basis: accrual
+estimate_status: budget
+period_granularity: financial_year
+input:
+  path: data/staging/breakdowns/federal_pbs_2026_27_ndia.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url: https://budget.gov.au/content/pbs/index.htm
+  original_resource_url: https://www.health.gov.au/sites/default/files/2026-06/budget_2026-27_national_disability_insurance_agency_2026-27_health_pbs.pdf
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/federal_pbs_2026_27_ndia/snapshots/manual-20260724T190531Z/files/budget_2026-27_national_disability_insurance_agency_2026-27_health_pbs.pdf
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+# node_name embeds derived label text; without this, facts from an earlier,
+# less-correct extraction run would sit alongside corrected rows forever
+# instead of being replaced. See load_facts.py's load_decisions().
+replace_on_reload: true
