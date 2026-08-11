@@ -30,7 +30,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | `3ec6d55` | Build bounded Statement 6 edition adapters in item 5.2 |
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
-| 5.4 Historical PBS/Statement 6 crosswalk | in_progress | Fact loading complete and validated (see milestone below); found and fixed a critical additivity defect first. Edge-set/router wiring not yet done | `40d0727` | Add exact-only `related_breakdown` edge set + extend `dashboard_tree()` for `mode='budget'`; scope to 1 verified 2022-23 and 1 2023-24 route per Wave 3 exit gate |
+| 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | pending commit | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
 | 5.5 NDIA repair / current-PBS coverage | not_started | — | — | NDIA repair, current-PBS coverage-by-portfolio report, quarantine precision review |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
@@ -751,3 +751,47 @@ The facts are safely loaded but not yet reachable from the dashboard by design. 
 ### Next item
 
 Plan section 5.4, prerequisite 2: build the exact-only edge set and extend `dashboard_tree()`'s budget-mode branch, scoped to one verified 2022-23 and one 2023-24 representative route per the Wave 3 exit gate.
+
+## Milestone: Historical Treasury PBS program detail under Statement 6 (item 5.4 complete)
+
+### Item
+
+Plan section 5.4, prerequisite 2.
+
+### Discovery that changed the plan
+
+Investigating how to expose the edges revealed `dashboard_tree()` calling `attach_related_to_tree` only for `mode == "actuals"`, never `mode == "budget"` - the router extension flagged as required in the prior milestone. Reading the router further found a *second*, mode-agnostic route, `dashboard_item_children` (`/v2/dashboard/item/{fact_id}/children`), which already resolves `related_breakdown` edges for any node by id regardless of mode - this is how the frontend's lazy-loaded drill-down already works, and it already carries the existing (currently dormant) current-edition `pbs_programs_all_under_s6` edges. No router code change was needed at all; only the edge set itself.
+
+### Changes
+
+- Added `config/breakdowns/crosswalks/historical_pbs_treasury_under_statement6.yaml`: two edition-locked pairings (March 2022-23, 2023-24), reusing the already-reviewed "Treasury -> General public services" portfolio-ownership assessment from the current-edition crosswalk rather than the unreviewed substring-heuristic bridge extractor.
+- Registered the `historical_pbs_treasury_under_statement6` policy in `config/breakdowns/edge_sets.yaml`: `related_breakdown`, `augment`, `fallback_policy: exact_only`.
+- Added `scripts/ingest/historical_pbs_s6_crosswalk.py`, an idempotent edge builder (dry-run by default, `--apply` to commit).
+- Found and fixed a program-node selection defect: a literal `NOT LIKE '%/ Administered /%'` filter let 3 mis-scoped National Housing Finance and Investment Corporation component rows (published under `scope="Unscoped"`) through as if they were whole programs (42 vs the correct 39 for 2023-24). Fixed by matching the extractor's fixed path-segment count instead of specific scope literals.
+- Deployed 82 edges live (43 March-2022-23 + 39 2023-24 Treasury programs).
+- Updated the reviewed `tests/fixtures/dashboard_projection/baseline.json` (`graph.edge_count`: 14,253 -> 14,335 - the sole, reviewed delta).
+- Added `tests/api/test_historical_pbs_s6_crosswalk.py` (7 tests).
+
+### Validation
+
+- [`historical-pbs-s6-crosswalk-20260811T221243Z.md`](historical-pbs-s6-crosswalk-20260811T221243Z.md) records full evidence.
+- Disposable-copy dry run, apply, and idempotent re-apply (0 new edges second time); live API check via FastAPI `TestClient` confirmed all 43/39 children resolve with `fallback_reason: exact_year_match`, `is_year_fallback: false`, correct source/compatibility metadata, and a non-additive banner; a year present in neither source returned empty with **no** fallback.
+- `mode=budget` root totals for FY2022-23/2023-24 confirmed unchanged after edge deployment.
+- Live deployment: backup taken first; 82 edges applied; second `--apply` inserted 0; `task9_sql_integrity_checks.py` 0 hard failures; `dashboard_depth_audit.py --check-fixture` true after the reviewed fixture update.
+- New suite: 7 passed. Full backend suite: 629 passed (622 + 7), 0 regressions. `ruff check`: passed.
+
+### Data impact
+
+`data/facts.db`: +82 `breakdown_edges` rows only; no fact, node, or existing edge changed. `tests/fixtures/dashboard_projection/baseline.json`: `graph.edge_count` updated.
+
+### Dashboard impact
+
+Drilling into the March 2022-23 or 2023-24 Statement 6 "General public services" function now surfaces the Treasury portfolio's individual program totals as clearly-labeled, non-additive related evidence with exact-year citations. No other function or portfolio gained depth from this milestone; canonical Statement 6 totals are unchanged.
+
+### Remaining risks
+
+Scope is Treasury-only, two editions, function-level, deliberately satisfying the Wave 3 exit gate rather than a full rollout. Extending to more portfolios/editions is future work using the same edition-locked pattern. Item 5.5 (NDIA repair, current-PBS coverage-by-portfolio report, quarantine precision review) remains not started.
+
+### Next item
+
+Plan section 5.5: NDIA repair, current-PBS coverage-by-portfolio report, and quarantine precision review - or continue to Wave 4 (reusable explorer platform) per priority order.

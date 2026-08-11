@@ -197,3 +197,16 @@ edge_sets:
     source_key_prefixes:
       - federal_dss_payment_demographics
     sort_order: 90
+
+  - id: historical_pbs_treasury_under_statement6
+    crosswalk_id: historical_pbs_treasury_under_statement6
+    branch_family: pbs
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: exact_only
+    presentation_role: data
+    folder_label: Historical Treasury PBS program detail
+    source_key_prefixes:
+      - federal_pbs_2022_23_march_treasury
+      - federal_pbs_2023_24_treasury
+    sort_order: 31
