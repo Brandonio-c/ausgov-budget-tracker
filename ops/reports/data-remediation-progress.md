@@ -31,7 +31,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
-| 5.5 NDIA repair / current-PBS coverage | in_progress | NDIA repaired: bounded source-specific extractor (50 facts, 0 reconciliation mismatches), critical additivity defect found/fixed (isolated measure type, same pattern as 5.4), deployed live with 0 dashboard impact; 8 new tests passed | pending commit | Coverage-by-portfolio report, malformed-label classifier precision, quarantine precision review remain |
+| 5.5 NDIA repair / current-PBS coverage | in_progress | NDIA repaired (`b4504c8`); fresh portfolio-level coverage report generated (2,957 nodes: 2,413 mapped, 372 ambiguous, 172 unmapped — all 172 traced to 9 parliamentary-family documents whose portfolio label is effectively their own origin) | pending commit | Per-individual-document origin breakdown for the "mapped" bucket, classifier precision improvements, quarantine precision review remain |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -840,3 +840,25 @@ Only sub-item 1 of item 5.5's four sub-asks is complete. Still open: current-PBS
 ### Next item
 
 Plan section 5.5, sub-items 2-4: current-PBS coverage-by-portfolio report, classifier precision improvements, quarantine precision review.
+
+## Milestone: Current-PBS coverage-by-portfolio report (item 5.5, part 2 of 4)
+
+### Item
+
+Plan section 5.5, sub-item 2: "Produce current unmapped-node coverage by source origin and portfolio."
+
+### Changes
+
+None to code. Re-ran the existing `scripts/ingest/pbs_s6_crosswalk.py --report-only` (already scoped exactly to this ask - a portfolio-level mapped/ambiguous/unmapped breakdown against `pbs_programs_all_under_s6.yaml`) against the live database, refreshing it after the NDIA repair.
+
+### Result
+
+[`pbs-statement6-crosswalk-coverage-20260811T230702Z.md`](pbs-statement6-crosswalk-coverage-20260811T230702Z.md)/`.csv`: 2,957 live PBS program nodes; 2,413 mapped (14,396 facts); 372 ambiguous (portfolio spans multiple Statement 6 functions with no dominant destination - deliberately left unmapped rather than guessed, per the crosswalk's own evidence-tier design); 172 unmapped. All 172 unmapped nodes trace to 9 documents in the parliamentary-services family (Senate, House of Representatives, Parliamentary Budget Office, Department of Parliamentary Services across editions) whose `_portfolio_from_source()` label is effectively their own document identity rather than a real government portfolio - i.e. the portfolio column already functions as a source-origin identifier for exactly the rows that matter (the unmapped ones).
+
+### Remaining risks
+
+A true per-individual-document origin column for the 2,413 *mapped* nodes (there are ~63 distinct PBS PDFs feeding the combined `federal_pbs_programs_all` source) is not built - the existing `_facts_by_origin()` mechanism in `ingestion_coverage_audit.py` could supply it but has not been joined into this report. Not attempted in this session; recorded as a scoped follow-up rather than claimed complete.
+
+### Next item
+
+Plan section 5.5, sub-items 3-4 (classifier precision on malformed labels; quarantine precision review) - each a substantial, separate task against the 597-line generalized `pbs_programs_all.py` extractor and the ~40,600-row PBS/bridge quarantine set respectively. Deliberately deferred to a dedicated session rather than rushed; not attempted here. Continue to these, or to Wave 4 (reusable explorer platform, item 6.1) per the plan's priority order.
