@@ -30,7 +30,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.1 Historical edition acquisition | complete | Three edition-specific Statement 6 sources and three Treasury PBS representatives acquired with official URLs/checksums; March/October remain distinct | `3ec6d55` | Build bounded Statement 6 edition adapters in item 5.2 |
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
-| 5.4-5.5 Historical PBS crosswalk/graph, NDIA repair | not_started | Staged, edition-bounded PBS rows exist in `data/staging/breakdowns/`; deliberately withheld from `data/facts.db`/graph per Wave 3 sequencing | — | Statement 6 crosswalk, exact-only related edges, NDIA repair, current-PBS coverage report, quarantine precision review |
+| 5.4 Historical PBS/Statement 6 crosswalk | in_progress | Fact loading complete and validated (see milestone below); found and fixed a critical additivity defect first. Edge-set/router wiring not yet done | pending commit | Add exact-only `related_breakdown` edge set + extend `dashboard_tree()` for `mode='budget'`; scope to 1 verified 2022-23 and 1 2023-24 route per Wave 3 exit gate |
+| 5.5 NDIA repair / current-PBS coverage | not_started | — | — | NDIA repair, current-PBS coverage-by-portfolio report, quarantine precision review |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -706,3 +707,47 @@ Plan section 5.4: crosswalk historical PBS program detail beneath matched Statem
 2. **Exact-year crosswalk, not the existing year-agnostic one.** `scripts/ingest/pbs_s6_crosswalk.py` / `config/breakdowns/crosswalks/pbs_programs_all_under_s6.yaml` already link the *current* PBS edition under Statement 6 with year-agnostic, portfolio-level `related_breakdown` edges. That pattern cannot be reused as-is for the historical editions: per the plan's non-negotiable rules and the historical FBO precedent (item 4.2), historical PBS-under-Statement-6 edges must be `fallback_policy: exact_only` and carry exact publication-edition/vintage metadata, not year-agnostic linkage — March and October 2022-23 must remain distinct, unmerged crosswalk targets.
 
 Given the plan's Wave 3 exit gate only requires "at least one 2022-23 and one 2023-24 representative function" with a verified route, the next iteration should scope 5.4 to one or two representative Treasury programs/functions end-to-end (loader + exact-only edge set + regression test + validation report) rather than a full-portfolio rollout, then expand coverage in a follow-up once the pattern is proven.
+
+## Milestone: Historical fact loading and a critical additivity defect
+
+### Item
+
+Plan section 5.4, prerequisite 1 (historical fact loaders), plus a defect found and fixed before any deployment.
+
+### Previous behavior
+
+Historical Statement 6 (item 5.2) and PBS (item 5.3) rows existed only as staged CSVs. Their natural mapping configuration used `measure_type: budget_estimate`, the same `compatibility_group: budget_expense` used by every other budget-basis fact.
+
+### Root cause
+
+`src/backend/routers/v2/dashboard.py::_fact_rows()` selects `mode='budget'` base facts with a bare `WHERE m.compatibility_group = 'budget_expense' AND ... AND financial_year = ?` and no per-source de-duplication. Statement 6 (function-level) and PBS (program-level) both represent near-complete, overlapping views of the same underlying expenditure; loading either family under `budget_expense` was verified on a disposable database copy to inflate the `federal_budget_2022_23`/`2023_24` root totals by roughly 400-3,000x (e.g. $1.63b → $2.34 trillion from Statement 6 alone) - a direct violation of the "no cross-compatibility-group/incompatible summation" invariant. Caught entirely on a disposable copy before the live database was touched.
+
+### Changes
+
+- Added migration `018_historical_related_evidence_measures.sql`: two new measures (`historical_bp1_statement6_expense`, `historical_treasury_pbs_program_expense`), each with its own compatibility group, `additive_across_nodes=0`, `root_total_allowed=0` - structurally invisible to every existing mode's raw fact walk, per the established one-measure-one-compatibility-group convention (migration 016).
+- Updated all 6 mapping YAMLs (3 Statement 6, 3 PBS) to the new measure types; `deployment_status` changed from `adapter_only_pending_graph_visibility` to `related_evidence_exact_only`.
+- Loaded all 6 mappings into the live `data/facts.db` after full disposable-copy validation and a live backup.
+- Added `tests/api/test_historical_related_evidence_isolation.py` (5 tests): schema-level guard that the new measure types can never anchor a root total, canonical-lineage-null guard, and a live API regression asserting `mode=budget` root totals for 2022-23/2023-24 are byte-identical to the pre-existing baseline.
+
+### Validation
+
+- [`historical-related-evidence-measures-20260811T180000Z.md`](historical-related-evidence-measures-20260811T180000Z.md) records the full defect investigation and before/after evidence.
+- Disposable copy: 6 mappings loaded 4,151 facts total, 0 quarantined; idempotent second run; 0 canonical assignment; `task9_sql_integrity_checks.py` 0 hard failures; `dashboard_depth_audit.py --check-fixture` byte-identical to the reviewed golden fixture for all 10 required projections.
+- Live deployment: backup taken first (`facts-20260811T175309Z.db`, baseline 285,117 facts); migration applied idempotently; facts 285,117 → 289,268 (+4,151, exact match to the disposable-copy delta); `task9_sql_integrity_checks.py` 0 hard failures; `dashboard_depth_audit.py --check-fixture`: **`fixture_matches: true`**.
+- New suite: 5 passed. Full backend suite before and after live deployment: 617 passed both times, 0 regressions. `ruff check`: passed.
+
+### Data impact
+
+`data/facts.db`: +2 `measure_definitions` rows, +4,151 facts under the two new mode-invisible compatibility groups. 0 changes to any existing fact, edge, or canonical assignment.
+
+### Dashboard impact
+
+None observable. The new facts are loaded but structurally unreachable from any current mode/route until an explicit edge set attaches them (item 5.4's remaining work).
+
+### Remaining risks
+
+The facts are safely loaded but not yet reachable from the dashboard by design. Completing item 5.4 still requires: (1) a declarative exact-only `related_breakdown` edge set matching specific Statement 6 nodes to their historical PBS program nodes by exact name/year (not the existing current-edition bridge's portfolio-substring heuristic, which the plan's "never infer missing hierarchy from label similarity alone" rule argues against reusing), and (2) extending `dashboard_tree()` to call `attach_related_to_tree` (or equivalent) for `mode == "budget"`, since today only `mode == "actuals"` does - a live-API behavior change requiring its own dedicated test coverage.
+
+### Next item
+
+Plan section 5.4, prerequisite 2: build the exact-only edge set and extend `dashboard_tree()`'s budget-mode branch, scoped to one verified 2022-23 and one 2023-24 representative route per the Wave 3 exit gate.

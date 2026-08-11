@@ -1,16 +1,16 @@
-source_id: federal_budget_statement_6_2022_23_october
-title: October 2022-23 BP1 Statement 6 expenses, subfunctions and components
+source_id: federal_pbs_2022_23_october_treasury
+title: October 2022-23 Treasury Portfolio Budget Statements program expenses
 publisher: Commonwealth of Australia
 jurisdiction: Commonwealth
 government_level: federal
 source_family: budget
 deployment_status: related_evidence_exact_only
-measure_type: historical_bp1_statement6_expense
+measure_type: historical_treasury_pbs_program_expense
 accounting_basis: accrual
 estimate_status: budget
 period_granularity: financial_year
 input:
-  path: data/staging/breakdowns/federal_budget_statement_6_2022_23_october.csv
+  path: data/staging/breakdowns/federal_pbs_2022_23_october_treasury.csv
   format: csv
 columns:
   financial_year: fy
@@ -24,8 +24,13 @@ columns:
   original_resource_url: resource_url
 attribution:
   landing_url: https://archive.budget.gov.au/2022-23-october/
-  original_resource_url: https://archive.budget.gov.au/2022-23-october/bp1/download/bp1_2022-23.pdf
+  original_resource_url: https://treasury.gov.au/sites/default/files/2022-10/tsy_pbs_october-2022-23.pdf
   landing_url_column: landing_url
   original_resource_url_column: resource_url
-  cached_copy_path: data/raw/federal/federal_budget_statement_6_2022_23_october/snapshots/20260808T170741Z/files/bp1_2022-23_october.pdf
+  cached_copy_path: data/raw/federal/federal_pbs_2022_23_october_treasury/snapshots/20260808T170741Z/files/treasury_pbs_2022-23_october.pdf
 fact_key_template: '{source_id}|vintage:{publication_vintage}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+# node_name embeds derived label text (entity/outcome/program/heading merge
+# logic); without this, facts from an earlier, less-correct extraction run
+# would sit alongside corrected rows forever instead of being replaced. See
+# load_facts.py's load_decisions().
+replace_on_reload: true
