@@ -307,6 +307,7 @@ export const apiV2 = {
     accounting_basis: string;
     estimate_status: string;
     financial_year: string;
+    source_key?: string;
     limit?: number;
     cursor?: string | null;
   }) => {
@@ -317,6 +318,7 @@ export const apiV2 = {
       financial_year: params.financial_year,
       limit: String(params.limit ?? 50),
     });
+    if (params.source_key) q.set("source_key", params.source_key);
     if (params.cursor) q.set("cursor", params.cursor);
     return getJson<V2Tree>(`/v2/tree?${q.toString()}`);
   },

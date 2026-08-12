@@ -96,3 +96,64 @@ def test_flat_tree_rejects_invalid_cursor(client: TestClient) -> None:
     response = client.get("/v2/tree", params={**SCOPE, "cursor": "not-a-cursor"})
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid tree cursor"
+
+
+# federal_pbs_programs_all shares this exact compatibility triple with several
+# other sources (state budget statements, other PBS-derived extractors) -
+# built for item 6.3's PBS explorer, which needs to show only PBS facts.
+PBS_SCOPE = {
+    "compatibility_group": "budget_expense",
+    "accounting_basis": "accrual",
+    "estimate_status": "budget",
+    "financial_year": "2026-27",
+}
+
+
+def test_source_key_filter_narrows_a_shared_compatibility_triple(
+    client: TestClient,
+) -> None:
+    unfiltered = client.get("/v2/tree", params={**PBS_SCOPE, "limit": 1}).json()
+    filtered = client.get(
+        "/v2/tree",
+        params={**PBS_SCOPE, "source_key": "federal_pbs_programs_all", "limit": 1},
+    ).json()
+
+    # This compatibility triple genuinely is shared by more than one source
+    # in the real database - otherwise this test would not exercise
+    # anything different from the unfiltered case.
+    assert filtered["total_count"] < unfiltered["total_count"]
+    assert filtered["total_count"] > 0
+    assert filtered["name"].startswith("federal_pbs_programs_all / ")
+
+    conn = sqlite3.connect(REPO_ROOT / "data" / "facts.db")
+    expected = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM facts f
+        JOIN measure_definitions m ON m.measure_type = f.measure_type
+        JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+        JOIN source_documents d ON d.id = f.source_document_id
+        WHERE m.compatibility_group = ?
+          AND f.accounting_basis = ?
+          AND f.estimate_status = ?
+          AND f.financial_year = ?
+          AND d.source_key = 'federal_pbs_programs_all'
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+        """,
+        tuple(PBS_SCOPE.values()),
+    ).fetchone()
+    conn.close()
+    assert filtered["total_count"] == expected[0]
+
+
+def test_source_key_omitted_preserves_existing_unfiltered_behaviour(
+    client: TestClient,
+) -> None:
+    """Every caller that predates the source_key parameter must see
+    identical results with it simply absent from the query string."""
+    with_param_absent = client.get("/v2/tree", params={**SCOPE, "limit": 5}).json()
+    with_param_none = client.get(
+        "/v2/tree", params={**SCOPE, "source_key": "", "limit": 5}
+    ).json()
+    assert with_param_absent["total_count"] == with_param_none["total_count"]
+    assert with_param_absent["children"] == with_param_none["children"]

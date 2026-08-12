@@ -167,6 +167,17 @@ def tree(
     accounting_basis: str = Query(...),
     estimate_status: str = Query(...),
     financial_year: str = Query(...),
+    source_key: str | None = Query(
+        default=None,
+        description=(
+            "Optional exact source_documents.source_key filter. A compatibility "
+            "triple is commonly shared by several distinct sources (e.g. "
+            "budget_expense/accrual/budget also covers state budget statements "
+            "and other PBS-derived extractors alongside federal_pbs_programs_all) "
+            "- omit to preserve the existing unfiltered behaviour of every caller "
+            "that predates this parameter."
+        ),
+    ),
     limit: int = Query(default=100, ge=1, le=1000),
     cursor: str | None = Query(default=None),
 ) -> dict:
@@ -192,6 +203,9 @@ def tree(
             estimate_status,
             financial_year,
         ]
+        if source_key:
+            from_where += " AND d.source_key = ?"
+            scope_params.append(source_key)
         totals = conn.execute(
             f"""
             SELECT COUNT(*) AS total_count,
@@ -262,8 +276,11 @@ def tree(
             )
         total_count = int(totals["total_count"] if totals else 0)
         total_value = float(totals["total_value"] if totals else 0)
+        name = f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}"
+        if source_key:
+            name = f"{source_key} / {name}"
         return {
-            "name": f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}",
+            "name": name,
             "shape": "flat",
             "value": total_value,
             "total_count": total_count,

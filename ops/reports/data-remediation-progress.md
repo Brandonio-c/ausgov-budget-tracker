@@ -49,8 +49,9 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | `bb4fa3b` | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
 | 6.3 ACT invoices explorer | complete | 46,714 already-loaded ACT notifiable invoice facts (13 years) had zero frontend reachability; confirmed `cash_outflow` group is shared with an unrelated source but `estimate_status=invoice` correctly scopes to ACT only; verified live in a real browser: truthful totals, working Load-more, 0 console errors | `e9bb39a` | True agency->supplier->invoice drill-down hierarchy and server-side search remain part of the larger item 6.1 explorer API |
+| 6.3 PBS explorer | complete | 16,800 already-loaded `federal_pbs_programs_all` facts had zero frontend reachability; added an optional `source_key` filter to `/v2/tree` (new test proves it narrows a real shared compatibility triple and preserves unfiltered behaviour when omitted) so the page shows PBS facts only, not co-scoped state/other-PBS sources; verified live in a real browser across year/estimate_status switches, 0 console errors | `<pending>` | Hierarchical edition->portfolio/entity->outcome/program/component depth and server-side search remain part of the larger item 6.1 explorer API |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
-| 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
+| 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | QGIP repair (item 7.2) still blocks its explorer; all other 6.3 families now complete | — | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
 | 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
 | 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
@@ -1133,3 +1134,42 @@ None identified for this reload specifically. Future classifier precision work o
 ### Next item
 
 Item 6.3's remaining migration (PBS explorer, now unblocked with a correct, cleaned-up fact count), or item 6.1 (reusable explorer API/registry).
+
+## Milestone: PBS explorer and a source_key filter for /v2/tree
+
+### Item
+
+Plan section 6.3, sixth migration: "PBS — edition -> portfolio/entity -> outcome/program/component, with quarantine-safe search."
+
+### Previous behavior
+
+16,800 `federal_pbs_programs_all` facts (post item 5.5b's reload) were loaded and live, but no frontend page existed. The `budget_expense / accrual / <status> / <year>` compatibility triple this source uses is shared with other sources (state budget statements, other PBS-derived extractors), so a naive reuse of the existing `/v2/tree` pattern would mix unrelated sources into "the PBS explorer."
+
+### Changes
+
+- `src/backend/routers/v2/query.py`: added an optional `source_key` filter to `GET /v2/tree`, applied as an exact `source_documents.source_key` match. Omitted by every pre-existing caller, preserving their behaviour exactly (proven by a dedicated regression test).
+- `tests/api/test_v2_tree_pagination.py`: two new tests proving the filter narrows a real shared triple (matches direct SQL) and that omitting it changes nothing for existing callers.
+- Added `src/frontend/app/explorers/pbs/page.tsx`, reusing the proven flat cursor-pagination pattern, scoped with `source_key=federal_pbs_programs_all` plus year/estimate_status controls. Registered in the explorers index.
+
+### Validation
+
+- [`pbs-explorer-20260812T054703Z.md`](pbs-explorer-20260812T054703Z.md) records full evidence, including a debugging note about a stale local dev server process (not a code defect - two earlier "restarts" had not actually replaced the running PID).
+- `tsc --noEmit`, `lint:ci` (unchanged baseline), `build` (14 static routes including `/explorers/pbs`), `test:unit`: all passed.
+- Live browser verification via Playwright against a confirmed-fresh backend process: truthful totals across year/estimate_status switches (including a correct 0-row result for a forward year's `actual` status), working citation panel, working client-side filter, zero console errors.
+- Full backend suite, run in the project's dedicated conda environment: 646 passed, 0 regressions.
+
+### Data impact
+
+None. No database write; `source_key` is a new, optional, backward-compatible parameter.
+
+### Dashboard impact
+
+Once deployed, all 16,800 live `federal_pbs_programs_all` facts become reachable through a correctly-scoped explorer that never mixes in other sources sharing the same compatibility triple.
+
+### Remaining risks
+
+Hierarchical edition -> portfolio/entity -> outcome/program/component depth and server-side search remain part of the larger item 6.1 explorer API. The production deployment lag (top-of-file callout) continues to apply.
+
+### Next item
+
+Item 6.1 (reusable explorer API/registry) - the last remaining Wave 4-adjacent item now that every plan-listed 6.3 family except QGIP (blocked behind item 7.2's repair) has an explorer.
