@@ -46,6 +46,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.5b `federal_pbs_programs_all` stale-corpus reload | not_started | Found while validating item 5.5's classifier fix: live facts (17,482) are stale vs current extractor+classifier code (33,291 if reloaded) - not a regression, just never redeployed since 2026-07-31 | — | Dedicated milestone: full before/after dashboard-projection audit, citation-completeness review of ~33k newly-published facts, confirm existing PBS-under-S6 crosswalk (5.4) and NDIA isolation (5.5) unaffected, then reload with backup |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
+| 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | pending commit | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
@@ -965,3 +966,40 @@ Hierarchical agency/category/supplier/notice depth and true server-side search r
 ### Next item
 
 Item 6.1 (reusable explorer API/registry) for the remaining Wave 4 families, or resolve the production deployment lag first (a decision for the user, not this loop, given its live/hard-to-reverse nature).
+
+## Milestone: VIC Output Performance explorer surfacing
+
+### Item
+
+Plan section 6.3: "VIC output performance — immediate surfacing of the seven already-loaded output nodes."
+
+### Previous behavior
+
+14 facts (7 outputs x actual/budget) have been loaded and live since 2026-08-07 (`ops/reports/vic-output-performance-implementation-20260807T173750Z.md`), reachable via the generic `/v2/tree` endpoint, but zero frontend page existed to surface them - confirmed by a repository-wide search.
+
+### Changes
+
+- Added `src/frontend/app/explorers/vic-output-performance/page.tsx`: fetches both `actual` and `budget` estimate statuses from the existing `/v2/tree` endpoint (no backend change) and merges them by output name into an Output / Actual / Target / Variance table with a citation panel.
+- Registered in `src/frontend/app/explorers/page.tsx`'s index.
+
+### Validation
+
+- [`vic-output-performance-explorer-20260812T034520Z.md`](vic-output-performance-explorer-20260812T034520Z.md) records full evidence.
+- `tsc --noEmit`, `lint:ci` (unchanged baseline), `build` (13 static routes), `test:unit`: all passed.
+- Live browser verification via Playwright: all 7 rows rendered correctly (first row "Budget and Financial Advice $46,300,000 $39,000,000 $7,300,000" matches the database exactly), citation panel populated with full workbook/sheet/cell locator on click, zero console errors.
+
+### Data impact
+
+None. No backend, database, or API contract change.
+
+### Dashboard impact
+
+Once deployed (see the production-deployment-lag finding), all seven Victorian departmental outputs' actual-vs-target total cost become reachable and citable for the first time, clearly separated from the annual additive tree.
+
+### Remaining risks
+
+The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original implementation. Only FY2024-25 is shown since it is the only loaded year; no year selector was added to avoid dead UI or inviting a future-year fallback.
+
+### Next item
+
+Item 6.1 (reusable explorer API/registry), or the remaining item 6.3 family migrations (PBS, grants, ACT invoices).
