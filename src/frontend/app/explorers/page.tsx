@@ -13,6 +13,9 @@ export default function ExplorersIndex() {
           <Link href="/explorers/contracts">Contracts explorer</Link>
         </li>
         <li>
+          <Link href="/explorers/grants">Grants explorer</Link>
+        </li>
+        <li>
           <Link href="/explorers/gfs">GFS / jurisdiction explorer</Link>
         </li>
         <li>

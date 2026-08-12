@@ -47,6 +47,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
+| 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | pending commit | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
@@ -1003,3 +1004,42 @@ The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, 
 ### Next item
 
 Item 6.1 (reusable explorer API/registry), or the remaining item 6.3 family migrations (PBS, grants, ACT invoices).
+
+## Milestone: Grants explorer
+
+### Item
+
+Plan section 6.3, second migration: "Grants — portfolio/program -> award/recipient, never additive to expenditure."
+
+### Previous behavior
+
+2,486 GrantConnect award facts have been loaded and live, but no frontend page existed to surface them.
+
+### Changes
+
+- Added `src/frontend/app/explorers/grants/page.tsx`, mirroring the contracts explorer's pagination pattern (same `compatibility_group`/`accounting_basis`, `estimate_status: award` instead of `contract` - the same `/v2/tree` endpoint applies with no backend change).
+- Registered in `src/frontend/app/explorers/page.tsx`'s index.
+- Page copy explicitly states grant awards are never additive to expenditure, matching the plan's exact wording.
+
+### Validation
+
+- [`grants-explorer-20260812T035705Z.md`](grants-explorer-20260812T035705Z.md) records full evidence.
+- `tsc --noEmit`, `lint:ci` (unchanged baseline after fixing one new violation introduced by copying an unnecessary resync effect), `build` (14 static routes), `test:unit`: all passed.
+- Live browser verification via Playwright: truthful total ("2,486 grant awards for 2024-25, total value $35,965,945,219 — 200 loaded"), working Load-more (400 loaded), correct citation, zero console errors.
+- Full backend suite: 643 passed, 0 regressions (frontend-only change).
+
+### Data impact
+
+None. No backend, database, or API contract change.
+
+### Dashboard impact
+
+Once deployed, all 2,486 FY2024-25 grant awards become reachable and truthfully paginated, explicitly labeled non-additive to expenditure.
+
+### Remaining risks
+
+Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API.
+
+### Next item
+
+Item 6.1 (reusable explorer API/registry), or the remaining item 6.3 family migrations (PBS, ACT invoices).
