@@ -126,6 +126,7 @@ export type V2Tree = {
   value: number;
   total_count: number;
   total_value: number;
+  source_breakdown: Array<{ source_key: string; count: number; value: number }>;
   next_cursor: string | null;
   children: Array<{ name: string; value: number; id: number; citation: Citation }>;
 };

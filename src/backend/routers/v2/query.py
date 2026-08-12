@@ -215,6 +215,18 @@ def tree(
             scope_params,
         ).fetchone()
 
+        source_rows = conn.execute(
+            f"""
+            SELECT d.source_key AS source_key,
+                   COUNT(*) AS n,
+                   COALESCE(SUM(f.amount_aud), 0) AS v
+            {from_where}
+            GROUP BY d.source_key
+            ORDER BY n DESC
+            """,
+            scope_params,
+        ).fetchall()
+
         cursor_sql = ""
         page_params = list(scope_params)
         if cursor:
@@ -279,12 +291,21 @@ def tree(
         name = f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}"
         if source_key:
             name = f"{source_key} / {name}"
+        source_breakdown = [
+            {
+                "source_key": r["source_key"],
+                "count": int(r["n"]),
+                "value": float(r["v"]),
+            }
+            for r in source_rows
+        ]
         return {
             "name": name,
             "shape": "flat",
             "value": total_value,
             "total_count": total_count,
             "total_value": total_value,
+            "source_breakdown": source_breakdown,
             "next_cursor": next_cursor,
             "children": children,
         }

@@ -146,6 +146,61 @@ def test_source_key_filter_narrows_a_shared_compatibility_triple(
     assert filtered["total_count"] == expected[0]
 
 
+# commitment/commitment/contract is shared by federal AusTender plus three
+# state contract-disclosure sources - discovered while building the item 6.1
+# family registry, when the "Contracts explorer" page's undisclosed mix (for
+# 2024-25 it is 100% NSW/NT/QLD state data, 0% federal AusTender) turned out
+# to be a real truthfulness gap, not a hypothetical one.
+CONTRACTS_SCOPE = {
+    "compatibility_group": "commitment",
+    "accounting_basis": "commitment",
+    "estimate_status": "contract",
+    "financial_year": "2024-25",
+}
+
+
+def test_source_breakdown_reveals_a_multi_jurisdiction_scope(client: TestClient) -> None:
+    body = client.get("/v2/tree", params={**CONTRACTS_SCOPE, "limit": 1}).json()
+    breakdown = body["source_breakdown"]
+
+    assert len(breakdown) > 1, "this scope is not actually multi-source; test is stale"
+    assert {b["source_key"] for b in breakdown} == {
+        "nsw_procurement_ocds_registry",
+        "nt_awarded_government_contracts",
+        "qld_contract_disclosure_agency_datasets",
+    }
+    assert sum(b["count"] for b in breakdown) == body["total_count"]
+    assert sum(b["value"] for b in breakdown) == pytest.approx(body["total_value"])
+
+    conn = sqlite3.connect(REPO_ROOT / "data" / "facts.db")
+    expected = dict(
+        conn.execute(
+            """
+            SELECT d.source_key, COUNT(*)
+            FROM facts f
+            JOIN measure_definitions m ON m.measure_type = f.measure_type
+            JOIN source_documents d ON d.id = f.source_document_id
+            WHERE m.compatibility_group = ? AND f.accounting_basis = ?
+              AND f.estimate_status = ? AND f.financial_year = ?
+              AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+            GROUP BY d.source_key
+            """,
+            tuple(CONTRACTS_SCOPE.values()),
+        ).fetchall()
+    )
+    conn.close()
+    assert {b["source_key"]: b["count"] for b in breakdown} == expected
+
+
+def test_source_breakdown_is_single_entry_for_an_already_single_source_scope(
+    client: TestClient,
+) -> None:
+    body = client.get("/v2/tree", params={**PBS_SCOPE, "source_key": "federal_pbs_programs_all", "limit": 1}).json()
+    assert len(body["source_breakdown"]) == 1
+    assert body["source_breakdown"][0]["source_key"] == "federal_pbs_programs_all"
+    assert body["source_breakdown"][0]["count"] == body["total_count"]
+
+
 def test_source_key_omitted_preserves_existing_unfiltered_behaviour(
     client: TestClient,
 ) -> None:

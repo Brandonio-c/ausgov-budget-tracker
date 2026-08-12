@@ -44,12 +44,13 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
 | 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | `a7aad12` | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
 | 5.5b `federal_pbs_programs_all` stale-corpus reload | complete | Reload + `cleanup_stale_pbs_nodes.py` deployed live with backup: fact-key analysis showed net effect was -682 facts (0 added, all removals of the same 158 garbled labels item 5.5 already verified), 158 stale crosswalk edges to nodes/412 edges cleaned; found and fixed an independent `task9_sql_integrity_checks.py` `--db`-ignored bug along the way; 0 hard failures after, fixture updated, full suite 643 passed | `1ec8b68` | Follow the same reload+cleanup pairing for any future classifier precision work on this source |
-| 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
+| 6.1 Reusable explorer API | in_progress | `source_key` scope filter and `source_breakdown` facet added to `/v2/tree`, both tested; family registry, `/v2/explorers` endpoints, hierarchy, search remain | `d7717fb`, `<pending>` | Add registry, hierarchy, remaining facets, search and cursor APIs |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | `bb4fa3b` | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
 | 6.3 ACT invoices explorer | complete | 46,714 already-loaded ACT notifiable invoice facts (13 years) had zero frontend reachability; confirmed `cash_outflow` group is shared with an unrelated source but `estimate_status=invoice` correctly scopes to ACT only; verified live in a real browser: truthful totals, working Load-more, 0 console errors | `e9bb39a` | True agency->supplier->invoice drill-down hierarchy and server-side search remain part of the larger item 6.1 explorer API |
 | 6.3 PBS explorer | complete | 16,800 already-loaded `federal_pbs_programs_all` facts had zero frontend reachability; added an optional `source_key` filter to `/v2/tree` (new test proves it narrows a real shared compatibility triple and preserves unfiltered behaviour when omitted) so the page shows PBS facts only, not co-scoped state/other-PBS sources; verified live in a real browser across year/estimate_status switches, 0 console errors | `d7717fb` | Hierarchical edition->portfolio/entity->outcome/program/component depth and server-side search remain part of the larger item 6.1 explorer API |
+| Contracts jurisdiction-mix disclosure (found scoping 6.1) | complete | Discovered the "Contracts explorer" scope for 2024-25 is 100% NSW/NT/QLD state data, 0% federal AusTender, undisclosed; added a `source_breakdown` facet to `/v2/tree` (2 new tests, exact-match against direct SQL) and surfaced it with a disclosure sentence and per-jurisdiction counts on the page; verified live in a real browser, 0 console errors | `<pending>` | Splitting into true per-jurisdiction family pages remains a legitimate item 6.1/6.3 scope boundary, not required by the exit gate |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | QGIP repair (item 7.2) still blocks its explorer; all other 6.3 families now complete | — | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
@@ -1173,3 +1174,42 @@ Hierarchical edition -> portfolio/entity -> outcome/program/component depth and 
 ### Next item
 
 Item 6.1 (reusable explorer API/registry) - the last remaining Wave 4-adjacent item now that every plan-listed 6.3 family except QGIP (blocked behind item 7.2's repair) has an explorer.
+
+## Milestone: contracts jurisdiction-mix disclosure and a source_breakdown facet for /v2/tree
+
+### Item
+
+Discovered while scoping item 6.1's family registry (plan 6.1 requires a "jurisdiction" facet). Not a numbered plan item; a truthfulness finding fixed immediately per the standing rule against deferring findings that fit current scope.
+
+### Previous behavior
+
+The contracts explorer's `commitment/commitment/contract` scope is shared by federal AusTender plus three state contract-disclosure sources. For its default year, 2024-25, the scope was 100% NSW/NT/QLD state data - **0% federal AusTender** - with no disclosure of this on a page titled plainly "Contracts explorer," unlike every sibling family page.
+
+### Changes
+
+- `src/backend/routers/v2/query.py`: `/v2/tree` now always returns `source_breakdown`, a `GROUP BY source_key` list of `{source_key, count, value}` over the full scope, independent of page `limit`.
+- `tests/api/test_v2_tree_pagination.py`: two new tests proving the breakdown is exact against direct SQL for both a real multi-source scope and a single-source scope.
+- `src/frontend/app/explorers/contracts/page.tsx`: renders the breakdown with readable jurisdiction labels and states plainly in the header that the scope is not federal-only.
+
+### Validation
+
+- [`contracts-jurisdiction-disclosure-20260812T061849Z.md`](contracts-jurisdiction-disclosure-20260812T061849Z.md) records full evidence.
+- `tsc --noEmit`, `lint:ci` (unchanged baseline), `build` (14 routes, unchanged): all passed.
+- Live browser verification via Playwright: summary total unchanged, breakdown line and disclosure sentence both present, zero console errors.
+- Full backend suite: 648 passed (2 new tests), 0 regressions.
+
+### Data impact
+
+None. `source_breakdown` is a new, always-present, additive response field.
+
+### Dashboard impact
+
+The contracts explorer now discloses its true jurisdiction mix. No other live family's reported totals change (all others already confirmed single-source).
+
+### Remaining risks
+
+Splitting into true per-jurisdiction pages remains a legitimate item 6.1/6.3 scope boundary, not required by the plan's exit gate. The production deployment lag continues to apply.
+
+### Next item
+
+Item 6.1's fuller reusable explorer API/registry (family registry config, `/v2/explorers` endpoints, generic frontend shell) remains open.

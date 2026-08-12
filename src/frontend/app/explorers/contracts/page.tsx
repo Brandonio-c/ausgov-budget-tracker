@@ -10,6 +10,21 @@ import { appHref } from "@/lib/searchDisplay";
 
 const PAGE_SIZE = 200;
 
+// This scope (compatibility_group=commitment / accounting_basis=commitment /
+// estimate_status=contract) is genuinely shared by federal AusTender and
+// three state contract-disclosure sources - they are safely additive (same
+// compatibility group), but a page titled plainly "Contracts explorer" would
+// mislead a reader into assuming this is federal AusTender data specifically
+// (as every sibling family page - PBS, grants, VIC, ACT - is single-source
+// or explicitly source-key-scoped). The breakdown below discloses the real
+// jurisdiction mix instead of hiding it.
+const SOURCE_LABELS: Record<string, string> = {
+  federal_austender_contracts: "Federal (AusTender)",
+  nsw_procurement_ocds_registry: "NSW (Procurement OCDS)",
+  nt_awarded_government_contracts: "NT (Awarded government contracts)",
+  qld_contract_disclosure_agency_datasets: "QLD (Contract disclosure)",
+};
+
 function ContractsExplorerInner() {
   const searchParams = useSearchParams();
   const [year, setYear] = useState(searchParams.get("year") || "2024-25");
@@ -21,6 +36,9 @@ function ContractsExplorerInner() {
   const [selected, setSelected] = useState<Citation | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [totalValue, setTotalValue] = useState<number | null>(null);
+  const [sourceBreakdown, setSourceBreakdown] = useState<
+    Array<{ source_key: string; count: number; value: number }>
+  >([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -53,6 +71,7 @@ function ContractsExplorerInner() {
         setRows(kids);
         setTotalCount(tree.total_count);
         setTotalValue(tree.total_value);
+        setSourceBreakdown(tree.source_breakdown || []);
         setNextCursor(tree.next_cursor);
         const fact = searchParams.get("fact");
         const match = fact ? kids.find((r) => String(r.id) === fact) : kids[0];
@@ -98,7 +117,11 @@ function ContractsExplorerInner() {
       <h1 className="text-2xl font-semibold">Contracts explorer</h1>
       <p className="mt-2 text-sm opacity-80">
         Compatibility group <code>commitment</code> / contract values (API v2).
-        For GFS liability stocks use{" "}
+        This combines federal AusTender contract notices with state contract
+        disclosure registers (NSW, NT, QLD) that publish on the same
+        compatible basis - it is <strong>not</strong> federal-only. See the
+        per-jurisdiction split below before treating a total as one
+        government&apos;s contracting activity. For GFS liability stocks use{" "}
         <a className="underline" href={appHref("/explorers/gfs?view=liabilities")}>
           GFS explorer → Liabilities
         </a>{" "}
@@ -134,6 +157,22 @@ function ContractsExplorerInner() {
           {rows.length.toLocaleString("en-AU")} loaded
           {filter ? ` (${visible.length.toLocaleString("en-AU")} match the filter)` : ""}.
         </p>
+      ) : null}
+      {sourceBreakdown.length > 0 ? (
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-70">
+          {sourceBreakdown.map((b) => (
+            <li key={b.source_key}>
+              {SOURCE_LABELS[b.source_key] || b.source_key}:{" "}
+              {b.count.toLocaleString("en-AU")} (
+              {b.value.toLocaleString("en-AU", {
+                style: "currency",
+                currency: "AUD",
+                maximumFractionDigits: 0,
+              })}
+              )
+            </li>
+          ))}
+        </ul>
       ) : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="max-h-[70vh] overflow-auto">
