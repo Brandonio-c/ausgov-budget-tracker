@@ -16,6 +16,9 @@ export default function ExplorersIndex() {
           <Link href="/explorers/grants">Grants explorer</Link>
         </li>
         <li>
+          <Link href="/explorers/act-invoices">ACT notifiable invoices</Link>
+        </li>
+        <li>
           <Link href="/explorers/gfs">GFS / jurisdiction explorer</Link>
         </li>
         <li>

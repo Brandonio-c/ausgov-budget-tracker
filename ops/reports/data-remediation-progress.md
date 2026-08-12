@@ -48,6 +48,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | `bb4fa3b` | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
+| 6.3 ACT invoices explorer | complete | 46,714 already-loaded ACT notifiable invoice facts (13 years) had zero frontend reachability; confirmed `cash_outflow` group is shared with an unrelated source but `estimate_status=invoice` correctly scopes to ACT only; verified live in a real browser: truthful totals, working Load-more, 0 console errors | pending commit | True agency->supplier->invoice drill-down hierarchy and server-side search remain part of the larger item 6.1 explorer API |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
@@ -1043,3 +1044,42 @@ Hierarchical portfolio/program -> award/recipient depth and server-side search r
 ### Next item
 
 Item 6.1 (reusable explorer API/registry), or the remaining item 6.3 family migrations (PBS, ACT invoices).
+
+## Milestone: ACT notifiable invoices explorer
+
+### Item
+
+Plan section 6.3, fifth migration: "ACT invoices — agency -> supplier/invoice cash-outflow product."
+
+### Previous behavior
+
+46,714 `act_notifiable_invoices` facts (13 financial years, 2005-06 through 2026-27) have been loaded and live, but no frontend page existed.
+
+### Changes
+
+- Added `src/frontend/app/explorers/act-invoices/page.tsx`, the same proven `/v2/tree`-backed pagination pattern used for contracts and grants (no backend change). Node labels are already published as `AGENCY / SUPPLIER-OR-DESCRIPTION`.
+- Registered in `src/frontend/app/explorers/page.tsx`'s index.
+- Verified before writing the page that `cash_outflow` is shared with an unrelated source (`bp1_outlays_by_function_pre_fbo`) but a different `estimate_status`, so `estimate_status=invoice` correctly scopes queries to ACT invoices only.
+
+### Validation
+
+- [`act-invoices-explorer-20260812T041103Z.md`](act-invoices-explorer-20260812T041103Z.md) records full evidence.
+- `tsc --noEmit`, `lint:ci` (unchanged baseline), `build` (15 static routes), `test:unit`: all passed.
+- Live browser verification via Playwright: truthful total ("4,742 invoices for 2024-25, total value $1,004,198,107 — 200 loaded"), working Load-more (400 loaded), correct citation, zero console errors.
+- Full backend suite: 643 passed, 0 regressions (frontend-only change).
+
+### Data impact
+
+None. No backend, database, or API contract change.
+
+### Dashboard impact
+
+Once deployed, all ACT notifiable invoices across all 13 loaded years become reachable and truthfully paginated.
+
+### Remaining risks
+
+A true agency -> supplier -> invoice drill-down hierarchy and server-side search remain part of the larger item 6.1 explorer API.
+
+### Next item
+
+Item 6.1 (reusable explorer API/registry), or item 6.3's remaining migration (PBS - blocked behind resolving item 5.5b's stale corpus first for a correct fact count), or item 5.5b itself.
