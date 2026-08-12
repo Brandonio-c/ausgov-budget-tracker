@@ -8,6 +8,17 @@ Started: 2026-08-07
 
 This is the persistent execution ledger for `ops/data_remediation_plan.md`. Statuses describe repository implementation, not source acquisition alone.
 
+> **CRITICAL, not part of the plan's own items, requires an explicit human decision:**
+> the public production API (`https://ausgov-budget-api.vibefactory.app`) is running a
+> backend container built from before commit `dde1c08` (item 3.4) - it does not have the
+> `/v2/tree` pagination fix, and by extension none of items 3.4 through the present entry
+> in this ledger are visible to real users. Data/config-only fixes reach production
+> immediately via the bind mount; every *Python code* change since does not, until the
+> container is rebuilt and redeployed. See
+> [`contracts-pagination-fix-20260812T030352Z.md`](contracts-pagination-fix-20260812T030352Z.md#critical-finding-the-public-production-api-has-not-been-redeployed)
+> for the evidence. This autonomous loop deliberately did not trigger a deploy (a live,
+> user-facing, comparatively hard-to-reverse action) without an explicit decision to do so.
+
 | Plan item | Status | Evidence | Commit/change | Remaining work |
 | --- | --- | --- | --- | --- |
 | 2.1 Golden projection fixtures | complete | `tests/fixtures/dashboard_projection/baseline.json`; required ten projections | `b6f5c1e` | Review fixture only when semantics intentionally change |
@@ -34,6 +45,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | `a7aad12` | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
 | 5.5b `federal_pbs_programs_all` stale-corpus reload | not_started | Found while validating item 5.5's classifier fix: live facts (17,482) are stale vs current extractor+classifier code (33,291 if reloaded) - not a regression, just never redeployed since 2026-07-31 | — | Dedicated milestone: full before/after dashboard-projection audit, citation-completeness review of ~33k newly-published facts, confirm existing PBS-under-S6 crosswalk (5.4) and NDIA isolation (5.5) unaffected, then reload with backup |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
+| 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | pending commit | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
@@ -909,3 +921,47 @@ New finding, tracked as plan item 5.5b: the live `federal_pbs_programs_all` corp
 ### Next item
 
 Plan item 5.5b (`federal_pbs_programs_all` stale-corpus reload) - or continue to Wave 4 (reusable explorer platform, item 6.1) per the plan's priority order, since 5.5's four named sub-items are now genuinely closed.
+
+## Milestone: Contracts explorer truthful pagination (Wave 4 started)
+
+### Item
+
+Plan section 6.3, first migration ("Contracts — remove the 200-row truncation"), toward the Wave 4 exit gate.
+
+### Previous behavior
+
+The contracts explorer page fetched a hardcoded `limit: 200` and presented that single page as if it were the complete contract list, with no indication more existed.
+
+### Root cause
+
+The frontend page pre-dated item 3.4's `/v2/tree` cursor-pagination/truthful-totals work and was never updated to consume it, even though the backend capability already existed.
+
+### Changes
+
+- `src/frontend/app/explorers/contracts/page.tsx`: consumes `total_count`/`total_value`/`next_cursor` from the existing `/v2/tree` endpoint; shows the true scope-wide total alongside the loaded count; adds a "Load next 200" button; state updates happen atomically in the fetch callback (avoids a new `react-hooks/set-state-in-effect` lint violation).
+
+### Validation
+
+- [`contracts-pagination-fix-20260812T030352Z.md`](contracts-pagination-fix-20260812T030352Z.md) records full evidence.
+- `tsc --noEmit`, `lint:ci` (unchanged baseline), `build` (12 static routes), `test:unit`: all passed.
+- Live browser verification via Playwright against `next dev` + a local backend bound to the real `data/facts.db`: confirmed the true total ("9,036 contracts for 2024-25, total value $39,337,071,294 — 200 loaded"), a working Load-more (400 loaded, total unchanged), an atomic year switch (2023-24: "2,836 contracts... $25,994,214,805"), and zero console errors.
+
+### Data impact
+
+None - frontend-only change, no backend/API/database change.
+
+### Dashboard impact
+
+Once deployed (see the critical finding below), users can see and reach every contract for a year, not just the first 200, with a truthful total always visible.
+
+### Critical finding
+
+While validating this fix, discovered the **public production API has not been redeployed since before item 3.4** (commit `dde1c08`) - see the callout at the top of this ledger and the milestone report's "Critical finding" section for full evidence. Every backend code change made across this entire remediation program (items 3.4 onward) is committed and tested on `main` but not yet live for real users. Deliberately not deployed as part of this autonomous loop; flagged for an explicit human decision.
+
+### Remaining risks
+
+Hierarchical agency/category/supplier/notice depth and true server-side search remain part of the larger item 6.1 reusable explorer API. The production deployment lag above is the single most consequential open item in this program.
+
+### Next item
+
+Item 6.1 (reusable explorer API/registry) for the remaining Wave 4 families, or resolve the production deployment lag first (a decision for the user, not this loop, given its live/hard-to-reverse nature).
