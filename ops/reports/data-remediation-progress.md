@@ -31,7 +31,8 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.2 Historical Statement expense adapters | complete | Edition-bounded Statement 5/6 appendix + 13 component tables each; 2,146 rows preflighted twice with zero quarantine; live projection unchanged | `4adcbcc` | Add historical PBS fixtures/adapters in item 5.3 |
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
-| 5.5 NDIA repair / current-PBS coverage | in_progress | NDIA repaired (`b4504c8`); fresh portfolio-level coverage report generated (2,957 nodes: 2,413 mapped, 372 ambiguous, 172 unmapped — all 172 traced to 9 parliamentary-family documents whose portfolio label is effectively their own origin) | pending commit | Per-individual-document origin breakdown for the "mapped" bucket, classifier precision improvements, quarantine precision review remain |
+| 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | pending commit | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
+| 5.5b `federal_pbs_programs_all` stale-corpus reload | not_started | Found while validating item 5.5's classifier fix: live facts (17,482) are stale vs current extractor+classifier code (33,291 if reloaded) - not a regression, just never redeployed since 2026-07-31 | — | Dedicated milestone: full before/after dashboard-projection audit, citation-completeness review of ~33k newly-published facts, confirm existing PBS-under-S6 crosswalk (5.4) and NDIA isolation (5.5) unaffected, then reload with backup |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | Several families loaded but hidden/flat | — | Migrate in plan order; QGIP after repair |
@@ -862,3 +863,49 @@ A true per-individual-document origin column for the 2,413 *mapped* nodes (there
 ### Next item
 
 Plan section 5.5, sub-items 3-4 (classifier precision on malformed labels; quarantine precision review) - each a substantial, separate task against the 597-line generalized `pbs_programs_all.py` extractor and the ~40,600-row PBS/bridge quarantine set respectively. Deliberately deferred to a dedicated session rather than rushed; not attempted here. Continue to these, or to Wave 4 (reusable explorer platform, item 6.1) per the plan's priority order.
+
+## Milestone: PBS classifier precision and quarantine review (item 5.5 complete)
+
+### Item
+
+Plan section 5.5, sub-items 3-4: classifier precision on malformed labels; quarantine precision review with page/table evidence, no bulk promotion.
+
+### Previous behavior
+
+`pbs_label_classifier.py`'s `unknown`/`no_confident_signal` bucket (572 of 35,601 quarantined `federal_pbs_programs_all` rows) contained real, unaddressed precision gaps. More seriously, undiscovered until this investigation: 158 unique genuinely garbled, multi-column-flattened Section 3 fragments (699 row instances across years) were being **incorrectly accepted** as real `program` facts and published.
+
+### Root cause
+
+Two structural signals the classifier had no rule for: (1) standard GFS/AASB single-word revenue/asset vocabulary ("Taxes", "Fees", "Fines", "Loans", "Leases", "Land") missing from the curated `FINANCIAL_STATEMENT_LINE_ITEMS` set; (2) two embedded dollar values plus an accounting-heading keyword, and a run of three or more bare `-`/soft-hyphen placeholder tokens, both strong concatenated-row signals with no existing detector.
+
+### Changes
+
+- `scripts/ingest/pbs_label_classifier.py`: added the 6 vocabulary terms; added `BARE_DASH_RUN` detection (`embedded_bare_dash_run`) and a `two_embedded_value_tokens_with_heading` check, both inserted in the existing "malformed" precedence tier.
+- `tests/ingest/test_pbs_label_classifier.py`: 6 new tests (29 total) pinning real, verbatim quarantined label strings, including explicit guards that the new rules do not over-fire (single bullet dash, two values with no heading keyword).
+
+### Validation
+
+- [`pbs-classifier-precision-20260812T025148Z.md`](pbs-classifier-precision-20260812T025148Z.md) records the full methodology and evidence.
+- Isolated the classifier-only effect from unrelated corpus staleness by classifying the exact same 103,945-row extracted label set with pre-change and post-change code and diffing: **zero** labels newly became `program`/`outcome`/`component` (publishable set can only shrink); 158 unique labels moved `program` -> `malformed_concatenated_row`, individually reviewed and confirmed every one is genuinely garbled, not a real program name.
+- New suite: 6 passed. Full backend suite: 643 passed (637 + 6), 0 regressions. `ruff check`: passed.
+- No live database write; `federal_pbs_programs_all` fact count confirmed unchanged (17,482) throughout.
+
+### Data impact
+
+None. All validation ran against a disposable copy or pure in-memory classification.
+
+### Dashboard impact
+
+None yet - the fix is validated but not deployed (see "New finding" below).
+
+### Quarantine review disposition
+
+Reviewed `federal_pbs_programs_all`'s full `unknown` bucket and the classifier-diff-identified transitions against real page/table locator evidence; 0 bulk promotions; remaining quarantined material re-categorized more precisely, not released. `qld_qgip_expenditure` (item 3.7/7.2) and `federal_pbs_programs_s6_bridge` (legacy derived product) explicitly out of scope with rationale recorded.
+
+### Remaining risks
+
+New finding, tracked as plan item 5.5b: the live `federal_pbs_programs_all` corpus is stale relative to current code (would nearly double published facts if reloaded) - this predates this session and is not caused by it, but deploying it is a separate, larger, dedicated decision deliberately not folded into this fix.
+
+### Next item
+
+Plan item 5.5b (`federal_pbs_programs_all` stale-corpus reload) - or continue to Wave 4 (reusable explorer platform, item 6.1) per the plan's priority order, since 5.5's four named sub-items are now genuinely closed.

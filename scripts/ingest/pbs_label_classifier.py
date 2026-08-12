@@ -57,6 +57,16 @@ UNIT_TOKEN = re.compile(r"\$'?\s?000\b|\$m\b|\$b\b|\('000\)|\(\$'000\)|^000$", r
 # in an unbroken run.
 BARE_NUMERIC_RUN = re.compile(r"(?<![\d.])-?\d{1,4}(?:\s+-?\d{1,4}){2,}(?![\d.])")
 
+# Three or more consecutive bare "-"/soft-hyphen placeholder tokens - PBS
+# tables use a lone dash for a $0 (or not-applicable) year column, so a run
+# of three or more is the same "flattened row" signal as BARE_NUMERIC_RUN,
+# just for all-zero columns (e.g. "- expense adjustment (e) - - - - -
+# Special appropriations" - confirmed against real quarantined rows from
+# federal_pbs_2025_26_health_disability_and_ageing p.130-ish Section 3
+# tables). A single leading "-" (a stray PDF bullet glyph) does not match,
+# since that requires only one token, not a run of three.
+BARE_DASH_RUN = re.compile(r"(?:^|\s)[\-­](?:\s+[\-­]){2,}(?:\s|$)")
+
 # Whole-table-section headings only - "Employee benefits", "Suppliers" etc.
 # are real line items *within* an EXPENSES section, not headings themselves,
 # and are matched separately via FINANCIAL_STATEMENT_LINE_ITEMS below so a
@@ -87,6 +97,11 @@ FINANCIAL_STATEMENT_LINE_ITEMS = {
     "equity", "reserves", "retained earnings", "accumulated deficit",
     "trade creditors", "other payables", "prepayments", "inventories",
     "grants and subsidies", "goods and services", "accrued expenses",
+    # Standard GFS/AASB revenue and PP&E-asset sub-categories, confirmed
+    # against real quarantined rows recurring across many portfolios'
+    # Section 3 tables (Home Affairs, Industry, PM&C, Infrastructure,
+    # Education, Health) - not a program name in any of them.
+    "taxes", "fees", "fines", "loans", "leases", "land",
 }
 
 TOTAL_SUBTOTAL = re.compile(
@@ -179,9 +194,24 @@ def classify_label(raw_label: str) -> Classification:
         return Classification(
             "malformed_concatenated_row", False, "three_or_more_embedded_value_tokens", signals
         )
+    # Two embedded value tokens alone is not decisive (a real title can
+    # legitimately carry one or two numbers, e.g. a program numbered
+    # "1.1"-style token plus a citation year), but two values *and* an
+    # accounting-heading keyword together is - a real program/component
+    # title never itself contains both a dollar figure and a bare
+    # section-heading word like "LIABILITIES" (confirmed against real
+    # quarantined rows, e.g. "17,419 17,481 LIABILITIES Payables Suppliers").
+    if len(value_tokens) >= 2 and ACCOUNTING_HEADINGS.search(label):
+        return Classification(
+            "malformed_concatenated_row", False, "two_embedded_value_tokens_with_heading", signals
+        )
     if BARE_NUMERIC_RUN.search(label):
         return Classification(
             "malformed_concatenated_row", False, "embedded_bare_numeric_run", signals
+        )
+    if BARE_DASH_RUN.search(label):
+        return Classification(
+            "malformed_concatenated_row", False, "embedded_bare_dash_run", signals
         )
     if year_tokens and ACCOUNTING_HEADINGS.search(label):
         return Classification(

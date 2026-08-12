@@ -223,3 +223,71 @@ def test_empty_label_is_unknown():
 
 def test_only_publishable_classes_are_program_outcome_component():
     assert PUBLISHABLE_CLASSES == frozenset({"program", "outcome", "component"})
+
+
+# --- Item 5.5 classifier precision pass -----------------------------------
+# Every label below is a real, verbatim extracted string that was
+# quarantined as `unknown` (no_confident_signal) against the live
+# federal_pbs_programs_all facts, found while auditing the current
+# quarantine set for genuine precision defects (as opposed to the large,
+# correctly-rejected malformed_concatenated_row/table_header buckets).
+
+
+def test_standalone_gfs_revenue_and_asset_terms_classify_as_financial_statement_line():
+    """"Taxes"/"Fees"/"Fines"/"Loans"/"Leases"/"Land" are standard GFS/AASB
+    revenue and PP&E sub-category rows, confirmed recurring across Home
+    Affairs, Industry, PM&C, Infrastructure, Education and Health Section 3
+    tables - never a program name. Previously fell through to `unknown`
+    because they weren't in the curated vocabulary; "land, buildings and
+    infrastructure" already was, so a standalone "Land" sub-line is the
+    same established concept, not new territory."""
+    for label in ("Taxes", "Fees", "Fines", "Loans", "Leases", "Land"):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert not r.publishable
+
+
+def test_two_value_tokens_with_accounting_heading_is_malformed():
+    """A real program/component title never itself contains both a dollar
+    figure and a bare section-heading word - two embedded values plus a
+    heading keyword together is decisive even though two values alone is
+    not (a real title can legitimately carry one or two numbers, e.g. a
+    footnoted citation year)."""
+    label = "17,419 17,481 LIABILITIES Payables Suppliers"
+    r = classify_label(label)
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "two_embedded_value_tokens_with_heading"
+    assert not r.publishable
+
+
+def test_two_value_tokens_alone_is_not_automatically_malformed():
+    """Guard against the precision fix above becoming a false-positive
+    generator: two values with no heading keyword must not be rejected on
+    value-count alone."""
+    r = classify_label("Program 1.1: Something 2024 2025")
+    assert r.classification != "malformed_concatenated_row"
+
+
+def test_bare_dash_run_glued_to_heading_is_malformed():
+    """PBS tables use a lone "-" for a $0 year column; a run of three or
+    more is the same flattened-row signal as a bare numeric run, just for
+    all-zero columns."""
+    label = "- expense adjustment (e) - - - - - Special appropriations"
+    r = classify_label(label)
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "embedded_bare_dash_run"
+    assert not r.publishable
+
+
+def test_bare_dash_run_with_soft_hyphen_glyph_is_malformed():
+    label = "\xad appropriation - - - - - - expense adjustment (e) 531 - - - - Special appropriations"
+    r = classify_label(label)
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "embedded_bare_dash_run"
+
+
+def test_single_leading_dash_bullet_is_not_a_dash_run():
+    """A single stray PDF bullet glyph must not trip the new dash-run rule
+    - only a genuine run of three or more zero-column placeholders should."""
+    r = classify_label("- Special Accounts")
+    assert r.rejection_reason != "embedded_bare_dash_run"
