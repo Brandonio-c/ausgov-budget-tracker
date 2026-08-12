@@ -969,5 +969,9 @@
     "edge_count": 13923,
     "duplicate_semantic_edges": 0,
     "cycles": 0
-  }
+  },
+  "hard_failures": [],
+  "hard_failure_count": 0,
+  "generated_at": "2026-08-12T04:33:23.056612+00:00",
+  "fixture_matches": true
 }

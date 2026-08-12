@@ -457,7 +457,7 @@ def test_main_is_clean_against_a_healthy_fixture_database(tmp_path, monkeypatch)
     conn.close()
 
     monkeypatch.setattr(task9, "DB_PATH", db_path)
-    rc = task9.main()
+    rc = task9.main([])
     assert rc == 0
 
 
@@ -470,7 +470,7 @@ def test_main_fails_when_accepted_residual_config_is_invalid(tmp_path, monkeypat
         "validate_accepted_residuals",
         lambda: {"valid": False, "errors": ["broken"], "entry_count": 0},
     )
-    rc = task9.main()
+    rc = task9.main([])
     assert rc == 1
     out = capsys.readouterr().out
     assert '"hard_failures": 1' in out
@@ -485,7 +485,7 @@ def test_main_fails_when_reviewed_duplicate_config_is_invalid(tmp_path, monkeypa
         "validate_reviewed_duplicates",
         lambda: {"valid": False, "errors": ["broken"], "entry_count": 0},
     )
-    rc = task9.main()
+    rc = task9.main([])
     assert rc == 1
 
 
@@ -498,5 +498,31 @@ def test_main_treats_dangling_source_documents_as_informational_only(tmp_path, m
     conn.close()
 
     monkeypatch.setattr(task9, "DB_PATH", db_path)
-    rc = task9.main()
+    rc = task9.main([])
+    assert rc == 0
+
+
+def test_main_db_flag_overrides_module_default(tmp_path, monkeypatch):
+    """Regression for a real bug found while validating item 5.5b: main()
+    never called parser.parse_args(), so every prior --db invocation across
+    this repo's callers was silently ignored and always checked the
+    hardcoded module-level DB_PATH instead - a disposable-copy pre-flight
+    check would pass or fail based on the *live* database, not the copy
+    actually being validated. Proven here by pointing DB_PATH at a
+    nonexistent path (any real query against it would raise, since
+    sqlite3.connect creates an empty, table-less file rather than failing
+    outright) while passing a real, healthy database via --db; a passing
+    run count proves --db - not DB_PATH - was actually used."""
+    healthy_path = tmp_path / "healthy.db"
+    migrate(healthy_path)
+    conn = sqlite3.connect(str(healthy_path))
+    doc = _add_source_document(conn, "src_a")
+    node = _add_node(conn, doc, "Program")
+    f1 = _add_fact(conn, "k1", doc)
+    _link(conn, f1, node)
+    conn.commit()
+    conn.close()
+
+    monkeypatch.setattr(task9, "DB_PATH", tmp_path / "does-not-exist.db")
+    rc = task9.main(["--db", str(healthy_path)])
     assert rc == 0

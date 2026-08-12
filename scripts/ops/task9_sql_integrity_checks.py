@@ -8,6 +8,7 @@ documented, expected baseline.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sqlite3
 import sys
@@ -229,8 +230,19 @@ def pbs_children_missing_source_year(conn) -> int:
     ).fetchone()[0]
 
 
-def main() -> int:
-    conn = sqlite3.connect(str(DB_PATH))
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--db",
+        type=Path,
+        default=DB_PATH,
+        help="facts.db to check (default: the live data/facts.db). Previously this "
+        "flag was silently accepted-but-ignored by every caller in this repo since "
+        "main() never read sys.argv - always checked DB_PATH regardless of any "
+        "--db value passed. Fixed here so a --db override actually takes effect.",
+    )
+    args = parser.parse_args(argv)
+    conn = sqlite3.connect(str(args.db))
     all_duplicate_groups = duplicate_facts(conn)
     unresolved_duplicates, reviewed_duplicates = partition_duplicate_facts(all_duplicate_groups)
     results = {

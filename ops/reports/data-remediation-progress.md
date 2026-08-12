@@ -43,7 +43,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.3 Historical Treasury PBS adapter | complete | Extractor fixed (4 root-cause defects) and validated on all 3 real editions: 0 exceptions, 0 duplicate keys, program-row counts exactly match programs×5yr, component sums reconcile to published program totals except 3 rows within documented $1,000 rounding; 12 new regression tests passed | `2553851` | Build crosswalk beneath matched Statement 6 nodes and deploy exact-only related edges in item 5.4 |
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
 | 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | `a7aad12` | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
-| 5.5b `federal_pbs_programs_all` stale-corpus reload | not_started | Found while validating item 5.5's classifier fix: live facts (17,482) are stale vs current extractor+classifier code (33,291 if reloaded) - not a regression, just never redeployed since 2026-07-31 | — | Dedicated milestone: full before/after dashboard-projection audit, citation-completeness review of ~33k newly-published facts, confirm existing PBS-under-S6 crosswalk (5.4) and NDIA isolation (5.5) unaffected, then reload with backup |
+| 5.5b `federal_pbs_programs_all` stale-corpus reload | complete | Reload + `cleanup_stale_pbs_nodes.py` deployed live with backup: fact-key analysis showed net effect was -682 facts (0 added, all removals of the same 158 garbled labels item 5.5 already verified), 158 stale crosswalk edges to nodes/412 edges cleaned; found and fixed an independent `task9_sql_integrity_checks.py` `--db`-ignored bug along the way; 0 hard failures after, fixture updated, full suite 643 passed | pending commit | Follow the same reload+cleanup pairing for any future classifier precision work on this source |
 | 6.1 Reusable explorer API | not_started | Family-specific APIs and flat generic endpoint exist | — | Add registry, hierarchy, facets, search and cursor APIs |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
@@ -1083,3 +1083,53 @@ A true agency -> supplier -> invoice drill-down hierarchy and server-side search
 ### Next item
 
 Item 6.1 (reusable explorer API/registry), or item 6.3's remaining migration (PBS - blocked behind resolving item 5.5b's stale corpus first for a correct fact count), or item 5.5b itself.
+
+## Milestone: federal_pbs_programs_all corpus reload (item 5.5b) and a --db validation-tooling bug
+
+### Item
+
+Plan item 5.5b: reload the stale `federal_pbs_programs_all` corpus, found while validating item 5.5.
+
+### Previous behavior
+
+Live facts (17,482) predated item 5.5's classifier precision fix by several days.
+
+### Root cause
+
+The corpus had not been reloaded since 2026-07-31, so the classifier fix's rejection of 158 genuinely garbled labels had never been applied to the live database.
+
+### A second, independent bug found and fixed first
+
+While validating on a disposable copy, `task9_sql_integrity_checks.py --db <copy>` kept reporting the same 254 hard failures regardless of changes made to the copy. Root cause: `main()` had no `argparse` at all and never read `sys.argv` - every `--db` flag ever passed to this script anywhere in this repository was silently ignored, always checking the hardcoded live `data/facts.db`. Fixed by adding a real `--db` argument and `argv` parameter (matching this repo's established CLI pattern), updating the 4 existing `main()`-calling tests to pass `main([])` explicitly, and adding a new dedicated regression test proving `--db` overrides the module default. This means every prior *pre-flight* task9 check with `--db` in this session was a no-op (re-checking the already-known-good live db); post-deployment checks (no `--db`, correctly defaulting to live) remained valid throughout, so no incorrect deployment resulted, but the pre-flight step itself was silently vacuous until this fix.
+
+### Changes
+
+- `scripts/ops/task9_sql_integrity_checks.py`: added `--db`/`argv` support.
+- `tests/ops/test_task9_sql_integrity_checks.py`: fixed 4 existing tests' `main()` calls, added `test_main_db_flag_overrides_module_default`.
+- Ran `scripts/ingest/reload_pbs_programs_all.py` then `scripts/ops/cleanup_stale_pbs_nodes.py` (an existing, tested "Task 8" tool built for exactly this scenario) against the live database, backup taken first.
+- Updated the reviewed dashboard-projection fixture and two tests with hardcoded pre-reload FY2023-24 root totals, both with inline explanations.
+
+### Validation
+
+- [`pbs-corpus-reload-20260812T044311Z.md`](pbs-corpus-reload-20260812T044311Z.md) records full evidence.
+- Exact `fact_key`-set comparison between the pre-reload backup and the post-reload database: -682 facts, **0 added**, 16,800 unchanged - the reload's entire net effect was removing the same 158 garbled labels item 5.5 already verified, not adding new coverage (correcting this milestone's original "would nearly double published facts" framing, which conflated row-level and deduplicated-fact counts).
+- `cleanup_stale_pbs_nodes.py`: 158 newly-orphaned nodes (exactly matching item 5.5's count - independent cross-validation), 412 stale edges removed.
+- `task9_sql_integrity_checks.py` (now correctly `--db`-aware): 254 hard failures -> 0, on both the disposable copy and, after live deployment, live itself.
+- `dashboard_depth_audit.py`: `federal_actuals_*` (canonical GFS tree) completely unchanged; `federal_budget_2023_24/2024_25/latest` root totals decreased by explained amounts (e.g. FY2023-24: -$31,083,239,000); citation completeness 100% before and after. Fixture updated and re-verified.
+- Full backend suite: 643 passed, 0 unexplained regressions (2 hardcoded-total updates resolved with documented justification).
+
+### Data impact
+
+`data/facts.db`: -682 facts, -158 nodes, -412 edges, confined to `federal_pbs_programs_all` and its crosswalk. Backup taken first (`facts-20260812T041605Z.db`).
+
+### Dashboard impact
+
+The federal "budget" mode no longer presents 158 garbled label fragments as real PBS facts, and the already-live PBS-under-Statement-6 crosswalk no longer exposes them as related detail. Canonical GFS actuals unaffected.
+
+### Remaining risks
+
+None identified for this reload specifically. Future classifier precision work on this source should follow the same reload+cleanup pairing established here.
+
+### Next item
+
+Item 6.3's remaining migration (PBS explorer, now unblocked with a correct, cleaned-up fact count), or item 6.1 (reusable explorer API/registry).

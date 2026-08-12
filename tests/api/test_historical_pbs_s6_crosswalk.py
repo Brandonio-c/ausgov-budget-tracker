@@ -139,7 +139,15 @@ def test_no_future_or_nearest_year_fallback_for_uncovered_year(client: TestClien
 
 @pytest.mark.parametrize(
     "year,expected_root_total",
-    [("2022-23", 1_629_222_000.0), ("2023-24", 1_818_520_572_000.0)],
+    # 2023-24 was intentionally updated (from 1_818_520_572_000.0) by item
+    # 5.5b's federal_pbs_programs_all reload: 158 genuinely garbled labels
+    # that this item's classifier precision fix (item 5.5) correctly
+    # rejects were still live as of this test's original value, incorrectly
+    # inflating the total - see ops/reports/pbs-corpus-reload-*.md. The
+    # guard this test exists for (this crosswalk's own edges cannot move
+    # the mode='budget' root total) still holds; only the correct baseline
+    # itself changed.
+    [("2022-23", 1_629_222_000.0), ("2023-24", 1_787_437_333_000.0)],
 )
 def test_root_total_still_unaffected_after_edge_deployment(
     client: TestClient, year: str, expected_root_total: float
