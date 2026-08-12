@@ -1,0 +1,67 @@
+version: 1
+
+# Registry of specialist explorer families (plan item 6.1). Each entry
+# declares the exact compatibility_group/accounting_basis/estimate_status(es)
+# scope and, where the compatibility triple is shared with unrelated
+# sources, the source_key required to isolate this family (see
+# ops/reports/pbs-explorer-20260812T054703Z.md and
+# ops/reports/contracts-jurisdiction-disclosure-20260812T061849Z.md for the
+# two cases this mattered in practice). contracts is deliberately
+# multi-source - see additive_note.
+
+families:
+  - id: contracts
+    label: Contracts
+    compatibility_group: commitment
+    accounting_basis: commitment
+    estimate_statuses: [contract]
+    default_estimate_status: contract
+    source_key: null
+    additive_note: >
+      Federal AusTender plus NSW, NT and QLD state contract disclosure
+      registers share this compatible scope - use the source_breakdown
+      facet, never assume a single jurisdiction.
+
+  - id: grants
+    label: Grants
+    compatibility_group: commitment
+    accounting_basis: commitment
+    estimate_statuses: [award]
+    default_estimate_status: award
+    source_key: federal_grantconnect_awards
+    additive_note: >
+      GrantConnect awarded grants - a commitment, never additive to accrual
+      expenditure in the annual tree.
+
+  - id: vic_output_performance
+    label: VIC output performance
+    compatibility_group: vic_output_total_cost
+    accounting_basis: accrual
+    estimate_statuses: [actual, budget]
+    default_estimate_status: actual
+    source_key: vic_output_performance_measures_2024_25
+    additive_note: >
+      Victorian output total-cost performance measures - not part of the
+      federal or state additive expenditure tree.
+
+  - id: act_invoices
+    label: ACT notifiable invoices
+    compatibility_group: cash_outflow
+    accounting_basis: cash
+    estimate_statuses: [invoice]
+    default_estimate_status: invoice
+    source_key: act_notifiable_invoices
+    additive_note: >
+      Cash-basis notifiable invoice payments - a distinct measure from
+      accrual expense, never additive to the ACT's accrual expenditure.
+
+  - id: pbs
+    label: PBS programs
+    compatibility_group: budget_expense
+    accounting_basis: accrual
+    estimate_statuses: [budget, forward_estimate, estimated_actual, actual]
+    default_estimate_status: budget
+    source_key: federal_pbs_programs_all
+    additive_note: >
+      Commonwealth Portfolio Budget Statements program expenses -
+      portfolio-level facts, not additive to the whole-of-government tree.

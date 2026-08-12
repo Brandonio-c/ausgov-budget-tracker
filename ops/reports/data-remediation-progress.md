@@ -44,7 +44,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
 | 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | `a7aad12` | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
 | 5.5b `federal_pbs_programs_all` stale-corpus reload | complete | Reload + `cleanup_stale_pbs_nodes.py` deployed live with backup: fact-key analysis showed net effect was -682 facts (0 added, all removals of the same 158 garbled labels item 5.5 already verified), 158 stale crosswalk edges to nodes/412 edges cleaned; found and fixed an independent `task9_sql_integrity_checks.py` `--db`-ignored bug along the way; 0 hard failures after, fixture updated, full suite 643 passed | `1ec8b68` | Follow the same reload+cleanup pairing for any future classifier precision work on this source |
-| 6.1 Reusable explorer API | in_progress | `source_key` scope filter and `source_breakdown` facet added to `/v2/tree`, both tested; family registry, `/v2/explorers` endpoints, hierarchy, search remain | `d7717fb`, `26dd135` | Add registry, hierarchy, remaining facets, search and cursor APIs |
+| 6.1 Reusable explorer API | in_progress | `source_key` scope filter and `source_breakdown` facet added to `/v2/tree` (tested); family registry (`config/explorers/families.yaml`, 5 families) plus `GET /v2/explorers` and `GET /v2/explorers/{family}/availability` added (12 new tests); hierarchy, search, frontend migration onto the registry remain | `d7717fb`, `26dd135`, `<pending>` | Migrate existing pages onto the registry; add hierarchy/search endpoints; build item 6.2's generic shell |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | `bb4fa3b` | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
@@ -1213,3 +1213,41 @@ Splitting into true per-jurisdiction pages remains a legitimate item 6.1/6.3 sco
 ### Next item
 
 Item 6.1's fuller reusable explorer API/registry (family registry config, `/v2/explorers` endpoints, generic frontend shell) remains open.
+
+## Milestone: explorer family registry and availability API (item 6.1, first increment)
+
+### Item
+
+Plan section 6.1: family registry plus `/v2/explorers` endpoints.
+
+### Previous behavior
+
+Each of the five completed family pages hardcoded its own compatibility triple/`source_key` in its own `page.tsx`, with no single source of truth and no way to discover which years/statuses have live data without querying `/v2/tree` per candidate.
+
+### Changes
+
+- `config/explorers/families.yaml`: declarative registry of all 5 completed families (compatibility triple, allowed estimate statuses, `source_key` where required, additive note), same `version: 1` + fail-fast validation pattern as `config/breakdowns/edge_sets.yaml`.
+- `src/backend/explorer_registry.py`: loader mirroring `edge_set_policy.py`'s structure and validation discipline.
+- `src/backend/routers/v2/explorers.py`: `GET /v2/explorers` (list families) and `GET /v2/explorers/{family_id}/availability` (per year × estimate_status live counts/values, honoring `source_key`; 404 for unknown family).
+- 12 new tests (`tests/unit/test_explorer_registry.py`, `tests/api/test_v2_explorers.py`), including proof that contracts' availability (no `source_key`) matches `/v2/tree`'s multi-jurisdiction total exactly - the registry does not silently narrow a legitimately multi-source family.
+
+### Validation
+
+- [`explorer-registry-20260812T064145Z.md`](explorer-registry-20260812T064145Z.md) records full evidence.
+- Full backend suite: 660 passed (12 new), 0 regressions. No frontend change in this increment - deliberately scoped as a backend-only first step.
+
+### Data impact
+
+None. Both endpoints are read-only.
+
+### Dashboard impact
+
+None yet - no frontend page consumes these endpoints in this increment.
+
+### Remaining risks
+
+Migrating the five existing pages onto the registry, the plan's remaining 6.1 endpoints (hierarchical `tree?path=`, `facets`, `search`, `item/{fact_id}`), and item 6.2's generic frontend shell all remain open, deliberately deferred to keep this increment reviewable. The production deployment lag continues to apply.
+
+### Next item
+
+Continue item 6.1 (migrate pages onto the registry, or add facets/search) before item 6.2's generic shell, or assess remaining plan items for higher-priority gaps.
