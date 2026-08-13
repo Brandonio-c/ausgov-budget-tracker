@@ -44,7 +44,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 5.4 Historical PBS/Statement 6 crosswalk | complete | Facts loaded (critical additivity defect found/fixed first); 82 exact-only `related_breakdown` edges deployed (Treasury portfolio, March 2022-23 + 2023-24, 43+39 programs); reachable via `/v2/dashboard/item/{id}/children`, zero root-total impact, zero fallback leakage; 19 new tests passed | `474cdd7` | Extend to more portfolios/editions in a follow-up; not required by the Wave 3 exit gate |
 | 5.5 NDIA repair / current-PBS coverage | complete | NDIA repaired (`b4504c8`); coverage report refreshed (`12ceead`); classifier precision fixed (2 new rejection signals + 6 new vocabulary terms, isolated diff proves 0 new false-positive acceptances and catches 158 previously mis-accepted garbled "program" labels); quarantine precision review evidence-based, 0 bulk promotions | `a7aad12` | Per-individual-document origin breakdown for the "mapped" bucket remains a minor follow-up; NEW distinct finding: `federal_pbs_programs_all` live facts are stale vs current code (17,482 vs 33,291 if reloaded) — reload needs its own dedicated, reviewed milestone, tracked separately below |
 | 5.5b `federal_pbs_programs_all` stale-corpus reload | complete | Reload + `cleanup_stale_pbs_nodes.py` deployed live with backup: fact-key analysis showed net effect was -682 facts (0 added, all removals of the same 158 garbled labels item 5.5 already verified), 158 stale crosswalk edges to nodes/412 edges cleaned; found and fixed an independent `task9_sql_integrity_checks.py` `--db`-ignored bug along the way; 0 hard failures after, fixture updated, full suite 643 passed | `1ec8b68` | Follow the same reload+cleanup pairing for any future classifier precision work on this source |
-| 6.1 Reusable explorer API | in_progress | `source_key` scope filter and `source_breakdown` facet added to `/v2/tree` (tested); family registry (`config/explorers/families.yaml`, 5 families) plus `GET /v2/explorers` and `GET /v2/explorers/{family}/availability` added (12 new tests); hierarchy, search, frontend migration onto the registry remain | `d7717fb`, `26dd135`, `14eede9` | Migrate existing pages onto the registry; add hierarchy/search endpoints; build item 6.2's generic shell |
+| 6.1 Reusable explorer API | complete | Full backend contract per the plan's own list: registry (5 families), `GET /v2/explorers`, `.../availability`, `.../tree` (cursor pagination, truthful totals, registry-validated estimate_status, honest 400 for `path` - verified via direct DB inspection that no family has real `node_edges` hierarchy, so none is fabricated), `.../facets` (year/status/source/measure), `.../item/{fact_id}` (family-boundary enforced even for a real cross-family fact_id), plus server-side `search` added to `/v2/tree` itself; 28 new tests across this and the prior increment, 676 total passed, 0 regressions; verified live against a freshly-confirmed uvicorn process, not only TestClient | `d7717fb`, `26dd135`, `14eede9`, `<pending>` | Frontend migration onto the registry is deliberately item 6.2/6.3 work, not redone twice; path browsing has no data to serve until a family gains real hierarchy |
 | 6.3 Contracts 200-row truncation | complete | Frontend-only fix reusing item 3.4's already-built `/v2/tree` cursor pagination; verified live in a real browser (Playwright): truthful "9,036 contracts... 200 loaded", working Load-more, atomic year switch, 0 console errors | `9b3e675` | Hierarchical agency/category/supplier/notice depth and server-side search remain part of the larger item 6.1 explorer API, not this fix |
 | 6.3 VIC output performance surfacing | complete | 14 already-loaded facts (7 outputs x actual/budget) had zero frontend reachability; new explorer page reuses the existing `/v2/tree` endpoint (no backend change), verified live in a real browser: all 7 rows correct, full citations, 0 console errors | `e0fb807` | The 70 non-dollar KPI rows from the same workbook remain deliberately deferred, unchanged from the original 2026-08-07 implementation |
 | 6.3 Grants explorer | complete | 2,486 already-loaded GrantConnect award facts had zero frontend reachability; new explorer page mirrors the contracts pagination pattern (same `/v2/tree` compatibility_group, different estimate_status), verified live in a real browser: truthful totals, working Load-more, 0 console errors | `bb4fa3b` | Hierarchical portfolio/program -> award/recipient depth and server-side search remain part of the larger item 6.1 explorer API |
@@ -1251,3 +1251,45 @@ Migrating the five existing pages onto the registry, the plan's remaining 6.1 en
 ### Next item
 
 Continue item 6.1 (migrate pages onto the registry, or add facets/search) before item 6.2's generic shell, or assess remaining plan items for higher-priority gaps.
+
+## Milestone: item 6.1 completion - full explorer backend contract
+
+### Item
+
+Plan section 6.1, closing the gap left open by the prior "first increment" milestone: `tree`, `facets`, `item/{fact_id}`, and `search`.
+
+### Previous behavior
+
+Registry, `GET /v2/explorers`, and `GET /v2/explorers/{family}/availability` existed. `tree`, `facets`, `item`, and `search` (the plan's own explicitly named capability) did not exist anywhere in the API, including on the pre-existing `/v2/tree`.
+
+### Gap analysis
+
+Before writing any hierarchy-handling code, checked directly against `data/facts.db` whether any of the five completed families have real `node_edges` beneath their nodes. **None do** - every family's nodes are single formatted-string labels with zero graph edges. This ruled out label-splitting as a way to fake `tree?path=` browsing (would violate the standing rule against inferring hierarchy from label structure) and settled the design as an honest 400 rejection instead.
+
+### Changes
+
+- `src/backend/routers/v2/query.py`: extracted `/v2/tree`'s query body into a shared `build_flat_tree_response()`, now used by both `/v2/tree` and the new per-family tree endpoint (no parallel query logic to drift out of sync); added an optional, backward-compatible `search` parameter with proper LIKE-wildcard escaping.
+- `src/backend/routers/v2/explorers.py`: added `GET /v2/explorers/{family}/tree` (registry-driven, estimate_status validated against the family's registered list, `path` honestly rejected, `q` search param), `GET /v2/explorers/{family}/facets` (year/status/source/measure breakdowns), `GET /v2/explorers/{family}/item/{fact_id}` (family-boundary-enforced citation lookup - a real fact_id valid in a different family still 404s).
+- 16 new tests (4 in `test_v2_tree_pagination.py` for `search`, 12 in `test_v2_explorers.py` for the three new endpoints), including a dedicated test proving family-boundary enforcement survives a real cross-family fact_id.
+
+### Validation
+
+- [`explorer-platform-6.1-completion-20260813T022217Z.md`](explorer-platform-6.1-completion-20260813T022217Z.md) records the full gap analysis and evidence.
+- Full backend suite: 676 passed (16 new), 0 regressions.
+- Live-verified against a freshly-confirmed `uvicorn` process (PID checked before/after, per this session's earlier debugging lesson): search, path-rejection, facets, and cross-family item-boundary all confirmed via direct `curl`, not only `TestClient`.
+
+### Data impact
+
+None. All new endpoints are read-only; `search` is optional and additive.
+
+### Dashboard impact
+
+None yet - no frontend page consumes these endpoints. The backend explorer contract the plan describes for item 6.1 is now complete for all five registered families.
+
+### Remaining risks
+
+Frontend migration onto the registry remains item 6.2/6.3 territory, not redone twice ahead of the shell that would consume it. Hierarchical path browsing has no real data to serve until some family gains actual `node_edges` structure. A pre-existing, unrelated data-quality artifact (`financial_year = "2022-20"` in the contracts source data) surfaced while spot-checking `/facets` - left visible rather than silently filtered, flagged for a future pass. The production deployment lag continues to apply.
+
+### Next item
+
+Item 6.1 is complete against the plan's explicit list. Item 6.2 (generic frontend explorer shell) is next, followed by migrating the five existing family pages onto it per the plan's established order.

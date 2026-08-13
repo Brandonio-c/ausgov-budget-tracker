@@ -161,6 +161,162 @@ def aggregate(
         conn.close()
 
 
+def _escape_like(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def build_flat_tree_response(
+    conn,
+    *,
+    compatibility_group: str,
+    accounting_basis: str,
+    estimate_status: str,
+    financial_year: str,
+    source_key: str | None,
+    limit: int,
+    cursor: str | None,
+    search: str | None = None,
+) -> dict:
+    """Truthful, cursor-paginated flat list for one compatibility triple.
+
+    Shared by GET /v2/tree and GET /v2/explorers/{family}/tree so both
+    surfaces traverse facts identically - no parallel query-building logic
+    to drift out of sync (e.g. the quarantine exclusion, cursor semantics,
+    or truthful totals-independent-of-limit invariant). ``search`` is a
+    case-insensitive substring match over the published node name, applied
+    server-side to the same quarantine-safe universe (never to quarantined
+    rows) so totals/source_breakdown/pagination all describe the searched
+    scope together, not the unsearched one with a client-side filter bolted
+    on top.
+    """
+    from_where = """
+            FROM facts f
+            JOIN measure_definitions m ON m.measure_type = f.measure_type
+            JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+            JOIN nodes n ON n.id = fn.node_id
+            JOIN source_documents d ON d.id = f.source_document_id
+            LEFT JOIN source_retrievals r ON r.id = f.source_retrieval_id
+            WHERE m.compatibility_group = ?
+              AND f.accounting_basis = ?
+              AND f.estimate_status = ?
+              AND f.financial_year = ?
+              AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+        """
+    scope_params: list = [
+        compatibility_group,
+        accounting_basis,
+        estimate_status,
+        financial_year,
+    ]
+    if source_key:
+        from_where += " AND d.source_key = ?"
+        scope_params.append(source_key)
+    if search:
+        from_where += " AND n.name LIKE ? ESCAPE '\\' COLLATE NOCASE"
+        scope_params.append(f"%{_escape_like(search)}%")
+    totals = conn.execute(
+        f"""
+        SELECT COUNT(*) AS total_count,
+               COALESCE(SUM(f.amount_aud), 0) AS total_value
+        {from_where}
+        """,
+        scope_params,
+    ).fetchone()
+
+    source_rows = conn.execute(
+        f"""
+        SELECT d.source_key AS source_key,
+               COUNT(*) AS n,
+               COALESCE(SUM(f.amount_aud), 0) AS v
+        {from_where}
+        GROUP BY d.source_key
+        ORDER BY n DESC
+        """,
+        scope_params,
+    ).fetchall()
+
+    cursor_sql = ""
+    page_params = list(scope_params)
+    if cursor:
+        cursor_amount, cursor_id = _decode_tree_cursor(cursor)
+        if cursor_amount is None:
+            cursor_sql = " AND f.amount_aud IS NULL AND f.id > ?"
+            page_params.append(cursor_id)
+        else:
+            cursor_sql = """
+                AND (
+                    f.amount_aud < ?
+                    OR (f.amount_aud = ? AND f.id > ?)
+                    OR f.amount_aud IS NULL
+                )
+            """
+            page_params.extend((cursor_amount, cursor_amount, cursor_id))
+    page_params.append(limit + 1)
+    rows = conn.execute(
+        f"""
+        SELECT
+            f.id AS fact_id,
+            n.name AS node_name,
+            f.amount_aud,
+            f.fact_key,
+            f.financial_year,
+            f.measure_type,
+            f.source_locator_json,
+            f.retrieved_at AS fact_retrieved_at,
+            d.landing_url AS doc_landing_url,
+            d.canonical_resource_url,
+            r.sha256,
+            r.retrieved_at AS retrieval_retrieved_at,
+            r.local_path,
+            r.resolved_url
+        {from_where}
+        {cursor_sql}
+        ORDER BY f.amount_aud IS NULL, f.amount_aud DESC, f.id
+        LIMIT ?
+        """,
+        page_params,
+    ).fetchall()
+    has_more = len(rows) > limit
+    page_rows = rows[:limit]
+    children = []
+    for r in page_rows:
+        children.append(
+            {
+                "name": r["node_name"],
+                "value": r["amount_aud"],
+                "id": r["fact_id"],
+                "citation": build_citation_from_row(r),
+            }
+        )
+    next_cursor = None
+    if has_more and page_rows:
+        last = page_rows[-1]
+        next_cursor = _encode_tree_cursor(last["amount_aud"], int(last["fact_id"]))
+    total_count = int(totals["total_count"] if totals else 0)
+    total_value = float(totals["total_value"] if totals else 0)
+    name = f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}"
+    if source_key:
+        name = f"{source_key} / {name}"
+    source_breakdown = [
+        {
+            "source_key": r["source_key"],
+            "count": int(r["n"]),
+            "value": float(r["v"]),
+        }
+        for r in source_rows
+    ]
+    return {
+        "name": name,
+        "shape": "flat",
+        "value": total_value,
+        "total_count": total_count,
+        "total_value": total_value,
+        "source_breakdown": source_breakdown,
+        "next_cursor": next_cursor,
+        "children": children,
+    }
+
+
 @router.get("/tree")
 def tree(
     compatibility_group: str = Query(...),
@@ -180,134 +336,29 @@ def tree(
     ),
     limit: int = Query(default=100, ge=1, le=1000),
     cursor: str | None = Query(default=None),
+    search: str | None = Query(
+        default=None,
+        description=(
+            "Optional case-insensitive substring match over the published node "
+            "name, applied server-side before totals/pagination. Omitted by "
+            "every caller that predates this parameter, preserving their "
+            "existing unfiltered behaviour exactly."
+        ),
+    ),
 ) -> dict:
     """Truthful, cursor-paginated flat list for one compatibility triple."""
     conn = _facts_conn()
     try:
-        from_where = """
-            FROM facts f
-            JOIN measure_definitions m ON m.measure_type = f.measure_type
-            JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
-            JOIN nodes n ON n.id = fn.node_id
-            JOIN source_documents d ON d.id = f.source_document_id
-            LEFT JOIN source_retrievals r ON r.id = f.source_retrieval_id
-            WHERE m.compatibility_group = ?
-              AND f.accounting_basis = ?
-              AND f.estimate_status = ?
-              AND f.financial_year = ?
-              AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
-        """
-        scope_params: list = [
-            compatibility_group,
-            accounting_basis,
-            estimate_status,
-            financial_year,
-        ]
-        if source_key:
-            from_where += " AND d.source_key = ?"
-            scope_params.append(source_key)
-        totals = conn.execute(
-            f"""
-            SELECT COUNT(*) AS total_count,
-                   COALESCE(SUM(f.amount_aud), 0) AS total_value
-            {from_where}
-            """,
-            scope_params,
-        ).fetchone()
-
-        source_rows = conn.execute(
-            f"""
-            SELECT d.source_key AS source_key,
-                   COUNT(*) AS n,
-                   COALESCE(SUM(f.amount_aud), 0) AS v
-            {from_where}
-            GROUP BY d.source_key
-            ORDER BY n DESC
-            """,
-            scope_params,
-        ).fetchall()
-
-        cursor_sql = ""
-        page_params = list(scope_params)
-        if cursor:
-            cursor_amount, cursor_id = _decode_tree_cursor(cursor)
-            if cursor_amount is None:
-                cursor_sql = " AND f.amount_aud IS NULL AND f.id > ?"
-                page_params.append(cursor_id)
-            else:
-                cursor_sql = """
-                    AND (
-                        f.amount_aud < ?
-                        OR (f.amount_aud = ? AND f.id > ?)
-                        OR f.amount_aud IS NULL
-                    )
-                """
-                page_params.extend((cursor_amount, cursor_amount, cursor_id))
-        page_params.append(limit + 1)
-        rows = conn.execute(
-            f"""
-            SELECT
-                f.id AS fact_id,
-                n.name AS node_name,
-                f.amount_aud,
-                f.fact_key,
-                f.financial_year,
-                f.measure_type,
-                f.source_locator_json,
-                f.retrieved_at AS fact_retrieved_at,
-                d.landing_url AS doc_landing_url,
-                d.canonical_resource_url,
-                r.sha256,
-                r.retrieved_at AS retrieval_retrieved_at,
-                r.local_path,
-                r.resolved_url
-            {from_where}
-            {cursor_sql}
-            ORDER BY f.amount_aud IS NULL, f.amount_aud DESC, f.id
-            LIMIT ?
-            """,
-            page_params,
-        ).fetchall()
-        has_more = len(rows) > limit
-        page_rows = rows[:limit]
-        children = []
-        for r in page_rows:
-            children.append(
-                {
-                    "name": r["node_name"],
-                    "value": r["amount_aud"],
-                    "id": r["fact_id"],
-                    "citation": build_citation_from_row(r),
-                }
-            )
-        next_cursor = None
-        if has_more and page_rows:
-            last = page_rows[-1]
-            next_cursor = _encode_tree_cursor(
-                last["amount_aud"], int(last["fact_id"])
-            )
-        total_count = int(totals["total_count"] if totals else 0)
-        total_value = float(totals["total_value"] if totals else 0)
-        name = f"{compatibility_group} / {accounting_basis} / {estimate_status} / {financial_year}"
-        if source_key:
-            name = f"{source_key} / {name}"
-        source_breakdown = [
-            {
-                "source_key": r["source_key"],
-                "count": int(r["n"]),
-                "value": float(r["v"]),
-            }
-            for r in source_rows
-        ]
-        return {
-            "name": name,
-            "shape": "flat",
-            "value": total_value,
-            "total_count": total_count,
-            "total_value": total_value,
-            "source_breakdown": source_breakdown,
-            "next_cursor": next_cursor,
-            "children": children,
-        }
+        return build_flat_tree_response(
+            conn,
+            compatibility_group=compatibility_group,
+            accounting_basis=accounting_basis,
+            estimate_status=estimate_status,
+            financial_year=financial_year,
+            source_key=source_key,
+            limit=limit,
+            cursor=cursor,
+            search=search,
+        )
     finally:
         conn.close()

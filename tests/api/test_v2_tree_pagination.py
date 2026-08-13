@@ -201,6 +201,51 @@ def test_source_breakdown_is_single_entry_for_an_already_single_source_scope(
     assert body["source_breakdown"][0]["count"] == body["total_count"]
 
 
+def test_search_narrows_totals_and_matches_direct_sql(client: TestClient) -> None:
+    unfiltered = client.get("/v2/tree", params={**PBS_SCOPE, "limit": 1}).json()
+    filtered = client.get(
+        "/v2/tree", params={**PBS_SCOPE, "search": "health", "limit": 200}
+    ).json()
+
+    assert filtered["total_count"] < unfiltered["total_count"]
+    assert filtered["total_count"] > 0
+    assert all("health" in c["name"].lower() for c in filtered["children"])
+
+    conn = sqlite3.connect(REPO_ROOT / "data" / "facts.db")
+    expected = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM facts f
+        JOIN measure_definitions m ON m.measure_type = f.measure_type
+        JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
+        JOIN nodes n ON n.id = fn.node_id
+        WHERE m.compatibility_group = ? AND f.accounting_basis = ?
+          AND f.estimate_status = ? AND f.financial_year = ?
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+          AND n.name LIKE '%health%' ESCAPE '\\' COLLATE NOCASE
+        """,
+        tuple(PBS_SCOPE.values()),
+    ).fetchone()
+    conn.close()
+    assert filtered["total_count"] == expected[0]
+
+
+def test_search_special_characters_do_not_leak_as_wildcards(client: TestClient) -> None:
+    """A literal '%' or '_' in the search string must be treated literally,
+    not as a SQL LIKE wildcard that would silently widen the match."""
+    response = client.get(
+        "/v2/tree", params={**PBS_SCOPE, "search": "100%_impossible", "limit": 1}
+    ).json()
+    assert response["total_count"] == 0
+
+
+def test_search_omitted_preserves_existing_unfiltered_behaviour(client: TestClient) -> None:
+    absent = client.get("/v2/tree", params={**SCOPE, "limit": 5}).json()
+    empty = client.get("/v2/tree", params={**SCOPE, "search": "", "limit": 5}).json()
+    assert absent["children"] == empty["children"]
+    assert absent["total_count"] == empty["total_count"]
+
+
 def test_source_key_omitted_preserves_existing_unfiltered_behaviour(
     client: TestClient,
 ) -> None:
