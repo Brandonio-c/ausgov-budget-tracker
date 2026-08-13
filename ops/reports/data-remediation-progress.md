@@ -52,7 +52,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.3 PBS explorer | complete | 16,800 already-loaded `federal_pbs_programs_all` facts had zero frontend reachability; added an optional `source_key` filter to `/v2/tree` (new test proves it narrows a real shared compatibility triple and preserves unfiltered behaviour when omitted) so the page shows PBS facts only, not co-scoped state/other-PBS sources; verified live in a real browser across year/estimate_status switches, 0 console errors | `d7717fb` | Hierarchical edition->portfolio/entity->outcome/program/component depth and server-side search remain part of the larger item 6.1 explorer API |
 | Contracts jurisdiction-mix disclosure (found scoping 6.1) | complete | Discovered the "Contracts explorer" scope for 2024-25 is 100% NSW/NT/QLD state data, 0% federal AusTender, undisclosed; added a `source_breakdown` facet to `/v2/tree` (2 new tests, exact-match against direct SQL) and surfaced it with a disclosure sentence and per-jurisdiction counts on the page; verified live in a real browser, 0 console errors | `26dd135` | Splitting into true per-jurisdiction family pages remains a legitimate item 6.1/6.3 scope boundary, not required by the exit gate |
 | 6.2 Reusable explorer shell | complete | `ExplorerShell.tsx` + `explorerApi.ts` + `app/explorers/family/[family]/page.tsx`, registry-driven end to end (year selector/estimate-status/additive-note banner/source_breakdown all derived from `/v2/explorers` responses, zero per-family hardcoding); verified live for all 5 registered families (zero console errors), server-side search, honest 404/no-data-year states, and zero regression to the 2 existing dedicated pages spot-checked; a real defaulting bug (latest-year default landing on sparse years) was found and fixed during live verification | `4f76350` | Family migration (item 6.3) intentionally not done in this pass; dynamic route placed at `/explorers/family/{id}` rather than the plan's literal `/explorers/[family]` since that slug is still shadowed by the 5 unmigrated static pages |
-| 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | QGIP repair (item 7.2) still blocks its explorer; all other 6.3 families now complete | — | QGIP explorer after item 7.2 repair |
+| 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | complete | All 5 plan-listed families migrated onto the item 6.1/6.2 generic shell at their existing URLs (each page now a thin `<ExplorerShell familyId="..." />` wrapper instead of ~170-200 lines of bespoke fetch/state logic); live-verified zero regressions to any of the 5 real totals, `DebtNav`/GFS cross-link preserved on contracts via a new `extraContent` shell slot; eslint baseline genuinely improved (25 -> 24 errors) by deleting duplicated code; QGIP still correctly blocked behind item 7.2 repair | `<pending>` | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
 | 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
 | 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
@@ -1334,3 +1334,47 @@ Family migration (item 6.3) is intentionally not done here. Hierarchical path br
 ### Next item
 
 Item 6.3: migrate contracts, PBS, grants, VIC output performance, and ACT invoices onto the shell in that order (QLD QGIP only after Wave 5 repair), per the plan's established migration order and exit gate.
+
+## Milestone: item 6.3 completion - migrate the five family pages onto the generic shell
+
+### Item
+
+Plan section 6.3's literal migration instruction, as distinct from the earlier-satisfied Wave 4 exit gate.
+
+### A discrepancy found and resolved
+
+The task opening this session claimed item 6.3 was already complete. This ledger's own last-written line said the opposite ("Family migration (item 6.3) is intentionally not done here... is next"). Trusting the repository's own evidence over the assumed premise, the gap was verified real and closed in this pass. The five earlier "6.3 X explorer complete" rows above refer to a different, already-satisfied claim - the plan's literal exit gate (reachable, non-additive, truthful pagination) - not the stronger "one reusable explorer framework" instruction in the same plan section, which was not yet true until this pass.
+
+### Previous behavior
+
+Each of the five family pages contained its own full fetch/state/pagination implementation (~170-200 lines each) with hard-coded scope and bespoke disclosure prose - the duplication item 6.1/6.2 were built to eliminate.
+
+### Changes
+
+- `ExplorerShell.tsx`: added an optional `extraContent` slot for family-specific supplementary navigation the generic shell shouldn't need to know about.
+- All five pages rewritten as thin `<ExplorerShell familyId="..." />` wrappers at their unchanged URLs; `contracts/page.tsx` passes `DebtNav` + the GFS-liabilities link as `extraContent` (the one real family-specific addition among the five).
+- `explorers/page.tsx`: removed the now-redundant 6.2-era "preview" section.
+- `.eslint-baseline.json`: lowered `max_errors` 25 -> 24, a genuine improvement from deleting duplicated code (flagged and confirmed by the baseline tool itself).
+
+### Validation
+
+- [`explorer-shell-migration-6.3-20260813T172550Z.md`](explorer-shell-migration-6.3-20260813T172550Z.md) records full evidence.
+- `tsc`/`lint:ci`/`build`/`test:unit` all passed; route list unchanged (implementations changed, not routes).
+- Live Playwright verification of all 5 migrated pages at their original URLs: identical real totals to every prior milestone report for these same scopes, zero console errors, `DebtNav`/GFS link preserved on contracts. Searched e2e/backend tests for references to the old bespoke page copy/components first - none found, so nothing needed updating.
+- Full backend suite: 676 passed, 0 regressions (no backend files touched).
+
+### Data impact
+
+None.
+
+### Frontend impact
+
+Five family pages now genuinely share one implementation at their existing URLs; several gained real capabilities they lacked as bespoke pages (server-side search, availability-aware year selector, generic `source_breakdown`).
+
+### Remaining risks
+
+QLD QGIP migration remains correctly blocked behind item 7.2 repair. The production deployment lag continues to apply.
+
+### Next item
+
+Wave 5 (structured-family repairs and new products): MFS sibling workbooks, QLD QGIP repair, state borrowing adapter repairs, QLD Consolidated Fund/CFFR, QLD on-time payment, remaining VIC AFS structured sheets - per the plan's own next heading.

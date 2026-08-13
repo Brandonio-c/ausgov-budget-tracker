@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -30,9 +30,9 @@ function pickDefaultYear(availability: ExplorerAvailability, status: string): st
   return rows.reduce((best, r) => (r.count > best.count ? r : best)).financial_year;
 }
 
-type Props = { familyId: string };
+type Props = { familyId: string; extraContent?: ReactNode };
 
-function ExplorerShellInner({ familyId }: Props) {
+function ExplorerShellInner({ familyId, extraContent }: Props) {
   const searchParams = useSearchParams();
 
   const [availability, setAvailability] = useState<ExplorerAvailability | null>(null);
@@ -205,6 +205,7 @@ function ExplorerShellInner({ familyId }: Props) {
       ) : null}
 
       <DashboardNav />
+      {extraContent}
 
       <div className="mt-4 flex flex-wrap gap-3">
         <label className="block text-sm">
@@ -345,10 +346,10 @@ function ExplorerShellInner({ familyId }: Props) {
   );
 }
 
-export function ExplorerShell({ familyId }: Props) {
+export function ExplorerShell({ familyId, extraContent }: Props) {
   return (
     <Suspense fallback={<main className="p-6 text-sm text-zinc-500">Loading…</main>}>
-      <ExplorerShellInner familyId={familyId} />
+      <ExplorerShellInner familyId={familyId} extraContent={extraContent} />
     </Suspense>
   );
 }
