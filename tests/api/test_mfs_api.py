@@ -122,14 +122,20 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> TestClient:
     return TestClient(app)
 
 
-def test_measures_lists_all_15(client: TestClient):
+def test_measures_lists_all_35(client: TestClient):
+    """15 Aggregates measures (unchanged) + 20 Note 3 measures added in
+    item 7.1's second MFS sibling workbook load - this endpoint is driven
+    entirely by config/measure-semantics/mfs.yaml, so no backend code
+    change was needed for the count to grow from 15 to 35."""
     r = client.get("/v2/mfs/measures")
     assert r.status_code == 200
     body = r.json()
-    assert len(body) == 15
+    assert len(body) == 35
     types = {m["measure_type"] for m in body}
     assert "mfs_ytd_revenue" in types
     assert "mfs_stock_total_assets" in types
+    assert "mfs_note3_defence" in types
+    assert "mfs_note3_total_expenses" in types
 
 
 def test_series_filters_by_financial_year(client: TestClient):

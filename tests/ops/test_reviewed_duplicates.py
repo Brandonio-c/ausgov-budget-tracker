@@ -211,17 +211,24 @@ def test_validate_config_accepts_empty_registry(tmp_path):
     assert result["entry_count"] == 0
 
 
-def test_real_repo_config_has_the_six_reviewed_false_positive_groups():
+def test_real_repo_config_has_the_expected_reviewed_false_positive_groups():
     """The real registry (config/audit/reviewed_duplicate_facts.yaml) has
     the 4 query-false-positive groups from the database-hygiene
-    milestone's Task 3 duplicate-fact investigation, plus 2 more from the
+    milestone's Task 3 duplicate-fact investigation, 2 more from the
     MFS-aggregates milestone's Task 7 load (two genuinely different
     reporting months under mfs_ytd_net_capital_investment that happen to
     report the identical cumulative YTD figure - see
-    ops/reports/mfs-duplicate-fact-investigation-*.md). The original 5th
-    group (QLD QGIP Goondiwindi "Black Spot") was a genuine true
-    duplicate, resolved by deletion rather than being registered here - a
-    true duplicate must never be reviewed into a permanent pass."""
+    ops/reports/mfs-duplicate-fact-investigation-*.md), and 43 more from
+    item 7.1's MFS Note 3 (Total expense by function) load: three lumpy,
+    irregular-flow measures (Contingency reserve, Natural disaster relief,
+    Nominal superannuation interest) that are genuinely flat across
+    several consecutive reporting months in a given year, verified
+    directly against the raw workbook for representative years - see
+    ops/reports/mfs-note3-duplicate-fact-investigation-*.md. Total: 4 + 2
+    + 43 = 49. The original 5th group (QLD QGIP Goondiwindi "Black Spot")
+    was a genuine true duplicate, resolved by deletion rather than being
+    registered here - a true duplicate must never be reviewed into a
+    permanent pass."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 6
+    assert result["entry_count"] == 49

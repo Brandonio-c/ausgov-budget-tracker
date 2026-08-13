@@ -141,3 +141,476 @@ reviewed_duplicate_facts:
       April, a real intervening change, not evidence of duplication.
     evidence_report: ops/reports/mfs-duplicate-fact-investigation-20260805T003818Z.md#group-2-fy2022-23-4400000000
     review_date: "2026-08-05"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2005-06"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2006-07"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2007-08"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2008-09"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 20000000
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2009-10"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2010-11"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2011-12"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2012-13"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2013-14"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2014-15"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2015-16"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2016-17"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2017-18"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2018-19"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2019-20"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2020-21"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2021-22"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2022-23"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2023-24"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2024-25"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Contingency reserve"
+    financial_year: "2025-26"
+    measure_type: mfs_note3_contingency_reserve
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      The Contingency reserve YTD figure is genuinely flat for this financial year - verified directly against the raw workbook (e.g. FY2005-06: 0 in every one of the 11 reporting months). A contingency reserve budget line that is not drawn down produces an identical cumulative $0 (or, in FY2008-09, a single revision step) across consecutive months, which duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish from a true duplicate on its own. Every MFS Note 3 fact for one measure_type shares a single node (same pattern as the existing federal_mfs_aggregates entries below).
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2008-09"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 9665000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2008-09"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 12665000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2008-09"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 58546000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2009-10"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 91421000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2009-10"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 108296000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2010-11"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2011-12"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 371000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2011-12"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 2765000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2011-12"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 1902765000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2012-13"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2012-13"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 1000000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2013-14"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2014-15"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2015-16"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: -1000
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2015-16"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2016-17"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2017-18"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2018-19"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2019-20"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Natural disaster relief"
+    financial_year: "2020-21"
+    measure_type: mfs_note3_natural_disaster_relief
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Natural disaster relief is a lumpy, irregular flow - verified directly against the raw workbook for representative years (e.g. FY2011-12: 3.651/9.559/9.823/0.371/0.371/2.765/2.765/1902.765/1902.765/1902.765/3.076 $m across the 11 months - genuinely flat for 2-3 consecutive months at a time as disaster-relief estimates are revised in occasional steps, then revised down sharply by May; FY2015-16: -0.001/-0.001/-0.001/0/0/0/0/0/0/0/0 $m, a small negative YTD adjustment flat for 3 months then flat at 0). duplicate_facts()'s grouping - lacking reporting_month - cannot distinguish consecutive identical months from a true duplicate.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Nominal superannuation interest"
+    financial_year: "2006-07"
+    measure_type: mfs_note3_nominal_superannuation_interest
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Nominal superannuation interest is recognised in occasional accrual steps, not smoothly monthly - verified directly against the raw workbook: FY2006-07's full YTD sequence is 0/0/0/0/831.593/1015.857/1198.75/1198.75/2071.5/2301.667/5387.558 $m, genuinely flat at 0 for the first 4 months and flat at 1198.75 for 2 months, matching the two flagged groups exactly.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"
+  - source_key: federal_mfs_note3_function
+    node_path: "MFS Note 3: Nominal superannuation interest"
+    financial_year: "2006-07"
+    measure_type: mfs_note3_nominal_superannuation_interest
+    estimate_status: actual
+    amount_aud: 1198750000
+    classification: query_false_positive
+    reason: >
+      Nominal superannuation interest is recognised in occasional accrual steps, not smoothly monthly - verified directly against the raw workbook: FY2006-07's full YTD sequence is 0/0/0/0/831.593/1015.857/1198.75/1198.75/2071.5/2301.667/5387.558 $m, genuinely flat at 0 for the first 4 months and flat at 1198.75 for 2 months, matching the two flagged groups exactly.
+    evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
+    review_date: "2026-08-13"

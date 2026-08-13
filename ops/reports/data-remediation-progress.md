@@ -53,7 +53,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | Contracts jurisdiction-mix disclosure (found scoping 6.1) | complete | Discovered the "Contracts explorer" scope for 2024-25 is 100% NSW/NT/QLD state data, 0% federal AusTender, undisclosed; added a `source_breakdown` facet to `/v2/tree` (2 new tests, exact-match against direct SQL) and surfaced it with a disclosure sentence and per-jurisdiction counts on the page; verified live in a real browser, 0 console errors | `26dd135` | Splitting into true per-jurisdiction family pages remains a legitimate item 6.1/6.3 scope boundary, not required by the exit gate |
 | 6.2 Reusable explorer shell | complete | `ExplorerShell.tsx` + `explorerApi.ts` + `app/explorers/family/[family]/page.tsx`, registry-driven end to end (year selector/estimate-status/additive-note banner/source_breakdown all derived from `/v2/explorers` responses, zero per-family hardcoding); verified live for all 5 registered families (zero console errors), server-side search, honest 404/no-data-year states, and zero regression to the 2 existing dedicated pages spot-checked; a real defaulting bug (latest-year default landing on sparse years) was found and fixed during live verification | `4f76350` | Family migration (item 6.3) intentionally not done in this pass; dynamic route placed at `/explorers/family/{id}` rather than the plan's literal `/explorers/[family]` since that slug is still shadowed by the 5 unmigrated static pages |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | complete | All 5 plan-listed families migrated onto the item 6.1/6.2 generic shell at their existing URLs (each page now a thin `<ExplorerShell familyId="..." />` wrapper instead of ~170-200 lines of bespoke fetch/state logic); live-verified zero regressions to any of the 5 real totals, `DebtNav`/GFS cross-link preserved on contracts via a new `extraContent` shell slot; eslint baseline genuinely improved (25 -> 24 errors) by deleting duplicated code; QGIP still correctly blocked behind item 7.2 repair | `c115219` | QGIP explorer after item 7.2 repair |
-| 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
+| 7.1 MFS sibling workbooks | in_progress | Workbook 2/5 (Note 3, Total expense by function) done: 20 new measure_types, +4,413 facts live, 0 backend/frontend code change needed (API/UI already registry-driven); found and fixed 2 real header-shape quirks (multi-row header FY2005-06..FY2011-12, internal-whitespace month token FY2013-14..FY2015-16) via a new shared mfs_common.py module; found and resolved 43 duplicate-fact false positives (evidence-based, same class already known from Aggregates); 16 new tests, 692 total passed, 0 regressions, 0 canonical-tree impact | `<pending>` | 4 sibling workbooks remain: operating statement, balance sheet, tax Notes 1/2, monthly profiles |
 | 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
 | 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
 | 7.4 QLD Consolidated Fund | not_started | 46 acquired PDFs; no product model | — | Cash/vintage model, adapters and explorer |
@@ -1378,3 +1378,44 @@ QLD QGIP migration remains correctly blocked behind item 7.2 repair. The product
 ### Next item
 
 Wave 5 (structured-family repairs and new products): MFS sibling workbooks, QLD QGIP repair, state borrowing adapter repairs, QLD Consolidated Fund/CFFR, QLD on-time payment, remaining VIC AFS structured sheets - per the plan's own next heading.
+
+## Milestone: MFS Note 3 (Total expense by function) - item 7.1, workbook 2 of 5
+
+### Item
+
+Plan section 7.1: implement the MFS sibling workbooks one at a time. `federal_mfs_aggregates` (workbook 1) was already complete; this closes Note 3 - Total expense by function (workbook 2).
+
+### Previous behavior
+
+The Note 3 `.xlsx` was acquired (21 sheets, FY2005-06..FY2025-26, checksummed) but had zero extractor or loader.
+
+### Changes
+
+- Factored shared header/footnote-row parsing out of `mfs_aggregates.py` into a new `scripts/ingest/extractors/mfs_common.py` (3 more sibling workbooks will need the identical parsing - real, not speculative, duplication). Verified behavior-preserving: `mfs_aggregates.py`'s existing tests pass unchanged and a fresh dry-run against the live database still idempotently matches all 3,354 existing facts.
+- Found and fixed two real structural quirks while building the shared module, both verified directly against the real file before assuming anything: an internal-whitespace-before-month header token (FY2013-14..FY2015-16), and a genuinely different header shape - the header spread across four separate physical rows instead of one combined cell (FY2005-06..FY2011-12), detected per-sheet and normalized into the same parsing path.
+- New `mfs_note3_function.py` extractor; 20 new `mfs_note3_*` measure types in `config/measure-semantics/mfs.yaml` (13 COFOG functions + 5 "Other purposes" items + Asset Sales, `only_published_financial_years`-gated to its real FY2005-06..FY2007-08 window + Total expenses, always the source's own stated cell, never computed); migration `020_mfs_note3_measures.sql`; new `load_mfs_note3_function.py` loader mirroring the Aggregates loader's revision-conflict discipline exactly.
+- Investigated 43 duplicate-fact candidates surfaced on a disposable copy before touching live: all three lumpy/irregular-flow measures (Contingency reserve, Natural disaster relief, Nominal superannuation interest) genuinely flat across consecutive months in real years - verified directly against the raw workbook, same false-positive class already documented for Aggregates. All 43 added to `config/audit/reviewed_duplicate_facts.yaml` with full evidence.
+
+### Validation
+
+- [`mfs-note3-function-20260813T212037Z.md`](mfs-note3-function-20260813T212037Z.md) and [`mfs-note3-duplicate-fact-investigation-20260813T180000Z.md`](mfs-note3-duplicate-fact-investigation-20260813T180000Z.md) record full evidence.
+- 16 new tests; full suite 692 passed, 0 regressions.
+- Disposable-copy-first: dry-run, apply, second apply (idempotent, 0 new inserts), `task9_sql_integrity_checks.py` (0 hard failures after the reviewed-duplicates update), `dashboard_depth_audit.py --check-fixture` (only the `database` path/timestamp differed from the golden fixture; manual diff confirmed `projections`/`graph` content byte-identical) - only then applied to live.
+- Live: backup taken first. Facts 288,636 -> 293,049 (+4,413, exact match), nodes +20. Second live apply: 0 new inserts. `task9`/`dashboard_depth_audit` on live: 0 hard failures, `fixture_matches: true`.
+- Zero backend or frontend code changes needed for reachability: `/v2/mfs/measures` and the existing MFS explorer page are both already registry/API-driven. Live-verified via Playwright: 35 measures in the dropdown (up from 15), "MFS Note 3: Defence" selectable and charts real data, 0 console errors.
+
+### Data impact
+
+`data/facts.db`: +4,413 facts, +20 nodes, +1 source_document, 0 changes to any existing source. Backup: `facts-20260813T175305Z.db`.
+
+### Dashboard impact
+
+None on the canonical annual tree (confirmed). The dedicated MFS explorer gains 20 new selectable series.
+
+### Remaining risks
+
+Four MFS sibling workbooks remain: operating statement, balance sheet, tax Notes 1/2, monthly profiles. Production deployment lag continues to apply to code (data is live immediately via the bind mount).
+
+### Next item
+
+Continue item 7.1 (Operating Statement, next in the plan's stated order), or item 7.2 (QLD QGIP repair) as an independent, parallel-eligible Wave 5 effort.

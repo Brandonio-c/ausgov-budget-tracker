@@ -18,136 +18,34 @@ mixing this file's year-to-date (partial-year) figures into the same
 additive/comparable bucket as complete full-year GFS actuals - see the
 accompanying ops report for why that decision is deferred rather than
 guessed.
+
+The actual sheet-parsing logic lives in mfs_common.py, shared with every
+MFS sibling workbook extractor (they all share the same sheet shape) -
+this module is a thin, source_id-bound wrapper around it.
 """
 
 from __future__ import annotations
 
 import csv
 import json
-import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pandas as pd
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mfs_common import extract_ytd_workbook, find_latest_asset  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 OUT_DIR = REPO_ROOT / "data" / "staging" / "breakdowns"
 QUARANTINE_DIR = REPO_ROOT / "data" / "staging" / "quarantine"
 
-HEADER_RE = re.compile(
-    r"^(?P<status>[A-Z]+)\s*\n(?P<fy_long>\d{4}-\d{4})\s*\n(?P<ytd>YTD\s+)?(?P<month>[A-Za-z]+)\s*\n(?P<unit>\$[a-z]+)\s*$"
-)
-UNIT_SCALE = {"$m": 1_000_000, "$b": 1_000_000_000, "$": 1}
-FOOTNOTE_ROW = re.compile(r"^\([a-z]\)")
-TRAILING_FOOTNOTE_MARK = re.compile(r"\([a-z]\)\s*$")
-
-
-def _fy_short(fy_long: str) -> str:
-    y1, y2 = fy_long.split("-")
-    return f"{y1}-{y2[-2:]}"
-
-
-def _relative_or_str(path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(REPO_ROOT))
-    except ValueError:
-        return str(path)
-
 
 def extract_workbook(path: Path, source_id: str) -> tuple[list[dict], list[dict]]:
-    rows: list[dict] = []
-    quarantine: list[dict] = []
-    xl = pd.ExcelFile(path)
-    for sheet in xl.sheet_names:
-        df = xl.parse(sheet, header=None)
-        if df.shape[0] < 3 or df.shape[1] < 2:
-            quarantine.append({"reason": "sheet_too_small", "sheet": sheet})
-            continue
-
-        header_row = df.iloc[1]
-        col_meta: dict[int, dict] = {}
-        for col_idx in range(1, df.shape[1]):
-            raw = header_row[col_idx]
-            if not isinstance(raw, str):
-                continue
-            m = HEADER_RE.match(raw.strip())
-            if not m:
-                quarantine.append(
-                    {"reason": "unparsed_column_header", "sheet": sheet, "column": col_idx, "header_text": raw}
-                )
-                continue
-            is_ytd = bool(m.group("ytd")) or m.group("month") == "July"
-            unit = m.group("unit")
-            if unit not in UNIT_SCALE:
-                quarantine.append(
-                    {"reason": "unknown_unit", "sheet": sheet, "column": col_idx, "unit": unit}
-                )
-                continue
-            col_meta[col_idx] = {
-                "status": m.group("status").lower(),
-                "fy": _fy_short(m.group("fy_long")),
-                "is_ytd": is_ytd,
-                "month": m.group("month"),
-                "unit": unit,
-                "header_text": raw.replace("\n", " "),
-            }
-
-        for row_idx in range(2, df.shape[0]):
-            label_raw = df.iloc[row_idx, 0]
-            if not isinstance(label_raw, str) or not label_raw.strip():
-                continue
-            if FOOTNOTE_ROW.match(label_raw.strip()):
-                break
-            label = TRAILING_FOOTNOTE_MARK.sub("", label_raw).strip()
-            for col_idx, meta in col_meta.items():
-                val = df.iloc[row_idx, col_idx]
-                if pd.isna(val):
-                    continue
-                try:
-                    amount = float(val) * UNIT_SCALE[meta["unit"]]
-                except (TypeError, ValueError):
-                    continue
-                if not meta["is_ytd"]:
-                    quarantine.append(
-                        {
-                            "reason": "non_ytd_column_not_supported",
-                            "sheet": sheet,
-                            "label": label,
-                            "column": meta["header_text"],
-                        }
-                    )
-                    continue
-                rows.append(
-                    {
-                        "fy": meta["fy"],
-                        "amount": amount,
-                        "measure_label": label,
-                        "estimate_status": meta["status"],
-                        "month": meta["month"],
-                        "unit": meta["unit"],
-                        "sheet": sheet,
-                        "locator": (
-                            f"source_id:{source_id} | sheet:{sheet} | row:{label} | "
-                            f"col:{meta['header_text']}"
-                        ),
-                        "cached_copy_path": _relative_or_str(path),
-                    }
-                )
-    return rows, quarantine
+    return extract_ytd_workbook(path, source_id)
 
 
 def _find_latest_asset(source_id: str) -> Path | None:
-    latest = REPO_ROOT / "data" / "raw" / "federal" / source_id / "latest.json"
-    if not latest.is_file():
-        return None
-    data = json.loads(latest.read_text(encoding="utf-8"))
-    for asset in data.get("assets") or []:
-        stored = asset.get("stored_path") or ""
-        if stored.lower().endswith((".xlsx", ".xls")):
-            p = REPO_ROOT / "data" / stored
-            if p.is_file():
-                return p
-    return None
+    return find_latest_asset(source_id)
 
 
 def main() -> int:

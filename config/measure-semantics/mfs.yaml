@@ -499,6 +499,490 @@ measures:
     reserved_not_loaded_this_milestone: true
 
 # ---------------------------------------------------------------------------
+# Note 3 - Total expense by function (federal_mfs_note3_function), the
+# second of the five MFS sibling workbooks item 7.1 completes one at a
+# time. Verified directly against all 21 real sheets
+# (FY2005-06..FY2025-26) before writing any label mapping below - see
+# ops/reports/mfs-note3-function-20260813*.md for the full evidence,
+# including the real header-shape and label-drift findings.
+#
+# All 18 function-level rows below (13 COFOG-style categories + 5 "Other
+# purposes" line items) plus mfs_note3_total_expenses are independently,
+# directly published by the source every year they exist - Total expenses
+# is never computed here by summing the others; every fact cites its own
+# source cell. The 18 are genuinely additive to the published total (a
+# real, source-stated relationship, not inferred), so root_total_allowed
+# is 1 for them and 0 for the already-derived total.
+# ---------------------------------------------------------------------------
+  mfs_note3_general_public_services:
+    economic_meaning: >
+      Australian Government general government sector expense for the
+      "General public services" COFOG-style function, accrual basis, YTD
+      through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_general_public_services
+    allowed_comparisons:
+      - mfs_note3_general_public_services at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series (never summed by the API)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["General public services", "General public services(a)"]
+
+  mfs_note3_defence:
+    economic_meaning: >
+      General government sector expense for the "Defence" function, YTD
+      through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_defence
+    allowed_comparisons:
+      - mfs_note3_defence at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Defence", "Defence(a)"]
+
+  mfs_note3_public_order_safety:
+    economic_meaning: >
+      General government sector expense for the "Public order and safety"
+      function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_public_order_safety
+    allowed_comparisons:
+      - mfs_note3_public_order_safety at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Public order and safety"]
+
+  mfs_note3_education:
+    economic_meaning: >
+      General government sector expense for the "Education" function, YTD
+      through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_education
+    allowed_comparisons:
+      - mfs_note3_education at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Education"]
+
+  mfs_note3_health:
+    economic_meaning: >
+      General government sector expense for the "Health" function, YTD
+      through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_health
+    allowed_comparisons:
+      - mfs_note3_health at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Health"]
+
+  mfs_note3_social_security_welfare:
+    economic_meaning: >
+      General government sector expense for the "Social security and
+      welfare" function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_social_security_welfare
+    allowed_comparisons:
+      - mfs_note3_social_security_welfare at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Social security and welfare"]
+
+  mfs_note3_housing_community_amenities:
+    economic_meaning: >
+      General government sector expense for the "Housing and community
+      amenities" function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_housing_community_amenities
+    allowed_comparisons:
+      - mfs_note3_housing_community_amenities at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Housing and community amenities"]
+
+  mfs_note3_recreation_culture:
+    economic_meaning: >
+      General government sector expense for the "Recreation and culture"
+      function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_recreation_culture
+    allowed_comparisons:
+      - mfs_note3_recreation_culture at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Recreation and culture"]
+
+  mfs_note3_fuel_energy:
+    economic_meaning: >
+      General government sector expense for the "Fuel and energy"
+      function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_fuel_energy
+    allowed_comparisons:
+      - mfs_note3_fuel_energy at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Fuel and energy"]
+
+  mfs_note3_agriculture_forestry_fishing:
+    economic_meaning: >
+      General government sector expense for the "Agriculture, forestry
+      and fishing" function, YTD through the reporting month. Treated as
+      one continuous measure across a title-case/sentence-case wording
+      change (FY2005-06..FY2016-17 vs FY2017-18+) - same concept, source
+      itself presents it as one continuously-named function.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_agriculture_forestry_fishing
+    allowed_comparisons:
+      - mfs_note3_agriculture_forestry_fishing at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Agriculture, Forestry and Fishing", "Agriculture, forestry and fishing"]
+
+  mfs_note3_mining_manufacturing_construction:
+    economic_meaning: >
+      General government sector expense for the mining/manufacturing/
+      construction function, YTD through the reporting month. Treated as
+      one continuous measure across a genuine wording change: "Mining and
+      Mineral Resources (other than fuels); Manufacturing and
+      Construction" (FY2005-06..FY2008-09) became "Mining, manufacturing
+      and construction" (FY2009-10+) - verified as the same function by
+      its stable position in the source's own function list, not by
+      fuzzy/substring matching.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_mining_manufacturing_construction
+    allowed_comparisons:
+      - mfs_note3_mining_manufacturing_construction at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants:
+      - "Mining and Mineral Resources (other than fuels); \n   Manufacturing and Construction"
+      - "Mining, manufacturing and construction"
+
+  mfs_note3_transport_communication:
+    economic_meaning: >
+      General government sector expense for the "Transport and
+      communication" function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_transport_communication
+    allowed_comparisons:
+      - mfs_note3_transport_communication at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Transport and communication"]
+
+  mfs_note3_other_economic_affairs:
+    economic_meaning: >
+      General government sector expense for the "Other economic affairs"
+      function, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_other_economic_affairs
+    allowed_comparisons:
+      - mfs_note3_other_economic_affairs at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Other economic affairs"]
+
+  mfs_note3_public_debt_interest:
+    economic_meaning: >
+      General government sector expense for "Public debt interest", one
+      of the five "Other purposes" line items, YTD through the reporting
+      month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_public_debt_interest
+    allowed_comparisons:
+      - mfs_note3_public_debt_interest at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Public debt interest"]
+
+  mfs_note3_nominal_superannuation_interest:
+    economic_meaning: >
+      General government sector expense for "Nominal superannuation
+      interest", one of the five "Other purposes" line items, YTD through
+      the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_nominal_superannuation_interest
+    allowed_comparisons:
+      - mfs_note3_nominal_superannuation_interest at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Nominal superannuation interest"]
+
+  mfs_note3_general_purpose_intergovt_transactions:
+    economic_meaning: >
+      General government sector expense for "General purpose
+      inter-government transactions", one of the five "Other purposes"
+      line items, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_general_purpose_intergovt_transactions
+    allowed_comparisons:
+      - mfs_note3_general_purpose_intergovt_transactions at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["General purpose inter-government transactions"]
+
+  mfs_note3_natural_disaster_relief:
+    economic_meaning: >
+      General government sector expense for "Natural disaster relief",
+      one of the five "Other purposes" line items, YTD through the
+      reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_natural_disaster_relief
+    allowed_comparisons:
+      - mfs_note3_natural_disaster_relief at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Natural disaster relief"]
+
+  mfs_note3_contingency_reserve:
+    economic_meaning: >
+      General government sector expense for the "Contingency reserve",
+      one of the five "Other purposes" line items, YTD through the
+      reporting month. From September 2008 (per the source's own
+      footnote), asset-sale-related expenses are treated as a component
+      of this line - see mfs_note3_asset_sales for the earlier, separately
+      disclosed predecessor.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_note3_contingency_reserve
+    allowed_comparisons:
+      - mfs_note3_contingency_reserve at the same reporting_month, a different financial_year
+      - any other mfs_note3_* function measure at the same reporting_month/financial_year, plotted as a distinct series
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Contingency reserve", "Contingency reserve (a)"]
+
+  mfs_note3_asset_sales:
+    economic_meaning: >
+      General government sector expense for "Asset Sales", disclosed as
+      its own "Other purposes" line item only FY2005-06 through
+      FY2007-08. From September 2008 the source folds asset-sale-related
+      expenses into mfs_note3_contingency_reserve instead (per that
+      measure's own footnote) - this measure is never backfilled or
+      merged into contingency reserve for years it does not itself cover.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_asset_sales
+    allowed_comparisons:
+      - mfs_note3_asset_sales at the same reporting_month, a different financial_year (FY2005-06..FY2007-08 only)
+    forbidden_comparisons:
+      - summed with or substituted for mfs_note3_contingency_reserve in any year
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years it exists
+    source_label_variants: ["Asset Sales"]
+    only_published_financial_years: ["2005-06", "2006-07", "2007-08"]
+
+  mfs_note3_total_expenses:
+    economic_meaning: >
+      The published "Total expenses" bottom line of the Note 3 function
+      breakdown - the sum, as stated directly by the source (never
+      computed here), of every function/"Other purposes" line item above
+      for the same reporting_month/financial_year.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_note3_total_expenses
+    allowed_comparisons:
+      - mfs_note3_total_expenses at the same reporting_month, a different financial_year
+      - mfs_ytd_expense at the same reporting_month, same financial_year, plotted as a distinct series (both describe total GGS expense; Note 3's total is by-function-derived, mfs_ytd_expense is the Aggregates workbook's own directly published total - they are expected to be numerically close but are two distinct published figures, never assumed identical or summed together)
+    forbidden_comparisons:
+      - summed with any of the function/"Other purposes" measures above (already their total; summing again double-counts)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Total expenses"]
+
+# ---------------------------------------------------------------------------
 # Quarantine rules (applied by the Task 5 loader, in addition to the
 # per-measure gates above)
 # ---------------------------------------------------------------------------
