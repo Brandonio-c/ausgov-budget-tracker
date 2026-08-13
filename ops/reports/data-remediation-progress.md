@@ -51,7 +51,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.3 ACT invoices explorer | complete | 46,714 already-loaded ACT notifiable invoice facts (13 years) had zero frontend reachability; confirmed `cash_outflow` group is shared with an unrelated source but `estimate_status=invoice` correctly scopes to ACT only; verified live in a real browser: truthful totals, working Load-more, 0 console errors | `e9bb39a` | True agency->supplier->invoice drill-down hierarchy and server-side search remain part of the larger item 6.1 explorer API |
 | 6.3 PBS explorer | complete | 16,800 already-loaded `federal_pbs_programs_all` facts had zero frontend reachability; added an optional `source_key` filter to `/v2/tree` (new test proves it narrows a real shared compatibility triple and preserves unfiltered behaviour when omitted) so the page shows PBS facts only, not co-scoped state/other-PBS sources; verified live in a real browser across year/estimate_status switches, 0 console errors | `d7717fb` | Hierarchical edition->portfolio/entity->outcome/program/component depth and server-side search remain part of the larger item 6.1 explorer API |
 | Contracts jurisdiction-mix disclosure (found scoping 6.1) | complete | Discovered the "Contracts explorer" scope for 2024-25 is 100% NSW/NT/QLD state data, 0% federal AusTender, undisclosed; added a `source_breakdown` facet to `/v2/tree` (2 new tests, exact-match against direct SQL) and surfaced it with a disclosure sentence and per-jurisdiction counts on the page; verified live in a real browser, 0 console errors | `26dd135` | Splitting into true per-jurisdiction family pages remains a legitimate item 6.1/6.3 scope boundary, not required by the exit gate |
-| 6.2 Reusable explorer shell | not_started | Existing explorer pages are family-specific | — | Add generic shell and shared evidence components |
+| 6.2 Reusable explorer shell | complete | `ExplorerShell.tsx` + `explorerApi.ts` + `app/explorers/family/[family]/page.tsx`, registry-driven end to end (year selector/estimate-status/additive-note banner/source_breakdown all derived from `/v2/explorers` responses, zero per-family hardcoding); verified live for all 5 registered families (zero console errors), server-side search, honest 404/no-data-year states, and zero regression to the 2 existing dedicated pages spot-checked; a real defaulting bug (latest-year default landing on sparse years) was found and fixed during live verification | `<pending>` | Family migration (item 6.3) intentionally not done in this pass; dynamic route placed at `/explorers/family/{id}` rather than the plan's literal `/explorers/[family]` since that slug is still shadowed by the 5 unmigrated static pages |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | not_started | QGIP repair (item 7.2) still blocks its explorer; all other 6.3 families now complete | — | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | not_started | Five acquired structured siblings lack adapters | — | Implement per-workbook measures, fixtures and MFS tabs |
 | 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
@@ -1293,3 +1293,44 @@ Frontend migration onto the registry remains item 6.2/6.3 territory, not redone 
 ### Next item
 
 Item 6.1 is complete against the plan's explicit list. Item 6.2 (generic frontend explorer shell) is next, followed by migrating the five existing family pages onto it per the plan's established order.
+
+## Milestone: item 6.2 completion - generic frontend explorer shell
+
+### Item
+
+Plan section 6.2: the generic explorer page/component consuming item 6.1's registry-backed API.
+
+### Previous behavior
+
+`ExplorerShell.tsx`, `explorerApi.ts`, and any `[family]` route did not exist (confirmed via `find` before writing anything). The five family pages each still hard-coded their own scope and duplicated citation/pagination/search logic.
+
+### Changes
+
+- `src/frontend/lib/explorerApi.ts`: typed client for every item-6.1 endpoint.
+- `src/frontend/components/ExplorerShell.tsx`: the generic shell - registry-driven year selector (only years with real data, with counts), estimate-status selector (only rendered when a family actually has more than one), the registry's `additive_note` as a generic source/semantic banner, the family-scoped `source_breakdown` always shown, server-side debounced search, an honestly minimal breadcrumb (no fabricated hierarchy - re-confirmed no family has real `node_edges`), and explicit unknown-family/no-data-year/empty/error states.
+- `src/frontend/app/explorers/family/[family]/page.tsx`: the dynamic route, deliberately placed off the plan's literal suggested path because the 5 existing pages already shadow it; `generateStaticParams()` reads the actual `config/explorers/families.yaml` registry file via a narrow regex rather than a hard-coded id list, so the static-export build target cannot drift from the real registry.
+- `src/frontend/app/explorers/page.tsx`: added a registry-driven section linking to the shell for every family, alongside the untouched existing links.
+- Found and fixed a real defaulting bug during live verification: picking the *latest* year (rather than the *most-populated* one) landed several families on sparse edge years (contracts: 21 vs 9,036 rows; PBS: 603/$2.6T vs 1,980/$5.9T) - fully disclosed, nothing hidden, but a misleading first view. Also surfaced further evidence of the pre-existing malformed-`financial_year` data-quality pattern (PBS: `"2025-20"`, `"2026-29"`, etc.), consistent with contracts' already-flagged `"2022-20"`.
+
+### Validation
+
+- [`explorer-shell-6.2-20260813T163357Z.md`](explorer-shell-6.2-20260813T163357Z.md) records full evidence.
+- `tsc --noEmit` clean (empirically confirmed this Next.js version's async dynamic-route `params` convention rather than guessing, per `AGENTS.md`'s warning that this version has training-data-diverging breaking changes); `lint:ci` back to baseline after fixing 2 `react-hooks/set-state-in-effect` violations; `build` succeeded with exactly the 5 real families statically generated; `test:unit` passed.
+- Live Playwright verification against freshly-confirmed backend/frontend processes: all 5 families correct with zero console errors, server-side search working, honest 404/no-data-year states, contracts' full jurisdiction disclosure reproduced generically, and the 2 already-verified dedicated pages re-checked byte-for-byte unaffected.
+- No backend files touched this pass (`git status` confirms frontend-only diff).
+
+### Data impact
+
+None.
+
+### Frontend impact
+
+A new generic, registry-driven explorer surface exists at `/explorers/family/{id}` for all 5 completed families, alongside their still-untouched dedicated pages.
+
+### Remaining risks
+
+Family migration (item 6.3) is intentionally not done here. Hierarchical path browsing remains unavailable until a family gains real graph structure. The malformed-`financial_year` pattern now has two independent pieces of evidence (contracts, PBS) and deserves a dedicated data-quality pass. The production deployment lag continues to apply.
+
+### Next item
+
+Item 6.3: migrate contracts, PBS, grants, VIC output performance, and ACT invoices onto the shell in that order (QLD QGIP only after Wave 5 repair), per the plan's established migration order and exit gate.
