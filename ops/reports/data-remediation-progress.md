@@ -53,7 +53,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | Contracts jurisdiction-mix disclosure (found scoping 6.1) | complete | Discovered the "Contracts explorer" scope for 2024-25 is 100% NSW/NT/QLD state data, 0% federal AusTender, undisclosed; added a `source_breakdown` facet to `/v2/tree` (2 new tests, exact-match against direct SQL) and surfaced it with a disclosure sentence and per-jurisdiction counts on the page; verified live in a real browser, 0 console errors | `26dd135` | Splitting into true per-jurisdiction family pages remains a legitimate item 6.1/6.3 scope boundary, not required by the exit gate |
 | 6.2 Reusable explorer shell | complete | `ExplorerShell.tsx` + `explorerApi.ts` + `app/explorers/family/[family]/page.tsx`, registry-driven end to end (year selector/estimate-status/additive-note banner/source_breakdown all derived from `/v2/explorers` responses, zero per-family hardcoding); verified live for all 5 registered families (zero console errors), server-side search, honest 404/no-data-year states, and zero regression to the 2 existing dedicated pages spot-checked; a real defaulting bug (latest-year default landing on sparse years) was found and fixed during live verification | `4f76350` | Family migration (item 6.3) intentionally not done in this pass; dynamic route placed at `/explorers/family/{id}` rather than the plan's literal `/explorers/[family]` since that slug is still shadowed by the 5 unmigrated static pages |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | complete | All 5 plan-listed families migrated onto the item 6.1/6.2 generic shell at their existing URLs (each page now a thin `<ExplorerShell familyId="..." />` wrapper instead of ~170-200 lines of bespoke fetch/state logic); live-verified zero regressions to any of the 5 real totals, `DebtNav`/GFS cross-link preserved on contracts via a new `extraContent` shell slot; eslint baseline genuinely improved (25 -> 24 errors) by deleting duplicated code; QGIP still correctly blocked behind item 7.2 repair | `c115219` | QGIP explorer after item 7.2 repair |
-| 7.1 MFS sibling workbooks | in_progress | Workbook 2/5 (Note 3, Total expense by function) done: 20 new measure_types, +4,413 facts live, 0 backend/frontend code change needed (API/UI already registry-driven); found and fixed 2 real header-shape quirks (multi-row header FY2005-06..FY2011-12, internal-whitespace month token FY2013-14..FY2015-16) via a new shared mfs_common.py module; found and resolved 43 duplicate-fact false positives (evidence-based, same class already known from Aggregates); 16 new tests, 692 total passed, 0 regressions, 0 canonical-tree impact | `31c8b4d` | 4 sibling workbooks remain: operating statement, balance sheet, tax Notes 1/2, monthly profiles |
+| 7.1 MFS sibling workbooks | in_progress | Workbook 2/5 (Note 3, Total expense by function) done: 20 new measure_types, +4,413 facts live, 0 backend/frontend code change needed (API/UI already registry-driven); found and fixed 2 real header-shape quirks via a new shared mfs_common.py module; found and resolved 43 duplicate-fact false positives; 16 new tests, 692 total passed, 0 regressions, 0 canonical-tree impact. Workbook 3/5 (Operating Statement) investigated and deliberately deferred: found at least 3 structurally distinct generations (not a richer version of Note 3's flat shape) including a genuine same-label, different-section, different-value collision ("Actuarial revaluations") - evidence and a recommended per-generation approach recorded, no code written | `31c8b4d` | Operating Statement needs a dedicated future pass (see scoping report); Balance Sheet, Tax Notes 1/2, Monthly Profiles remain untouched |
 | 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
 | 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
 | 7.4 QLD Consolidated Fund | not_started | 46 acquired PDFs; no product model | — | Cash/vintage model, adapters and explorer |
@@ -1419,3 +1419,25 @@ Four MFS sibling workbooks remain: operating statement, balance sheet, tax Notes
 ### Next item
 
 Continue item 7.1 (Operating Statement, next in the plan's stated order), or item 7.2 (QLD QGIP repair) as an independent, parallel-eligible Wave 5 effort.
+
+## Milestone: MFS Operating Statement scoping investigation - deferred with evidence
+
+### Item
+
+Plan section 7.1, third MFS sibling workbook in the stated order.
+
+### Previous behavior
+
+`federal_mfs_operating_statement` acquired but unadapted, same as the other three remaining siblings.
+
+### Investigation and finding
+
+Direct inspection of all 21 sheets before writing any code found at least three structurally distinct generations, not one richer version of Note 3's flat single-table shape: FY2005-06/06-07 ("Income Statement", 9-13 high-level items plus a separate second reconciliation table on the same sheet); FY2007-08 (transitional `GFS revenue`/`GFS expenses` wording, plus a unique line-wrap defect splitting one label across two physical rows); FY2008-09..FY2025-26 (the modern, richly-sectioned statement) - and even within this "modern" 18-year span, the Other-economic-flows/equity subsection alone has cycled through at least four distinct vocabularies. A genuine section collision was confirmed: `"Actuarial revaluations"` appears twice per sheet from FY2013-14 onward, under two different sections, with different values - mapping on row label alone (as Note 3 safely could) would silently conflate two different GFS concepts here.
+
+### Disposition
+
+**Deferred, not attempted.** Building a correct mapping across this many under-resolved era boundaries in one pass would mean guessing which vocabulary a given year's row belongs to - exactly what this program's rules forbid. No code was written; nothing to roll back. Full evidence and a recommended per-generation approach for a future dedicated pass: [`mfs-operating-statement-scoping-20260813T220000Z.md`](mfs-operating-statement-scoping-20260813T220000Z.md).
+
+### Next item
+
+Redirecting this session's Wave 5 effort to item 7.2 (QLD QGIP repair) - an independent item with its own already-documented, differently-shaped defects, rather than rushing Operating Statement's real complexity.
