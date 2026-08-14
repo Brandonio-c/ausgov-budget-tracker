@@ -614,3 +614,960 @@ reviewed_duplicate_facts:
       Nominal superannuation interest is recognised in occasional accrual steps, not smoothly monthly - verified directly against the raw workbook: FY2006-07's full YTD sequence is 0/0/0/0/831.593/1015.857/1198.75/1198.75/2071.5/2301.667/5387.558 $m, genuinely flat at 0 for the first 4 months and flat at 1198.75 for 2 months, matching the two flagged groups exactly.
     evidence_report: ops/reports/mfs-note3-duplicate-fact-investigation-20260813T180000Z.md
     review_date: "2026-08-13"
+  - source_key: qld_on_time_payment_reports
+    node_path: "cdsb"
+    financial_year: "2025-26"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "cdsb"
+    financial_year: "2025-26"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "chde"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "chde"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dcsyw"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dcsyw"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dcyjma"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dcyjma"
+    financial_year: "2020-21"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 31
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dcyjma"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_pct_late_others
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_pct_late_smallbus
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_total_eligible_invoices
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dec"
+    financial_year: "2024-25"
+    measure_type: qld_otp_value_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "desbt"
+    financial_year: "2025-26"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "desbt"
+    financial_year: "2025-26"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 2
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "desbt"
+    financial_year: "2025-26"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dhlgppw"
+    financial_year: "2023-24"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dhlgppw"
+    financial_year: "2023-24"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 15
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dhlgppw"
+    financial_year: "2023-24"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dlgwv"
+    financial_year: "2024-25"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dlgwv"
+    financial_year: "2024-25"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dnrme"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dnrme"
+    financial_year: "2020-21"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 5
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dnrme"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "doe"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "doe"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 1
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_pct_late_smallbus
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dpc"
+    financial_year: "2020-21"
+    measure_type: qld_otp_value_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "drdmw"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "drdmw"
+    financial_year: "2020-21"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 13
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "drdmw"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsdi"
+    financial_year: "2023-24"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsdi"
+    financial_year: "2023-24"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsdilgp"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsdilgp"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsropg"
+    financial_year: "2025-26"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsropg"
+    financial_year: "2025-26"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 9
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dsropg"
+    financial_year: "2025-26"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_pct_late_smallbus
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtet"
+    financial_year: "2024-25"
+    measure_type: qld_otp_value_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtis"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dtis"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dyj"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dyj"
+    financial_year: "2020-21"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 12
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dyj"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dyjvs"
+    financial_year: "2024-25"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "dyjvs"
+    financial_year: "2024-25"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "epwon"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "epwon"
+    financial_year: "2020-21"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 20
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "epwon"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "hpwon"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "hpwon"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "nrmmrrd"
+    financial_year: "2025-26"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "nrmmrrd"
+    financial_year: "2025-26"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "opp"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "opp"
+    financial_year: "2020-21"
+    measure_type: qld_otp_pct_late_others
+    estimate_status: actual
+    amount_aud: 17
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "opp"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "qcs"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "qcs"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "qt"
+    financial_year: "2020-21"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "qt"
+    financial_year: "2020-21"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 4
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "qt"
+    financial_year: "2020-21"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "resources"
+    financial_year: "2021-22"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "resources"
+    financial_year: "2021-22"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 10
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "resources"
+    financial_year: "2021-22"
+    measure_type: qld_otp_penalty_interest_paid
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "resources"
+    financial_year: "2021-22"
+    measure_type: qld_otp_total_eligible_invoices
+    estimate_status: actual
+    amount_aud: 64
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "tatsipca"
+    financial_year: "2023-24"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_eligible_claims
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_invoices_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_mean_days_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_pct_late_others
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_pct_late_smallbus
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_total_eligible_invoices
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"
+  - source_key: qld_on_time_payment_reports
+    node_path: "watsipm"
+    financial_year: "2024-25"
+    measure_type: qld_otp_value_paid_late
+    estimate_status: actual
+    amount_aud: 0
+    classification: query_false_positive
+    reason: >
+      Two or more different quarters within this financial year genuinely report the identical value for this measure - verified directly against the extracted staging data (e.g. dcyjma FY2020-21: both Q3 and Q4 report mean_days_paid_late=31.0, from two different source rows). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish two genuinely different quarters that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates and federal_mfs_note3_function above.
+    evidence_report: ops/reports/qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md
+    review_date: "2026-08-14"

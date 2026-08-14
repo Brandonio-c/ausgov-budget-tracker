@@ -30,24 +30,39 @@ DB_PATH = REPO_ROOT / "data" / "facts.db"
 
 
 def duplicate_facts(conn) -> list[dict]:
-    """Same node + financial_year + measure_type + estimate_status + amount
+    """Same node + financial_year + measure_type + estimate_status + value
     appearing under more than one distinct fact_id - a true duplicate
     candidate, not just two different facts that happen to share a
     fact_key (impossible; fact_key is UNIQUE). Includes node_path and
     source_key (not just the mutable node_id) so a reviewer - or
     scripts/ops/reviewed_duplicates.py's declarative registry - can tell a
     genuine true duplicate apart from two legitimately distinct records
-    that a shared, under-specified node made look identical."""
+    that a shared, under-specified node made look identical.
+
+    "value" is COALESCE(amount_aud, quantity): a fact's real published
+    figure lives in exactly one of these two columns (amount_aud for
+    dollar measures, quantity for count/day/percent measures written
+    directly to quantity - e.g. item 7.5's qld_otp_* measures). Grouping on
+    amount_aud alone would treat every quantity-only fact as amount_aud
+    IS NULL and silently lump them into one giant false-duplicate group
+    (NULL groups with NULL in SQL), and the previous code crashed outright
+    on the first such fact (float(None)) - found when item 7.5's QLD
+    on-time-payment load hit this for the first time in this database's
+    history. The returned dict key stays "amount_aud" for backward
+    compatibility with every existing config/audit/reviewed_duplicate_facts.yaml
+    entry, which already only ever names real dollar amounts (quantity-only
+    measures did not exist when those entries were written)."""
     rows = conn.execute(
         """
         SELECT fn.node_id, n.name AS node_path, sd.source_key,
                f.financial_year, f.measure_type, f.estimate_status,
-               f.amount_aud, COUNT(DISTINCT f.id) AS n, GROUP_CONCAT(DISTINCT f.id) AS fact_ids
+               COALESCE(f.amount_aud, f.quantity) AS value,
+               COUNT(DISTINCT f.id) AS n, GROUP_CONCAT(DISTINCT f.id) AS fact_ids
         FROM facts f
         JOIN fact_nodes fn ON fn.fact_id = f.id AND fn.dimension_role = 'primary'
         JOIN nodes n ON n.id = fn.node_id
         JOIN source_documents sd ON sd.id = f.source_document_id
-        GROUP BY fn.node_id, f.financial_year, f.measure_type, f.estimate_status, f.amount_aud
+        GROUP BY fn.node_id, f.financial_year, f.measure_type, f.estimate_status, COALESCE(f.amount_aud, f.quantity)
         HAVING COUNT(DISTINCT f.id) > 1
         """
     ).fetchall()

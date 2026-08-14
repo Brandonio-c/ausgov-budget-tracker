@@ -57,7 +57,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 7.2 QLD QGIP repair | complete | All 3 named defects root-caused via direct inspection of all 14 real files and fixed: financial_year now derived only from filename (was picking up a dollar-amount column, "Previous financial year", as a year - root cause of the "2099-00" observation; also fixed a filename-regex gap that silently misattributed 5 real years' data to a hardcoded "2024-25"); amount-column now prefers per-year "Financial year expenditure" over "Total funding under this agreement" regardless of file column order, with the 2 years lacking a per-year column tagged with a distinct estimate_status so they can never blend with genuine single-year figures; subprogram structure now captured (was silently dropped for 11/14 files). Facts 176,719 -> 203,899 via replace_on_reload; 63,763 stale old nodes cleaned up (same method as the PBS reload); 0 hard failures, 0 canonical-tree impact, idempotent; 7 new tests, 699 total passed | `26522e2` | Dedicated QGIP explorer not yet built, per the plan's own "then expose..." sequencing; fact_key overwrite-not-sum collision risk on identical agency/program/subprogram text is pre-existing and flagged for a future pass, not fixed here |
 | 7.3 State borrowing gaps | in_progress | Investigated before writing any adapter code: the "three broken" sources are NOT broken - `orphan-node-investigation-20260804T180700Z.md` already resolved them as intentionally retired legacy duplicates (superseded by already-loaded canonical sources); reloading them would double-count debt. Real remaining gap is 8 acquired-but-unadapted sources (5 PDF, 1 XLSX, 1 CSV, 1 unchecked), one of which (`vic_tcv_benchmark_bond_outstandings`) was found to substantially overlap already-loaded data and needs non-additive treatment, not a plain adapter. A separate, larger federal AOFM debt-instrument family (12 sources) was also found, out of this item's "state borrowing" scope | `ecb6546` | Ledger correction is the concrete deliverable this pass; each of the 5 PDF sources needs its own evidence-first inspection before any adapter is written (see scoping report) |
 | 7.4 QLD Consolidated Fund | not_started | 46 acquired PDFs; no product model | — | Cash/vintage model, adapters and explorer |
-| 7.5 QLD on-time payments | not_started | 42 acquired CSVs; no pipeline/product | — | Typed compliance measures, adapter and explorer |
+| 7.5 QLD on-time payments | complete | 8 typed measure_types (count/cash/days/percent) live for 29 agencies; 794 facts loaded, idempotent, 0 hard failures, `fixture_matches: true` on live | `<pending>` | Dedicated compliance explorer not yet built, per the plan's own sequencing |
 | 7.6 VIC deferred sheets/KPIs | not_started | Structured sheets/KPI rows deliberately deferred | — | Separate typed products and surfaces |
 | 8.1 Pre-2019 FBO parsers | not_started | Acquired text-extractable PDFs; broad parser unsafe | — | Three generation-bounded parser families |
 | 8.2 1985-87 acquisition | not_started | Atlas reports sources external | — | Verify official source or mark blocked with evidence |
@@ -1510,3 +1510,52 @@ Ledger corrected (a real, load-bearing fix preventing a future wrong action). Fu
 ### Next item
 
 Redirecting to item 7.5 (QLD on-time payments) - a more homogeneous, single-publisher CSV family, for concrete forward progress this pass.
+
+## Milestone: QLD on-time payments (item 7.5)
+
+### Item
+
+Plan section 7.5: build an extractor/loader for the QLD Government On-Time Payment (small business) quarterly compliance reports (42 acquired CSVs, one per agency per acquisition batch) with typed measures for counts, percentages, days and payment values.
+
+### Previous behavior
+
+No pipeline existed for this source; 0 facts loaded.
+
+### Build approach and defects avoided by design, not found after the fact
+
+- 42 real files inspected directly before writing any mapping code: a stable 9-column shape, but 5 real wording variants for one column plus 1 file missing it entirely; inconsistent numeric formatting (`$X,XXX`, padded whitespace, `"Nil"` as a literal zero, blank as a genuinely missing observation); agency identity and financial year present only in the filename, not the CSV data, and for several files not confidently determinable at all.
+- Extractor (`scripts/ingest/extractors/qld_on_time_payments.py`) normalizes the 5 header-wording variants, handles one file's embedded-newline `"2025-26\nQuarter"` header cell, and skips (never guesses) any file whose agency code or financial year can't be confidently derived from its filename - the plan's standing rule against inferring identity from label similarity alone.
+- 8 dedicated `qld_otp_*` measure_types (migration `022_qld_on_time_payment_measures.sql`), each its own `compatibility_group`, none sharing a group with any expenditure/procurement measure. Count/day/percentage measures write to `facts.quantity`; only the two genuine dollar measures (`penalty_interest_paid`, `value_paid_late`) write to `amount_aud`.
+- Loader (`scripts/ingest/load_qld_on_time_payments.py`) maps QLD's Q1=Jul-Sep..Q4=Apr-Jun financial-year quarter convention to real calendar `period_start`/`period_end` dates; agency node identity is the literal filename-derived code, never expanded to a guessed department name (QLD agencies undergo frequent machinery-of-government renames).
+
+### Two real bugs found and fixed along the way
+
+1. **Extractor**: `pandas` represents a blank CSV cell as `float('nan')`, not Python `None`, even with `dtype=str` - `str(float('nan'))` is the non-empty string `"nan"`, which silently survived the original `raw is None` check and round-tripped back into a real NaN via `float("nan")`, reaching the `facts` table's `amount_aud IS NOT NULL OR quantity IS NOT NULL` CHECK constraint as neither a valid number nor SQL NULL. Fixed with an explicit `pd.isna()` check; extraction dropped from 840 to 794 genuine rows (the 46 difference were all-blank rows, correctly excluded, not lost data).
+2. **Shared infrastructure**: `task9_sql_integrity_checks.py`'s `duplicate_facts()` grouped strictly on `f.amount_aud`, so this was the first load in the database's history to produce `quantity`-only facts (`amount_aud IS NULL`) - every one of them fell into a single NULL-amount_aud SQL group, and `partition_duplicate_facts()` crashed outright (`TypeError: float(None)`) the first time it tried to process one. Fixed by grouping on `COALESCE(f.amount_aud, f.quantity)` in both the SELECT and GROUP BY, while keeping the returned dict's `"amount_aud"` key name for backward compatibility with all 49 pre-existing registry entries. 2 new regression tests added (quantity-only duplicate detection without crashing; quantity-only facts with genuinely different values correctly not conflated).
+
+### Duplicate-fact investigation
+
+87 `unresolved_duplicate_facts` groups surfaced after the COALESCE fix - the same structural false-positive class already documented for MFS: `duplicate_facts()` groups by value but not quarter/period, so two genuinely different quarters for one agency/measure that happen to report an identical value (very common for small agencies reporting `0` eligible claims/penalty interest quarter after quarter) are flagged as if duplicates. All 87 verified directly against the extracted staging CSV (not database metadata alone) and added to `config/audit/reviewed_duplicate_facts.yaml` (49 -> 136 entries). Full evidence in [`qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md`](qld-on-time-payments-duplicate-fact-investigation-20260814T150000Z.md), including a `133`-vs-`136` reconciliation: all 87 new entries matched cleanly; the gap was 3 stale, already-precedented `qld_qgip_expenditure` entries whose underlying duplicate pairs no longer exist after the earlier item 7.2 QGIP repair (a benign side effect of that unrelated fix, not a defect here).
+
+### Validation
+
+- Disposable-copy-first throughout: extraction, migration, first apply (794 inserted, 29 nodes, 0 conflicts) and a second apply (794 idempotent skips, 0 new inserts) all proven on a copy before touching live.
+- 32 new regression tests (30 extractor/loader, 2 task9 COALESCE fix); full backend suite 731 passed, 0 regressions.
+- `task9_sql_integrity_checks.py`: 0 hard failures on live after the registry update.
+- `dashboard_depth_audit.py --check-fixture` on live (no `--db` override, the definitive check): `fixture_matches: true`, `hard_failure_count: 0` - zero canonical-tree impact, as expected (8 entirely new, isolated compatibility groups).
+
+### Data impact
+
+`data/facts.db`: facts 320,229 -> 321,023 (+794, exact match to `facts_to_insert`); nodes 240,900 -> 240,929 (+29 agency nodes, exact match). Backup taken first: `facts-20260814T190319Z.db`.
+
+### Dashboard impact
+
+None on the canonical tree (new, isolated compatibility groups; confirmed via fixture match). No dedicated compliance explorer yet, per the plan's own "then expose..." sequencing already established for QGIP.
+
+### Remaining risks
+
+The production deployment lag (see the CRITICAL note at the top of this ledger) continues to apply to code; this item's data is live immediately via the bind mount. 13 of the 42 real files were quarantined at extraction (11 undeterminable financial year, 2 undeterminable agency code) - never guessed, consistent with this program's standing rule; a human reviewer could potentially resolve some of these from the source publication pages, but that is out of scope for this pass.
+
+### Next item
+
+Continuing Wave 5: item 7.4 (QLD Consolidated Fund, 46 acquired PDFs, no product model), the remaining MFS sibling workbooks (Balance Sheet, Tax Notes 1-2, Monthly Profiles, and the deferred Operating Statement), or the 5 remaining state-borrowing PDF sources scoped in item 7.3's report.

@@ -68,6 +68,31 @@ def _add_fact(
     return int(cur.lastrowid)
 
 
+def _add_quantity_fact(
+    conn,
+    fact_key: str,
+    source_document_id: int,
+    fy: str = "2024-25",
+    quantity: float = 10,
+    measure_type: str = "qld_otp_eligible_claims",
+    estimate_status: str = "actual",
+) -> int:
+    """Mirrors _add_fact but writes to quantity (amount_aud left NULL) -
+    the shape of a count/day/percentage measure (e.g. item 7.5's
+    qld_otp_* measures)."""
+    cur = conn.execute(
+        """
+        INSERT INTO facts (
+            fact_key, financial_year, period_granularity, measure_type,
+            accounting_basis, estimate_status, quantity, source_document_id,
+            source_locator_json, retrieved_at
+        ) VALUES (?, ?, 'financial_year', ?, 'count', ?, ?, ?, '{"locator": "test"}', '2026-01-01T00:00:00')
+        """,
+        (fact_key, fy, measure_type, estimate_status, quantity, source_document_id),
+    )
+    return int(cur.lastrowid)
+
+
 def _link(conn, fact_id: int, node_id: int, role: str = "primary") -> None:
     conn.execute(
         "INSERT INTO fact_nodes (fact_id, node_id, dimension_role) VALUES (?, ?, ?)",
@@ -110,6 +135,49 @@ def test_duplicate_facts_finds_nothing_when_facts_are_distinct(db):
     node = _add_node(db, doc, "Program / Line item")
     f1 = _add_fact(db, "k1", doc, amount=1000)
     f2 = _add_fact(db, "k2", doc, amount=2000)
+    _link(db, f1, node)
+    _link(db, f2, node)
+    db.commit()
+
+    assert task9.duplicate_facts(db) == []
+
+
+def test_duplicate_facts_detects_quantity_only_group_without_crashing(db):
+    """Regression (item 7.5, QLD on-time-payments): duplicate_facts() used
+    to GROUP BY f.amount_aud directly, so every quantity-only fact
+    (amount_aud IS NULL, real value in quantity) fell into a single
+    NULL-amount_aud SQL group, and partition_duplicate_facts() crashed with
+    TypeError: float() argument must be ... not 'NoneType' the first time
+    the database actually contained quantity-only facts. Now groups on
+    COALESCE(amount_aud, quantity), so two quantity-only facts with the
+    same value are correctly detected as a duplicate pair without crashing."""
+    doc = _add_source_document(db, "src_b")
+    node = _add_node(db, doc, "Agency / Measure")
+    f1 = _add_quantity_fact(db, "q1", doc, quantity=42)
+    f2 = _add_quantity_fact(db, "q2", doc, quantity=42)
+    _link(db, f1, node)
+    _link(db, f2, node)
+    db.commit()
+
+    groups = task9.duplicate_facts(db)
+    assert len(groups) == 1
+    assert groups[0]["amount_aud"] == 42
+
+    unresolved, reviewed = task9.partition_duplicate_facts(groups, [])
+    assert len(unresolved) == 1
+    assert reviewed == []
+
+
+def test_duplicate_facts_distinguishes_quantity_only_facts_by_value(db):
+    """Before the COALESCE fix, grouping by amount_aud alone put every
+    quantity-only fact into one NULL-amount_aud SQL group regardless of its
+    real quantity value - a systemic false-positive duplicate group. Two
+    quantity-only facts with genuinely different values must not be
+    conflated."""
+    doc = _add_source_document(db, "src_c")
+    node = _add_node(db, doc, "Agency / Measure")
+    f1 = _add_quantity_fact(db, "q1", doc, quantity=42)
+    f2 = _add_quantity_fact(db, "q2", doc, quantity=99)
     _link(db, f1, node)
     _link(db, f2, node)
     db.commit()

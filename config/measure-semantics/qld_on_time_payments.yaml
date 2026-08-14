@@ -1,0 +1,166 @@
+# QLD Government On-Time Payment (small business) quarterly compliance
+# reports (item 7.5). Verified directly against all 42 real acquired CSV
+# files before writing this - see
+# scripts/ingest/extractors/qld_on_time_payments.py's module docstring and
+# ops/reports/qld-on-time-payments-*.md for full evidence.
+#
+# Every measure below is a typed compliance metric (count, percentage, day,
+# or payment value) kept structurally separate from expenditure/procurement
+# commitments per the plan's explicit instruction: no measure here shares a
+# compatibility_group with any actual_accrual_expense/commitment measure
+# used elsewhere in this database. Count/day/percentage measures are stored
+# in facts.quantity (never amount_aud, which would misleadingly imply a
+# dollar figure); only the two genuine payment-value measures use
+# amount_aud.
+version: 1
+
+global_rules:
+  - id: quarter_facts_never_summed_across_quarters_as_annual
+    text: >
+      A quarter's count/percentage/day/payment-value fact describes that
+      one quarter only. Never summed across the four quarters of a
+      financial year to produce an annual figure here - the source itself
+      never publishes an annual total for these measures, so one would be
+      computed, not cited.
+  - id: percentages_and_counts_never_share_a_group_with_dollar_measures
+    text: >
+      qld_otp_pct_late_smallbus/others (percentages) and
+      qld_otp_eligible_claims/total_eligible_invoices/invoices_paid_late
+      (counts) are fundamentally different units from
+      qld_otp_penalty_interest_paid/qld_otp_value_paid_late (AUD) and
+      qld_otp_mean_days_paid_late (days) - never summed or compared as if
+      interchangeable.
+  - id: agency_identity_is_the_source_filename_code_verbatim
+    text: >
+      The "agency" node for each fact is the literal code embedded in that
+      file's own filename (e.g. "dpc", "dcyjma"), never expanded to a
+      guessed full department name - QLD agencies undergo frequent
+      machinery-of-government renames, and a wrong guess would misattribute
+      real compliance data. A reader can follow the citation to the source
+      URL to confirm which real department it is.
+  - id: undeterminable_filename_identity_is_skipped_not_guessed
+    text: >
+      A file whose financial year or agency code cannot be confidently
+      determined from its filename is skipped entirely (visible via the
+      extractor's quarantine output), never defaulted or guessed.
+
+measures:
+  qld_otp_eligible_claims:
+    economic_meaning: >
+      Count of eligible claims for penalty interest lodged by small
+      business suppliers against this agency, for the quarter.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: count
+    estimate_status: actual
+    unit: count
+    sign_convention: positive
+    compatibility_group: qld_otp_eligible_claims
+    dashboard_treatment: dedicated compliance API only; never in an annual expenditure tree
+    source_label_variants: ["eligible claims for penalty interest smallbus"]
+
+  qld_otp_penalty_interest_paid:
+    economic_meaning: >
+      Penalty interest actually paid by this agency to small business
+      suppliers for late payment, for the quarter - a compliance payment,
+      not a procurement/expenditure commitment.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: cash
+    estimate_status: actual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: qld_otp_penalty_interest_paid
+    dashboard_treatment: dedicated compliance API only; never merged into any expenditure/procurement compatibility_group
+    source_label_variants: ["penalty interest paid smallbus"]
+
+  qld_otp_total_eligible_invoices:
+    economic_meaning: >
+      Count of eligible and undisputed small business invoices received by
+      this agency, for the quarter - the denominator for the late-payment
+      percentages.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: count
+    estimate_status: actual
+    unit: count
+    sign_convention: positive
+    compatibility_group: qld_otp_total_eligible_invoices
+    dashboard_treatment: dedicated compliance API only
+    source_label_variants:
+      - "total eligible and undisputed invs smallbus"
+      - "total eligible and undisputed small business invoices"
+      - "total eligible and undisputed invs"
+      - "total eligible and undisputed undisputed invs small business"
+      - "total eligible and undisputed invs small business"
+
+  qld_otp_invoices_paid_late:
+    economic_meaning: >
+      Count of eligible and undisputed small business invoices this agency
+      paid late, for the quarter.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: count
+    estimate_status: actual
+    unit: count
+    sign_convention: positive
+    compatibility_group: qld_otp_invoices_paid_late
+    dashboard_treatment: dedicated compliance API only
+    source_label_variants: ["eligible and undisputed invs paid late smallbus"]
+
+  qld_otp_value_paid_late:
+    economic_meaning: >
+      Dollar value of eligible and undisputed small business invoices this
+      agency paid late, for the quarter - a compliance-reporting payment
+      value, never merged into procurement/expenditure totals.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: cash
+    estimate_status: actual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: qld_otp_value_paid_late
+    dashboard_treatment: dedicated compliance API only; never merged into any expenditure/procurement compatibility_group
+    source_label_variants: ["value eligible and undisputed inv paid late smallbus"]
+
+  qld_otp_mean_days_paid_late:
+    economic_meaning: >
+      Mean number of days late for eligible and undisputed small business
+      invoices this agency paid late, for the quarter.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: not_applicable
+    estimate_status: actual
+    unit: days
+    sign_convention: positive
+    compatibility_group: qld_otp_mean_days_paid_late
+    dashboard_treatment: dedicated compliance API only
+    source_label_variants: ["mean days paid late eligible and undisputed inv smallbus"]
+
+  qld_otp_pct_late_smallbus:
+    economic_meaning: >
+      Percentage of this agency's late payments (across all suppliers) that
+      were owed to small business suppliers, for the quarter.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: not_applicable
+    estimate_status: actual
+    unit: percent
+    sign_convention: positive
+    compatibility_group: qld_otp_pct_late_smallbus
+    dashboard_treatment: dedicated compliance API only
+    source_label_variants: ["percent of all late payments smallbus"]
+
+  qld_otp_pct_late_others:
+    economic_meaning: >
+      Percentage of this agency's late payments (across all suppliers) that
+      were owed to non-small-business suppliers, for the quarter.
+    flow_or_stock: flow
+    period_granularity: quarter
+    accounting_basis: not_applicable
+    estimate_status: actual
+    unit: percent
+    sign_convention: positive
+    compatibility_group: qld_otp_pct_late_others
+    dashboard_treatment: dedicated compliance API only
+    source_label_variants: ["percent of all late payments others"]

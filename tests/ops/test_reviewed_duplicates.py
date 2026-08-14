@@ -228,7 +228,14 @@ def test_real_repo_config_has_the_expected_reviewed_false_positive_groups():
     + 43 = 49. The original 5th group (QLD QGIP Goondiwindi "Black Spot")
     was a genuine true duplicate, resolved by deletion rather than being
     registered here - a true duplicate must never be reviewed into a
-    permanent pass."""
+    permanent pass.
+
+    87 more from item 7.5's QLD on-time-payments load: independent quarters
+    for the same agency/measure genuinely reporting an identical value
+    (task9_sql_integrity_checks.py's duplicate_facts() groups on value but
+    not period/quarter) - see
+    ops/reports/qld-on-time-payments-duplicate-fact-investigation-*.md.
+    Total: 49 + 87 = 136."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 49
+    assert result["entry_count"] == 136
