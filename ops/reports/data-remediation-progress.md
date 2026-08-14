@@ -54,7 +54,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.2 Reusable explorer shell | complete | `ExplorerShell.tsx` + `explorerApi.ts` + `app/explorers/family/[family]/page.tsx`, registry-driven end to end (year selector/estimate-status/additive-note banner/source_breakdown all derived from `/v2/explorers` responses, zero per-family hardcoding); verified live for all 5 registered families (zero console errors), server-side search, honest 404/no-data-year states, and zero regression to the 2 existing dedicated pages spot-checked; a real defaulting bug (latest-year default landing on sparse years) was found and fixed during live verification | `4f76350` | Family migration (item 6.3) intentionally not done in this pass; dynamic route placed at `/explorers/family/{id}` rather than the plan's literal `/explorers/[family]` since that slug is still shadowed by the 5 unmigrated static pages |
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | complete | All 5 plan-listed families migrated onto the item 6.1/6.2 generic shell at their existing URLs (each page now a thin `<ExplorerShell familyId="..." />` wrapper instead of ~170-200 lines of bespoke fetch/state logic); live-verified zero regressions to any of the 5 real totals, `DebtNav`/GFS cross-link preserved on contracts via a new `extraContent` shell slot; eslint baseline genuinely improved (25 -> 24 errors) by deleting duplicated code; QGIP still correctly blocked behind item 7.2 repair | `c115219` | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | in_progress | Workbook 2/5 (Note 3, Total expense by function) done: 20 new measure_types, +4,413 facts live, 0 backend/frontend code change needed (API/UI already registry-driven); found and fixed 2 real header-shape quirks via a new shared mfs_common.py module; found and resolved 43 duplicate-fact false positives; 16 new tests, 692 total passed, 0 regressions, 0 canonical-tree impact. Workbook 3/5 (Operating Statement) investigated and deliberately deferred: found at least 3 structurally distinct generations (not a richer version of Note 3's flat shape) including a genuine same-label, different-section, different-value collision ("Actuarial revaluations") - evidence and a recommended per-generation approach recorded, no code written | `31c8b4d` | Operating Statement needs a dedicated future pass (see scoping report); Balance Sheet, Tax Notes 1/2, Monthly Profiles remain untouched |
-| 7.2 QLD QGIP repair | not_started | Loaded corpus has amount/subprogram/year defects | — | Reconcile, repair, validate, then explorer |
+| 7.2 QLD QGIP repair | complete | All 3 named defects root-caused via direct inspection of all 14 real files and fixed: financial_year now derived only from filename (was picking up a dollar-amount column, "Previous financial year", as a year - root cause of the "2099-00" observation; also fixed a filename-regex gap that silently misattributed 5 real years' data to a hardcoded "2024-25"); amount-column now prefers per-year "Financial year expenditure" over "Total funding under this agreement" regardless of file column order, with the 2 years lacking a per-year column tagged with a distinct estimate_status so they can never blend with genuine single-year figures; subprogram structure now captured (was silently dropped for 11/14 files). Facts 176,719 -> 203,899 via replace_on_reload; 63,763 stale old nodes cleaned up (same method as the PBS reload); 0 hard failures, 0 canonical-tree impact, idempotent; 7 new tests, 699 total passed | `<pending>` | Dedicated QGIP explorer not yet built, per the plan's own "then expose..." sequencing; fact_key overwrite-not-sum collision risk on identical agency/program/subprogram text is pre-existing and flagged for a future pass, not fixed here |
 | 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
 | 7.4 QLD Consolidated Fund | not_started | 46 acquired PDFs; no product model | — | Cash/vintage model, adapters and explorer |
 | 7.5 QLD on-time payments | not_started | 42 acquired CSVs; no pipeline/product | — | Typed compliance measures, adapter and explorer |
@@ -1441,3 +1441,50 @@ Direct inspection of all 21 sheets before writing any code found at least three 
 ### Next item
 
 Redirecting this session's Wave 5 effort to item 7.2 (QLD QGIP repair) - an independent item with its own already-documented, differently-shaped defects, rather than rushing Operating Statement's real complexity.
+
+## Milestone: QLD QGIP repair (item 7.2)
+
+### Item
+
+Plan section 7.2: identify/correct the amount-column defect, recover/validate subprogram structure, investigate the 2099-00 observation, publish a before/after reconciliation report, rerun citations/idempotency - all before any UI work.
+
+### Previous behavior
+
+176,719 `qld_qgip_expenditure` facts loaded via `m7_qld_procurement.py`'s `export_qgip()`. Financial year, amount, and category columns were all auto-detected by generic substring heuristics with no per-file verification.
+
+### Root causes (all verified directly against the 14 real acquired files)
+
+1. `"Previous financial year"` - a column that actually holds a **dollar amount** - was being matched as the year column for 2012-13/2013-14; when an amount coincidentally resembled `20\d{2}`, the code fabricated a bogus future year (e.g. "2037-38") - the exact mechanism behind the "2099-00" observation. Separately, the filename-year regex required a 4-digit "20XX" and failed on 5 real files using a bare two-digit pattern, silently dumping tens of thousands of rows from FY2017-18..FY2021-22 into a hardcoded "2024-25" (confirmed: those 5 years held only 2-9 facts each before this fix, vs 14,209/18,513 for correctly-attributed neighbouring years).
+2. The amount column was the first file-order match against generic substrings, picking "Total funding under this agreement" (whole-of-agreement total) over "Financial year expenditure" (correct single-year figure) for the 2014-15 file purely by column position.
+3. "Sub-program title" (present in 11/14 files) was silently dropped - the category heuristic always picked "Program title" first.
+
+### Changes
+
+- `m7_qld_procurement.py`: `export_qgip()` rewritten - filename-only financial year (handles both 2-digit and 4-digit patterns, skips files with no determinable year rather than defaulting); amount column always prefers the true per-year figure; subprogram captured as a distinct dimension.
+- `config/mappings/qld_qgip_expenditure.yaml`: `estimate_status` now a per-row column (2012-13/2013-14's whole-of-agreement-total rows get `actual_cumulative_agreement_total`, never blended with genuine single-year `actual` figures); `replace_on_reload: true`.
+- `scripts/ingest/migrations/021_qgip_agreement_total_estimate_status.sql`: full `facts` table rebuild (SQLite has no `ALTER TABLE ... ADD CHECK`) adding the new estimate_status value; every column/row/index preserved, verified byte-for-byte on a disposable copy first.
+- 7 new regression tests.
+
+### Validation
+
+- [`qgip-repair-20260814T134952Z.md`](qgip-repair-20260814T134952Z.md) records the full before/after reconciliation table and evidence.
+- Disposable-copy-first throughout: migration, reload (idempotent - verified via a second run producing identical facts), and stale-node cleanup (reusing `cleanup_stale_pbs_nodes.py --source-key qld_qgip_expenditure` unmodified, same before/after-snapshot method already proven for the PBS reload) all tested on a copy before live.
+- `task9_sql_integrity_checks.py`: 0 hard failures on live after cleanup. `dashboard_depth_audit.py --check-fixture`: `fixture_matches: true` (QGIP is not part of the primary GFS-preferred annual tree, so zero canonical impact, as expected).
+- Facts 176,719 -> 203,899; QGIP-specific nodes 149,161 -> 170,264 (net +21,103 from genuinely finer subprogram structure), 63,763 stale old nodes removed.
+- Full backend suite: 699 passed (692 + 7 new), 0 regressions.
+
+### Data impact
+
+`data/facts.db`: QGIP facts replaced via `replace_on_reload`; net node count change reflects real added structure, not double-counting. Backup taken first: `facts-20260814T134320Z.db`.
+
+### Dashboard impact
+
+None on the canonical tree. No dedicated QGIP explorer yet (deliberately deferred per the plan's own sequencing).
+
+### Remaining risks
+
+`upsert_fact()`'s `ON CONFLICT ... DO UPDATE SET amount_aud = excluded.amount_aud` overwrites rather than sums when multiple raw rows share identical node identity - pre-existing pipeline behaviour, reduced but not eliminated by adding subprogram granularity; a full fix needs a stable per-recipient identity (e.g. ABN) in the node/fact_key, flagged for a future dedicated pass. The production deployment lag continues to apply to code (data is live immediately via the bind mount).
+
+### Next item
+
+Dedicated QGIP program/project explorer (the plan's explicit next step for this item), or continue Wave 5 with state borrowing repair, QLD Consolidated Fund, QLD on-time payments, or remaining VIC AFS work.

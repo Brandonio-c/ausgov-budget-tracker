@@ -21,8 +21,22 @@ columns:
   locator: locator
   landing_url: landing_url
   original_resource_url: resource_url
+  # Per-row override (item 7.2 repair): 2012-13/2013-14 have no genuine
+  # per-year expenditure column in source, only a whole-of-agreement
+  # cumulative total - those rows get estimate_status
+  # actual_cumulative_agreement_total instead of plain actual, so they can
+  # never be silently treated as the same vintage. See
+  # scripts/ingest/m7_qld_procurement.py's _select_amount_col().
+  estimate_status: estimate_status
 attribution:
   landing_url_column: landing_url
   original_resource_url_column: resource_url
   cached_copy_path: data/raw/state/qld_qgip_expenditure/snapshots/manual-20260722T052657Z/files/qld_qgip_expenditure__18-19-expenditure-data-consolidated.csv
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+# Item 7.2 repair: the fixed extractor changes financial_year, amount
+# selection, and node_name (subprogram) for most rows, producing different
+# fact_keys than their pre-fix predecessors - without replace_on_reload the
+# old, defective facts would never be removed, just silently duplicated
+# alongside the corrected ones. See scripts/ingest/load_facts.py's own
+# comment on this exact mechanism.
+replace_on_reload: true
