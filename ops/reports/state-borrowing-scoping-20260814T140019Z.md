@@ -1,0 +1,119 @@
+# State borrowing (item 7.3) - status correction and scoping
+
+Generated: 2026-08-14T14:00:19Z
+Repository: `ausgov-budget-tracker`, branch `main`
+
+## Item
+
+Plan section 7.3: "Repair or add adapters for acquired missing/broken sources using a
+common borrowing adapter contract." The current progress ledger and the atlas/backlog
+reports describe this as "seven loaded, six adapter-missing, three adapter-broken."
+Investigated before writing any adapter code, per this program's standing discipline -
+found the "three broken" characterization is stale and would have led to a wrong action
+if acted on directly.
+
+## Finding 1: the "three broken" sources are not broken - they are already-resolved, intentionally retired duplicates
+
+`nsw_tcorp_weekly_bonds`, `qld_qtc_benchmark_bonds`, and
+`qld_qtc_weekly_outstandings_2026_07_17` each have a `source_documents` row with zero
+live facts, which the atlas/backlog reports characterize as "broken/zero-fact" needing
+repair. Re-running each through the current pipeline confirms they extract and load
+cleanly with zero errors (14/36/19 facts respectively, tested against a disposable copy,
+not live) - so nothing is actually broken in the code today.
+
+However, `ops/reports/orphan-node-investigation-20260804T180700Z.md` (2026-08-04, predating
+this session) already investigated and resolved this exact question: these three
+`source_id`s are **fully-retired legacy identifiers**, superseded by
+`nsw_tcorp_bonds_on_issue` and `qld_qtc_aud_bond_outstandings` respectively, no longer
+referenced anywhere in `m_borrowing_authorities.py`'s `SOURCE_PARSERS` dict, and their
+orphaned nodes were already deliberately cleaned up as a one-time pass. Their
+`source_documents` rows were **left in place on purpose** (informational-only per
+`task9_sql_integrity_checks.py`'s `dangling_source_documents` classification, not a hard
+failure) as a record of retirement, not a to-do item.
+
+**Reloading these three would be actively wrong**: `nsw_tcorp_weekly_bonds` and
+`nsw_tcorp_bonds_on_issue` cover the same NSW TCorp bond population from two different
+report cadences (weekly vs on-issue); loading both under the same `gfs_liability`
+compatibility group would double-count NSW debt. Same for the two QTC sources against
+`qld_qtc_aud_bond_outstandings`. The atlas report's "three broken" framing is stale and
+should not be read as a to-do list.
+
+## Finding 2: the state-borrowing "missing" family is broader and messier than a clean "six"
+
+Beyond the 7 loaded + 3 retired-legacy sources tracked in
+`config/lineage/canonical_datasets.yaml`'s `state_borrowing_authorities` entry,
+`config/procurement_sources.yaml` has 8 further acquired-but-unadapted state-authority
+sources, each with real raw files already on disk:
+
+| source_id | authority | file format |
+| --- | --- | --- |
+| `nt_nttc_annual_report_2024_25` | NT NTTC | PDF (annual report) |
+| `sa_safa_funding_program_2026_27` | SA SAFA | PDF |
+| `tas_tascorp_bond_programme` | TAS TASCORP | PDF |
+| `tas_tascorp_financial_markets` | TAS TASCORP | PDF |
+| `vic_tcv_data_feeds` | VIC TCV | XLSX |
+| `vic_tcv_benchmark_bond_outstandings` | VIC TCV | CSV |
+| `wa_watc_annual_report_2025` | WA WATC | PDF |
+| `wa_watc_investor_term_sheets` | WA WATC | (format not yet checked) |
+
+Separately, the most recent ingestion-coverage audit
+(`ops/reports/ingestion-coverage-20260808T161257Z.md`) shows a materially larger,
+**federal** debt-instrument family (AOFM - Australian Office of Financial Management) with
+12 `adapter_missing`/`adapter_broken` sources (`aofm_foreign_holdings`,
+`aofm_portfolio_aggregate_dealt/settlement`, `aofm_register_government_borrowing`,
+`aofm_stock_ags_csv`, `aofm_treasury_bonds_dealt/settlement`,
+`aofm_treasury_indexed_bonds_dealt/settlement`, `aofm_treasury_notes_dealt/settlement`) -
+outside plan item 7.3's explicit "state borrowing" scope, but worth flagging as a
+distinct, larger family the plan does not yet have a numbered item for.
+
+## Finding 3: at least one "missing" candidate substantially overlaps already-loaded data
+
+Direct inspection of `vic_tcv_benchmark_bond_outstandings.csv` before writing any adapter
+code: it is a maturity-keyed table with two reporting-date columns (30.06.2025,
+30.06.2026). Cross-checking one security (17-Nov-26 maturity) against the already-loaded
+`vic_tcv_amount_on_issue` staging data: this file's 30.06.2026 figure ($7,071.344m) matches
+the already-loaded "17 Nov 2026 5.5" fixed-rate bond fact ($7,071,340,000) to within normal
+independent-rounding tolerance - the same security, the same population, substantially the
+same current-date figures already captured by the loaded source. The only genuinely new
+information in this file is the 30.06.2025 (prior-year) column - a real, non-duplicative
+historical comparison point, but building an adapter that treats the whole file as new
+data would risk exactly the double-counting this program's rules forbid. A correct
+adapter here would need to either load only the non-overlapping historical column, or tag
+the whole file under a measure_type that is explicitly understood as a named
+subset/cross-section view rather than an independent additive quantity - not attempted in
+this pass, since it requires more careful verification than fits inside this session's
+remaining scope for this item.
+
+## Disposition
+
+- **Ledger corrected**: "three broken" is downgraded from "needs repair" to "confirmed
+  intentionally retired, no action needed" - a real, load-bearing correction to this
+  program's own record, preventing a future agent from wrongly reloading duplicate data.
+- **Six-plus missing sources inventoried with real evidence**, not the previous vague
+  "six." At least one (`vic_tcv_benchmark_bond_outstandings`) is flagged as needing
+  careful non-additive treatment rather than a straightforward new adapter.
+- No adapter code written this pass - each of the 4 remaining PDF-format sources
+  (`nt_nttc_annual_report_2024_25`, `sa_safa_funding_program_2026_27`,
+  `tas_tascorp_bond_programme`, `tas_tascorp_financial_markets`, `wa_watc_annual_report_2025`
+  - 5, not 4) carries the same per-document table-shape risk already demonstrated this
+  session for the MFS Operating Statement workbook and would need the same
+  evidence-first, one-at-a-time treatment before any is safely adapted.
+
+## Recommended next steps for a dedicated future pass
+
+1. Directly inspect each of the 5 PDF sources' actual table structure before writing any
+   parser (matching the discipline already applied throughout this session) - do not
+   assume they share `adapters/state_debt_instruments.py`'s existing `kind` parsers
+   without verifying.
+2. For `vic_tcv_benchmark_bond_outstandings` and `vic_tcv_data_feeds`, resolve the
+   overlap/subset relationship with the already-loaded `vic_tcv_amount_on_issue` before
+   loading anything, following the same evidence-based method used here.
+3. Treat the AOFM (federal) debt-instrument family as a separate, larger piece of work,
+   not folded into item 7.3's "state borrowing" scope without an explicit plan decision.
+
+## Next item
+
+Given the real per-source investigation each of these requires, redirecting this
+session's Wave 5 effort to a more homogeneous, better-scoped item - item 7.5 (QLD
+on-time payments, 42 acquired CSVs, likely one consistent format from one publisher) -
+while leaving this corrected, evidence-based inventory for item 7.3's next dedicated pass.

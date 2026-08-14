@@ -55,7 +55,7 @@ This is the persistent execution ledger for `ops/data_remediation_plan.md`. Stat
 | 6.3 Contracts/PBS/grants/VIC/ACT/QGIP migrations | complete | All 5 plan-listed families migrated onto the item 6.1/6.2 generic shell at their existing URLs (each page now a thin `<ExplorerShell familyId="..." />` wrapper instead of ~170-200 lines of bespoke fetch/state logic); live-verified zero regressions to any of the 5 real totals, `DebtNav`/GFS cross-link preserved on contracts via a new `extraContent` shell slot; eslint baseline genuinely improved (25 -> 24 errors) by deleting duplicated code; QGIP still correctly blocked behind item 7.2 repair | `c115219` | QGIP explorer after item 7.2 repair |
 | 7.1 MFS sibling workbooks | in_progress | Workbook 2/5 (Note 3, Total expense by function) done: 20 new measure_types, +4,413 facts live, 0 backend/frontend code change needed (API/UI already registry-driven); found and fixed 2 real header-shape quirks via a new shared mfs_common.py module; found and resolved 43 duplicate-fact false positives; 16 new tests, 692 total passed, 0 regressions, 0 canonical-tree impact. Workbook 3/5 (Operating Statement) investigated and deliberately deferred: found at least 3 structurally distinct generations (not a richer version of Note 3's flat shape) including a genuine same-label, different-section, different-value collision ("Actuarial revaluations") - evidence and a recommended per-generation approach recorded, no code written | `31c8b4d` | Operating Statement needs a dedicated future pass (see scoping report); Balance Sheet, Tax Notes 1/2, Monthly Profiles remain untouched |
 | 7.2 QLD QGIP repair | complete | All 3 named defects root-caused via direct inspection of all 14 real files and fixed: financial_year now derived only from filename (was picking up a dollar-amount column, "Previous financial year", as a year - root cause of the "2099-00" observation; also fixed a filename-regex gap that silently misattributed 5 real years' data to a hardcoded "2024-25"); amount-column now prefers per-year "Financial year expenditure" over "Total funding under this agreement" regardless of file column order, with the 2 years lacking a per-year column tagged with a distinct estimate_status so they can never blend with genuine single-year figures; subprogram structure now captured (was silently dropped for 11/14 files). Facts 176,719 -> 203,899 via replace_on_reload; 63,763 stale old nodes cleaned up (same method as the PBS reload); 0 hard failures, 0 canonical-tree impact, idempotent; 7 new tests, 699 total passed | `26522e2` | Dedicated QGIP explorer not yet built, per the plan's own "then expose..." sequencing; fact_key overwrite-not-sum collision risk on identical agency/program/subprogram text is pre-existing and flagged for a future pass, not fixed here |
-| 7.3 State borrowing gaps | not_started | Six missing and three broken acquired sources | — | Common contract and source adapters |
+| 7.3 State borrowing gaps | in_progress | Investigated before writing any adapter code: the "three broken" sources are NOT broken - `orphan-node-investigation-20260804T180700Z.md` already resolved them as intentionally retired legacy duplicates (superseded by already-loaded canonical sources); reloading them would double-count debt. Real remaining gap is 8 acquired-but-unadapted sources (5 PDF, 1 XLSX, 1 CSV, 1 unchecked), one of which (`vic_tcv_benchmark_bond_outstandings`) was found to substantially overlap already-loaded data and needs non-additive treatment, not a plain adapter. A separate, larger federal AOFM debt-instrument family (12 sources) was also found, out of this item's "state borrowing" scope | `<pending>` | Ledger correction is the concrete deliverable this pass; each of the 5 PDF sources needs its own evidence-first inspection before any adapter is written (see scoping report) |
 | 7.4 QLD Consolidated Fund | not_started | 46 acquired PDFs; no product model | — | Cash/vintage model, adapters and explorer |
 | 7.5 QLD on-time payments | not_started | 42 acquired CSVs; no pipeline/product | — | Typed compliance measures, adapter and explorer |
 | 7.6 VIC deferred sheets/KPIs | not_started | Structured sheets/KPI rows deliberately deferred | — | Separate typed products and surfaces |
@@ -1488,3 +1488,25 @@ None on the canonical tree. No dedicated QGIP explorer yet (deliberately deferre
 ### Next item
 
 Dedicated QGIP program/project explorer (the plan's explicit next step for this item), or continue Wave 5 with state borrowing repair, QLD Consolidated Fund, QLD on-time payments, or remaining VIC AFS work.
+
+## Milestone: state borrowing (item 7.3) - status correction and scoping
+
+### Item
+
+Plan section 7.3: repair/add adapters for missing/broken state borrowing sources.
+
+### Finding: the ledger's own "three broken" characterization was stale and would have caused a real mistake
+
+Before writing any adapter code, re-ran all three "broken" sources (`nsw_tcorp_weekly_bonds`, `qld_qtc_benchmark_bonds`, `qld_qtc_weekly_outstandings_2026_07_17`) - all extract and load cleanly today (tested on a disposable copy). But an earlier milestone report (`orphan-node-investigation-20260804T180700Z.md`, 2026-08-04) had already determined these are **intentionally retired legacy duplicates**, superseded by already-loaded canonical sources (`nsw_tcorp_bonds_on_issue`, `qld_qtc_aud_bond_outstandings`). Reloading them would double-count the same NSW/QLD debt under two source_keys - exactly what this program's rules forbid. The atlas/backlog reports' "three broken" framing was outdated and, read at face value, would have led to a wrong reload.
+
+### Further finding: at least one "missing" candidate overlaps already-loaded data
+
+Direct inspection of `vic_tcv_benchmark_bond_outstandings.csv` (one of 8 real acquired-but-unadapted state sources found) shows its current-date figures match an already-loaded security in `vic_tcv_amount_on_issue` almost exactly - the same bond population, mostly not new information. Flagged as needing careful non-additive treatment, not a plain adapter.
+
+### Disposition
+
+Ledger corrected (a real, load-bearing fix preventing a future wrong action). Full evidence and an 8-source inventory (plus a separately-flagged, out-of-scope 12-source federal AOFM family) in [`state-borrowing-scoping-20260814T140019Z.md`](state-borrowing-scoping-20260814T140019Z.md). No adapter code written - each of the 5 remaining PDF sources needs its own evidence-first inspection first, matching the discipline already demonstrated for MFS Operating Statement.
+
+### Next item
+
+Redirecting to item 7.5 (QLD on-time payments) - a more homogeneous, single-publisher CSV family, for concrete forward progress this pass.
