@@ -117,3 +117,30 @@ Given the real per-source investigation each of these requires, redirecting this
 session's Wave 5 effort to a more homogeneous, better-scoped item - item 7.5 (QLD
 on-time payments, 42 acquired CSVs, likely one consistent format from one publisher) -
 while leaving this corrected, evidence-based inventory for item 7.3's next dedicated pass.
+
+## Addendum (2026-08-14T19:30:00Z), after item 7.5 landed: `vic_tcv_data_feeds` checked and found mislabeled
+
+Re-checked `vic_tcv_data_feeds` (the one XLSX-format source in the 8-source inventory
+above, hoped to be more tractable than the 5 PDFs) before writing any adapter code: its
+one acquired file is `5.4_2022_Financial_Statements.xlsx` with 26 sheets literally named
+`Page 2`..`Page 26` - a full annual financial-statements report converted page-by-page to
+Excel, not a structured bond-outstandings data feed as the `source_id` name implies. This
+carries the same unstructured per-page/per-table inspection risk already flagged for the
+5 PDF sources, not a quick win. No adapter code written.
+
+`wa_watc_investor_term_sheets` (`.zip`, contents now checked) unzips to 17 individual PDF
+"investor term sheets," one per WA WATC bond issuance (e.g.
+`watc-225-23-july-2041-final-investor-termsheet.pdf`). These are a fundamentally
+different document type from the rest of this family: a term sheet describes the
+**static issuance terms** of one bond (coupon, maturity, ISIN, face value at issue) at a
+point in time, not a periodic time series of outstanding balances - the shape the
+existing `gfs_liability`/borrowing-outstanding measure contract expects. Modeling these
+correctly would need either a distinct non-additive "instrument static terms" measure
+type (not summed with outstanding-balance facts) or per-issuance reconciliation against
+`wa_watc_annual_report_2025`'s own outstanding figures - a design question, not an
+extraction question, and out of scope for a same-pattern adapter reuse.
+
+**Revised conclusion**: all 8 sources in this inventory (5 PDF + `vic_tcv_data_feeds`
+mislabeled-XLSX + `vic_tcv_benchmark_bond_outstandings` overlap risk +
+`wa_watc_investor_term_sheets` wrong-shape-entirely) genuinely require individual
+bespoke design, not a shared adapter reuse pass. None was built this session.
