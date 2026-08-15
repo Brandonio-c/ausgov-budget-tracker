@@ -144,3 +144,66 @@ extraction question, and out of scope for a same-pattern adapter reuse.
 mislabeled-XLSX + `vic_tcv_benchmark_bond_outstandings` overlap risk +
 `wa_watc_investor_term_sheets` wrong-shape-entirely) genuinely require individual
 bespoke design, not a shared adapter reuse pass. None was built this session.
+
+## Addendum (2026-08-15T16:35:00Z): a pre-existing generic borrowing adapter already covers all 7 authorities - the "5 missing PDFs" are supplementary documents, not a complete gap
+
+Before attempting to build any of the 5 PDF sources, `scripts/ingest/adapters/
+state_debt_instruments.py` was found and read in full - a **pre-existing, already-wired**
+generic adapter (`InstrumentRow` dataclass, proper `face_value`/`fair_value`
+`valuation_basis` distinction, `instrument_type_aggregate` vs `individual_security`
+`amount_granularity` distinction - exactly the "keep face value/fair value distinctions
+explicit" contract this mission's own instructions ask for) with 7 `SOURCE_PARSERS`
+entries. Checked directly against live `data/facts.db`: **all 7 are already loaded**:
+
+| source_id | live facts |
+| --- | --- |
+| `vic_tcv_amount_on_issue` | 32 |
+| `nsw_tcorp_bonds_on_issue` | 36 |
+| `qld_qtc_aud_bond_outstandings` | 38 |
+| `sa_safa_weekly_funding_update` | 18 |
+| `wa_watc_funding_sources` | 21 |
+| `nt_nttc_borrowing_strategy` | 17 |
+| `tas_tascorp_annual_report_2024_25` | 8 |
+
+Every one of the 7 named borrowing authorities already has at least some coverage. The 5
+PDF sources this report investigates (`nt_nttc_annual_report_2024_25`,
+`sa_safa_funding_program_2026_27`, `tas_tascorp_bond_programme`,
+`tas_tascorp_financial_markets`, `wa_watc_annual_report_2025`) are **different
+source_ids from, and different documents than**, the ones already adapted (e.g.
+`wa_watc_annual_report_2025` is a 118-page annual report; `wa_watc_funding_sources`,
+already loaded, is a different, presumably instrument-level CSV/data feed) - they would
+be **supplementary** additions for already-partially-covered authorities, not filling a
+complete gap, and the value/effort case is accordingly weaker than initially assumed.
+
+Direct inspection of 3 of the 5 (not attempted in the original pass):
+
+- **`sa_safa_funding_program_2026_27`** (5 pages): a narrative "Market Release" bulletin,
+  not a tabular bond-outstanding dataset - dominated by multi-year Budget/MYEFO
+  **forecast/estimate** tables for FY2026-27..FY2029-30, with exactly one genuine
+  actual/current data point (Total debt "Actuals 4 June" = $50.4bn). Loading the
+  forecast tables under the same measure as actual outstanding debt would violate this
+  program's "never substitute a forecast for an actual" rule; the one real actual figure
+  is too thin (a single point-in-time total, not a series) to justify a dedicated build.
+- **`tas_tascorp_bond_programme.pdf`** (38 pages): an investor-presentation slide deck
+  ("2026-27 Debt Investor Update") - narrative/marketing content (Tasmanian economy,
+  sustainability credentials, government structure) dominates the pages checked; likely
+  unreliable for structured text extraction even where tables exist (slide-deck tables
+  are frequently rendered as images/charts, not extractable text).
+- **`wa_watc_annual_report_2025.pdf`** (118 pages): genuinely well-structured financial
+  statements (a clean "Statement of Financial Position" note with `Borrowings 49,459.5
+  47,857.2` for FY2025/FY2024) - the most tractable of the 5, but only yields 2 years of
+  data from this single acquired edition (no historical series without acquiring further
+  editions), and its relationship to the already-loaded `wa_watc_funding_sources`
+  instrument-level data (does the aggregate reconcile to the sum of individual
+  securities?) has not been checked - a genuine cross-check opportunity, not attempted
+  this pass given the low data-volume return.
+
+## Disposition (revised)
+
+Given all 7 authorities already have baseline coverage via the existing generic adapter,
+and the 5 PDF sources are lower-value supplementary documents (one is forecast-dominated
+and not safely loadable at all; one is a narrative slide deck with likely poor
+extractability; the most tractable one yields only 2 data points), this item's remaining
+work is genuinely lower-priority than initially ranked. Redirecting this session's further
+Wave 5 effort to item 7.4 (QLD Consolidated Fund), a completely unstarted area with (on
+initial inspection) a larger and more clearly-scoped acquired corpus (46 PDFs).
