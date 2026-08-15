@@ -23,12 +23,12 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     return TestClient(app)
 
 
-def test_list_explorers_returns_all_five_registered_families(client: TestClient) -> None:
+def test_list_explorers_returns_all_six_registered_families(client: TestClient) -> None:
     response = client.get("/v2/explorers")
     assert response.status_code == 200
     body = response.json()
     ids = {f["id"] for f in body["families"]}
-    assert ids == {"contracts", "grants", "vic_output_performance", "act_invoices", "pbs"}
+    assert ids == {"contracts", "grants", "vic_output_performance", "act_invoices", "pbs", "qgip"}
 
     pbs = next(f for f in body["families"] if f["id"] == "pbs")
     assert pbs["compatibility_group"] == "budget_expense"
@@ -39,6 +39,12 @@ def test_list_explorers_returns_all_five_registered_families(client: TestClient)
         "estimated_actual",
         "actual",
     ]
+
+    qgip = next(f for f in body["families"] if f["id"] == "qgip")
+    assert qgip["compatibility_group"] == "actual_expense"
+    assert qgip["source_key"] == "qld_qgip_expenditure"
+    assert qgip["default_estimate_status"] == "actual"
+    assert qgip["estimate_statuses"] == ["actual", "actual_cumulative_agreement_total"]
 
 
 def test_pbs_availability_matches_direct_sql(client: TestClient) -> None:
@@ -101,6 +107,50 @@ def test_contracts_availability_is_not_narrowed_by_a_source_key(
     assert row["value"] == pytest.approx(tree["total_value"])
 
 
+def test_qgip_availability_matches_direct_sql(client: TestClient) -> None:
+    response = client.get("/v2/explorers/qgip/availability")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["family"]["id"] == "qgip"
+
+    row = next(
+        r
+        for r in body["years"]
+        if r["financial_year"] == "2015-16" and r["estimate_status"] == "actual"
+    )
+
+    conn = sqlite3.connect(REPO_ROOT / "data" / "facts.db")
+    expected = conn.execute(
+        """
+        SELECT COUNT(*), COALESCE(SUM(f.amount_aud), 0)
+        FROM facts f
+        JOIN measure_definitions m ON m.measure_type = f.measure_type
+        JOIN source_documents d ON d.id = f.source_document_id
+        WHERE m.compatibility_group = 'actual_expense'
+          AND f.accounting_basis = 'accrual'
+          AND f.estimate_status = 'actual'
+          AND f.financial_year = '2015-16'
+          AND d.source_key = 'qld_qgip_expenditure'
+          AND COALESCE(f.quality_status, 'ok') NOT IN ('quarantined', 'rejected')
+        """
+    ).fetchone()
+    conn.close()
+
+    assert row["count"] == expected[0]
+    assert row["value"] == pytest.approx(expected[1])
+
+
+def test_qgip_availability_never_mixes_actual_with_cumulative_agreement_total(client: TestClient) -> None:
+    """The two estimate_status bases (actual vs
+    actual_cumulative_agreement_total) must be reported as separate rows,
+    never summed into one figure - they are not comparable quantities."""
+    body = client.get("/v2/explorers/qgip/availability").json()
+    fy_2012_13 = [r for r in body["years"] if r["financial_year"] == "2012-13"]
+    statuses = {r["estimate_status"] for r in fy_2012_13}
+    assert statuses == {"actual_cumulative_agreement_total"}
+    assert "actual" not in statuses
+
+
 def test_unknown_family_returns_404(client: TestClient) -> None:
     response = client.get("/v2/explorers/does-not-exist/availability")
     assert response.status_code == 404
@@ -129,6 +179,49 @@ def test_pbs_family_tree_matches_direct_v2_tree_with_source_key(client: TestClie
     assert family_tree["total_value"] == pytest.approx(direct["total_value"])
     assert family_tree["children"] == direct["children"]
     assert family_tree["family"] == "pbs"
+
+
+def test_qgip_family_tree_matches_direct_v2_tree_with_source_key(client: TestClient) -> None:
+    family_tree = client.get(
+        "/v2/explorers/qgip/tree",
+        params={"financial_year": "2015-16", "limit": 5},
+    ).json()
+    direct = client.get(
+        "/v2/tree",
+        params={
+            "compatibility_group": "actual_expense",
+            "accounting_basis": "accrual",
+            "estimate_status": "actual",  # qgip's default_estimate_status
+            "financial_year": "2015-16",
+            "source_key": "qld_qgip_expenditure",
+            "limit": 5,
+        },
+    ).json()
+    assert family_tree["total_count"] == direct["total_count"]
+    assert family_tree["total_value"] == pytest.approx(direct["total_value"])
+    assert family_tree["children"] == direct["children"]
+    assert family_tree["family"] == "qgip"
+
+
+def test_qgip_family_tree_estimate_status_switches_to_agreement_total(client: TestClient) -> None:
+    """A caller can explicitly view the FY2012-13/FY2013-14 whole-of-
+    agreement cumulative total basis, but only via an explicit
+    estimate_status - never the family's default."""
+    default_tree = client.get(
+        "/v2/explorers/qgip/tree",
+        params={"financial_year": "2012-13", "limit": 1},
+    ).json()
+    assert default_tree["total_count"] == 0  # "actual" doesn't exist for FY2012-13
+
+    cumulative_tree = client.get(
+        "/v2/explorers/qgip/tree",
+        params={
+            "financial_year": "2012-13",
+            "estimate_status": "actual_cumulative_agreement_total",
+            "limit": 1,
+        },
+    ).json()
+    assert cumulative_tree["total_count"] > 0
 
 
 def test_family_tree_explicit_estimate_status_must_be_registered(client: TestClient) -> None:

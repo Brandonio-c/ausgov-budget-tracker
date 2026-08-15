@@ -65,3 +65,24 @@ families:
     additive_note: >
       Commonwealth Portfolio Budget Statements program expenses -
       portfolio-level facts, not additive to the whole-of-government tree.
+
+  - id: qgip
+    label: QLD QGIP expenditure
+    compatibility_group: actual_expense
+    accounting_basis: accrual
+    estimate_statuses: [actual, actual_cumulative_agreement_total]
+    default_estimate_status: actual
+    source_key: qld_qgip_expenditure
+    additive_note: >
+      QLD Government grants/investment program expenditure by agency,
+      program and subprogram - a specialist QLD state disclosure, not
+      part of the primary GFS-preferred annual additive tree (see
+      ops/reports/qgip-repair-20260814T134952Z.md). Two estimate_status
+      bases coexist and must never be summed or compared as if
+      interchangeable: "actual" (a genuine single financial year's
+      expenditure, the vast majority of facts) and
+      "actual_cumulative_agreement_total" (FY2012-13/FY2013-14 only,
+      whose source files lack a per-year expenditure column and instead
+      disclose only the whole-of-agreement cumulative total to date -
+      switch estimate_status explicitly to view it, never blended with
+      the per-year figures by default).
