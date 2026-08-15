@@ -235,7 +235,16 @@ def test_real_repo_config_has_the_expected_reviewed_false_positive_groups():
     (task9_sql_integrity_checks.py's duplicate_facts() groups on value but
     not period/quarter) - see
     ops/reports/qld-on-time-payments-duplicate-fact-investigation-*.md.
-    Total: 49 + 87 = 136."""
+    Total: 49 + 87 = 136.
+
+    2 more from item 7.1's Tax Notes 1-2 load: two genuinely different
+    reporting months within the same financial year reporting an
+    identical value (mfs_tax1_petroleum_resource_rent_tax FY2006-07's
+    February/March; mfs_tax2_carbon_pricing_mechanism FY2012-13's
+    July/August/September, all $0 before the mechanism's first revenue
+    landed in October) - see
+    ops/reports/mfs-tax-notes-1-2-duplicate-fact-investigation-*.md.
+    Total: 136 + 2 = 138."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 136
+    assert result["entry_count"] == 138

@@ -17,9 +17,12 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ingest" / "extractors"))
 
+import re  # noqa: E402
+
 from mfs_common import (  # noqa: E402
     HEADER_RE,
     clean_label,
+    extract_multi_block_ytd_workbook,
     extract_ytd_workbook,
 )
 
@@ -83,3 +86,63 @@ def test_section_heading_row_produces_no_facts(multirow_header_workbook: Path):
     rows, _ = extract_ytd_workbook(multirow_header_workbook, "test_note3")
     labels = {r["measure_label"] for r in rows}
     assert "Expenses by function" not in labels
+
+
+# --- extract_multi_block_ytd_workbook (added for Tax Notes 1-2, item 7.1) --
+
+
+TITLE_RE = re.compile(r"Tax Note \d - ")
+
+
+@pytest.fixture
+def two_block_workbook(tmp_path: Path) -> Path:
+    """Mirrors Tax Notes 1-2's real shape: two independently-titled
+    title-header-data blocks stacked in one sheet, each with its own
+    footnote row - block 1's footnote must not truncate the scan before
+    block 2's data is reached."""
+    path = tmp_path / "tax_notes.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        sheet = pd.DataFrame(
+            [
+                ["2012-13 Tax Note 1 - Income Tax", None],
+                [None, "ACTUAL\n2012-2013\nJuly\n$m"],
+                ["Company tax", 5.0],
+                ["(a) A footnote for block 1.", None],
+                ["2012-13 Tax Note 2 - Indirect Tax", None],
+                [None, "ACTUAL\n2012-2013\nJuly\n$m"],
+                ["Excise duty", 3.0],
+                ["(a) A footnote for block 2.", None],
+            ]
+        )
+        sheet.to_excel(writer, sheet_name="2012-13", header=False, index=False)
+    return path
+
+
+def test_multi_block_reaches_second_blocks_data(two_block_workbook: Path):
+    rows, _ = extract_multi_block_ytd_workbook(two_block_workbook, "test_tax_notes", TITLE_RE)
+    labels = {r["measure_label"] for r in rows}
+    assert "Company tax" in labels
+    assert "Excise duty" in labels
+
+
+def test_multi_block_first_footnote_does_not_leak_into_second_block(two_block_workbook: Path):
+    rows, _ = extract_multi_block_ytd_workbook(two_block_workbook, "test_tax_notes", TITLE_RE)
+    assert not any("footnote for block" in r["measure_label"] for r in rows)
+
+
+def test_multi_block_values_correctly_attributed_to_their_own_block(two_block_workbook: Path):
+    rows, _ = extract_multi_block_ytd_workbook(two_block_workbook, "test_tax_notes", TITLE_RE)
+    company_tax = [r for r in rows if r["measure_label"] == "Company tax"]
+    excise = [r for r in rows if r["measure_label"] == "Excise duty"]
+    assert company_tax[0]["amount"] == pytest.approx(5_000_000)
+    assert excise[0]["amount"] == pytest.approx(3_000_000)
+
+
+def test_multi_block_sheet_with_no_title_match_is_quarantined(tmp_path: Path):
+    path = tmp_path / "no_titles.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        sheet = pd.DataFrame([["Not a title row", None], [None, "ACTUAL\n2012-2013\nJuly\n$m"], ["Company tax", 5.0]])
+        sheet.to_excel(writer, sheet_name="2012-13", header=False, index=False)
+    rows, quarantine = extract_multi_block_ytd_workbook(path, "test_tax_notes", TITLE_RE)
+    assert rows == []
+    assert any(q["reason"] == "no_block_titles_found" for q in quarantine)

@@ -983,6 +983,407 @@ measures:
     source_label_variants: ["Total expenses"]
 
 # ---------------------------------------------------------------------------
+# Tax Notes 1-2 (federal_mfs_tax_notes_1_2), item 7.1's fourth MFS sibling
+# workbook. Verified directly against all 21 real sheets
+# (FY2005-06..FY2025-26) before writing any label mapping below - see
+# scripts/ingest/extractors/mfs_tax_notes_1_2.py's module docstring and
+# ops/reports/mfs-tax-notes-1-2-*.md for the full evidence, including two
+# genuine multi-generation composition ambiguities (Note 1's resource rent
+# tax family and grand total; Note 2's "Other indirect tax") that are
+# deliberately NOT loaded below - a same-label-different-value collision
+# risk, the same defect class already documented for the Operating
+# Statement workbook.
+#
+# Unlike Note 3 (one title-header-data block per sheet), this workbook
+# stacks two independently-titled blocks per sheet ("Tax Note 1 - Income
+# Tax" then, further down the same sheet, "Tax Note 2 - Indirect Tax") -
+# handled by mfs_common.py's extract_multi_block_ytd_workbook().
+# ---------------------------------------------------------------------------
+  mfs_tax1_gross_income_tax_withholding:
+    economic_meaning: >
+      Gross income tax withheld from individuals (PAYG withholding),
+      before refunds, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_gross_income_tax_withholding
+    allowed_comparisons:
+      - mfs_tax1_gross_income_tax_withholding at the same reporting_month, a different financial_year
+      - any other mfs_tax1_*/mfs_tax2_* measure at the same reporting_month/financial_year, plotted as a distinct series (never summed by the API)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Gross income tax withholding"]
+
+  mfs_tax1_gross_other_individuals:
+    economic_meaning: >
+      Gross income tax from individuals other than PAYG withholding
+      (e.g. self-assessed), YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_gross_other_individuals
+    allowed_comparisons:
+      - mfs_tax1_gross_other_individuals at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Gross other individuals"]
+
+  mfs_tax1_less_refunds:
+    economic_meaning: >
+      Individual income tax refunds paid, YTD through the reporting
+      month - reported by the source as a positive dollar magnitude that
+      is SUBTRACTED from gross withholding/other-individuals income tax
+      to derive Total individuals and other withholding taxation (never
+      itself a negative number in this database).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive (subtracted from gross withholding/other-individuals figures by the source, not by this database)
+    compatibility_group: mfs_tax1_less_refunds
+    allowed_comparisons:
+      - mfs_tax1_less_refunds at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - added to (rather than subtracted from) mfs_tax1_gross_income_tax_withholding/mfs_tax1_gross_other_individuals
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["less Refunds", "less refunds"]
+
+  mfs_tax1_total_individuals_withholding_tax:
+    economic_meaning: >
+      The published "Total individuals and other withholding taxation"
+      subtotal - gross income tax withholding plus gross other
+      individuals, less refunds, as stated directly by the source (never
+      computed here), YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_total_individuals_withholding_tax
+    allowed_comparisons:
+      - mfs_tax1_total_individuals_withholding_tax at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - summed with mfs_tax1_gross_income_tax_withholding/mfs_tax1_gross_other_individuals/mfs_tax1_less_refunds (already their net; summing again double-counts)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Total individuals and other withholding taxation"]
+
+  mfs_tax1_company_tax:
+    economic_meaning: >
+      Company (corporate) income tax collections, YTD through the
+      reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_company_tax
+    allowed_comparisons:
+      - mfs_tax1_company_tax at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Company tax"]
+
+  mfs_tax1_superannuation_fund_taxes:
+    economic_meaning: >
+      Taxes on superannuation fund earnings/contributions, YTD through
+      the reporting month. One continuous measure across a wording change
+      ("Superannuation funds" -> "Superannuation fund taxes", FY2017-18).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_superannuation_fund_taxes
+    allowed_comparisons:
+      - mfs_tax1_superannuation_fund_taxes at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Superannuation funds", "Superannuation fund taxes"]
+
+  mfs_tax1_fringe_benefits_tax:
+    economic_meaning: >
+      Fringe benefits tax collections, YTD through the reporting month -
+      the raw line-item figure only. This database makes no claim about
+      whether a given year's Total income taxation revenue includes or
+      excludes this figure (the source's own inclusion/exclusion of FBT
+      in that total genuinely varies by generation, and even within
+      FY2006-07 itself per that year's own footnote) - that total is
+      deliberately not loaded (see the extractor's module docstring).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_fringe_benefits_tax
+    allowed_comparisons:
+      - mfs_tax1_fringe_benefits_tax at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - assumed included in or excluded from any Total income tax(ation revenue) figure without checking that year's own footnote
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Fringe Benefits tax", "Fringe benefits tax"]
+
+  mfs_tax1_petroleum_resource_rent_tax:
+    economic_meaning: >
+      Petroleum resource rent tax (PRRT) collections, YTD through the
+      reporting month - loaded only for the years this exact label
+      reports a clean, standalone PRRT figure. FY2012-13..FY2016-17 use a
+      different, combined "Resource rent taxes" label (PRRT+MRRT,
+      explicitly combined per that era's own footnote to avoid breaching
+      tax secrecy provisions) and are never loaded under this measure;
+      FY2013-14 additionally has an incomplete child-breakdown row under
+      this exact label (missing July/August entirely, per that year's own
+      footnote) and is excluded via only_published_financial_years rather
+      than silently mixed with the clean years.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_petroleum_resource_rent_tax
+    allowed_comparisons:
+      - mfs_tax1_petroleum_resource_rent_tax at the same reporting_month, a different financial_year within only_published_financial_years
+    forbidden_comparisons:
+      - treated as continuous with FY2012-13..FY2016-17's combined "Resource rent taxes" figures (a different, larger population - not loaded)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years it exists
+    source_label_variants: ["Petroleum resource rent tax"]
+    only_published_financial_years:
+      ["2005-06", "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12",
+       "2017-18", "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
+
+  mfs_tax1_total_income_other_sources:
+    economic_meaning: >
+      The published "Total income from other sources" subtotal (Company
+      tax plus Superannuation funds plus Petroleum resource rent tax), as
+      stated directly by the source (never computed here). Disclosed as
+      its own line only in FY2005-06 - from FY2006-07 the source folds
+      this subtotal directly into the grand total instead (which is not
+      loaded here - see mfs_tax1_fringe_benefits_tax's note).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax1_total_income_other_sources
+    allowed_comparisons:
+      - mfs_tax1_total_income_other_sources at the same reporting_month (FY2005-06 only)
+    forbidden_comparisons:
+      - summed with mfs_tax1_company_tax/mfs_tax1_superannuation_fund_taxes/mfs_tax1_petroleum_resource_rent_tax (already their total; summing again double-counts)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for FY2005-06
+    source_label_variants: ["Total income from other sources"]
+    only_published_financial_years: ["2005-06"]
+
+  mfs_tax2_excise_duty:
+    economic_meaning: >
+      Excise duty collections, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_excise_duty
+    allowed_comparisons:
+      - mfs_tax2_excise_duty at the same reporting_month, a different financial_year
+      - any other mfs_tax2_* measure at the same reporting_month/financial_year, plotted as a distinct series (never summed by the API)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Excise duty"]
+
+  mfs_tax2_customs_duty:
+    economic_meaning: >
+      Customs duty collections, YTD through the reporting month.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_customs_duty
+    allowed_comparisons:
+      - mfs_tax2_customs_duty at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Customs duty"]
+
+  mfs_tax2_goods_and_services_tax:
+    economic_meaning: >
+      Goods and services tax (GST) collections, YTD through the reporting
+      month. Disclosed as its own line only from December 2008-09 onward
+      (before that, bundled into "Other indirect tax", which is not
+      loaded here - see the extractor's module docstring); FY2009-10
+      onward it is disclosed as its own line for the full year.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_goods_and_services_tax
+    allowed_comparisons:
+      - mfs_tax2_goods_and_services_tax at the same reporting_month, a different financial_year (from FY2008-09's December column onward)
+    forbidden_comparisons:
+      - treated as continuous with an earlier year's "Other indirect tax" figure (GST is bundled inside that row before December 2008-09, not loaded here)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years/months it exists as its own line
+    source_label_variants: ["Goods and services tax", "Goods and services tax (a)"]
+
+  mfs_tax2_wine_equalisation_tax:
+    economic_meaning: >
+      Wine equalisation tax collections, YTD through the reporting month.
+      Disclosed as its own line only from FY2009-10 onward.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_wine_equalisation_tax
+    allowed_comparisons:
+      - mfs_tax2_wine_equalisation_tax at the same reporting_month, a different financial_year (FY2009-10 onward)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years it exists
+    source_label_variants: ["Wine equalisation tax"]
+
+  mfs_tax2_luxury_car_tax:
+    economic_meaning: >
+      Luxury car tax collections, YTD through the reporting month.
+      Disclosed as its own line only from FY2009-10 onward.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_luxury_car_tax
+    allowed_comparisons:
+      - mfs_tax2_luxury_car_tax at the same reporting_month, a different financial_year (FY2009-10 onward)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for the years it exists
+    source_label_variants: ["Luxury car tax"]
+
+  mfs_tax2_carbon_pricing_mechanism:
+    economic_meaning: >
+      Carbon pricing mechanism revenue, YTD through the reporting month.
+      Disclosed as its own line only FY2012-13 and FY2013-14 (the
+      mechanism's full operating years before repeal) - never backfilled
+      or extended to any other year.
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_carbon_pricing_mechanism
+    allowed_comparisons:
+      - mfs_tax2_carbon_pricing_mechanism at the same reporting_month (FY2012-13 or FY2013-14 only)
+    forbidden_comparisons:
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only, shown only for FY2012-13/FY2013-14
+    source_label_variants: ["Carbon pricing mechanism", "Carbon pricing mechanism (a)"]
+    only_published_financial_years: ["2012-13", "2013-14"]
+
+  mfs_tax2_total_indirect_taxation_revenue:
+    economic_meaning: >
+      The published "Total indirect taxation revenue" bottom line of the
+      Note 2 breakdown - the sum, as stated directly by the source (never
+      computed here), of every indirect-tax line item above for the same
+      reporting_month/financial_year. Its internal composition legitimately
+      changes over time as taxes are introduced/repealed (GST separated
+      out, wine equalisation/luxury car tax introduced FY2009-10, carbon
+      pricing mechanism FY2012-13..FY2013-14 only) - a normal feature of
+      any total-across-a-changing-tax-base measure, not the same defect
+      class as the "Other indirect tax" line's within-year composition
+      ambiguity (which is not loaded here).
+    flow_or_stock: flow
+    period_granularity: month
+    period_start: financial_year_start
+    period_end: reporting_month_end
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_tax2_total_indirect_taxation_revenue
+    allowed_comparisons:
+      - mfs_tax2_total_indirect_taxation_revenue at the same reporting_month, a different financial_year
+    forbidden_comparisons:
+      - summed with any of the Note 2 line items above (already their total; summing again double-counts)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS timeline/comparison API only
+    source_label_variants: ["Total indirect taxation revenue"]
+
+# ---------------------------------------------------------------------------
 # Quarantine rules (applied by the Task 5 loader, in addition to the
 # per-measure gates above)
 # ---------------------------------------------------------------------------

@@ -82,48 +82,115 @@ def parse_header_row(header_row, num_cols: int, *, sheet: str, quarantine: list[
     return col_meta
 
 
-def _combined_header_and_data_start(df) -> tuple[dict[int, object], int]:
+def _combined_header_and_data_start(df, header_row: int = 1) -> tuple[dict[int, object], int]:
     """Two known header shapes exist across these workbooks' 20+ year
     history, verified directly against the real Note 3 Function Statement
     file (FY2005-06..FY2025-26), not assumed from one era's format:
 
       - a single combined cell per column, e.g.
         "ACTUAL\\n2024-2025\\nJuly\\n$m" (FY2012-13 onward) - header at
-        row 1, data starts at row 2;
+        `header_row`, data starts at `header_row` + 1;
       - four separate physical rows - status/financial_year/month/unit,
-        one each - at rows 1-4 (FY2005-06..FY2011-12) - header spans rows
-        1-4, data starts at row 5.
+        one each - at `header_row`..`header_row`+3 (FY2005-06..FY2011-12) -
+        header spans those 4 rows, data starts at `header_row` + 4.
 
-    Detected per-sheet (not assumed from a fixed year cutoff) by checking
-    whether row 1's first data column already contains embedded newlines.
-    Returns a column-index-keyed dict of combined header strings (or None
-    where a column's header could not be assembled), in the same shape
-    parse_header_row() already expects for the single-cell case - so both
-    shapes feed the identical downstream regex/quarantine logic.
+    `header_row` defaults to 1 (immediately after a sheet's single title
+    row, the shape every MFS sibling except Tax Notes 1-2 uses); Tax Notes
+    1-2 stacks two independently-titled blocks per sheet, each with its own
+    title-then-header shape starting at a different row, so
+    extract_multi_block_ytd_workbook() passes each block's own header_row.
+
+    Detected per-block (not assumed from a fixed year cutoff) by checking
+    whether the header row's first data column already contains embedded
+    newlines. Returns a column-index-keyed dict of combined header strings
+    (or None where a column's header could not be assembled), in the same
+    shape parse_header_row() already expects for the single-cell case - so
+    both shapes feed the identical downstream regex/quarantine logic.
     """
     num_cols = df.shape[1]
-    probe = df.iloc[1, 1] if num_cols > 1 else None
+    probe = df.iloc[header_row, 1] if num_cols > 1 else None
     is_single_cell = isinstance(probe, str) and "\n" in probe
 
     combined: dict[int, object] = {}
     if is_single_cell:
         for c in range(1, num_cols):
-            v = df.iloc[1, c]
+            v = df.iloc[header_row, c]
             combined[c] = v if isinstance(v, str) else None
-        return combined, 2
+        return combined, header_row + 1
 
     for c in range(1, num_cols):
         parts: list[str] = []
-        complete = df.shape[0] > 4
+        complete = df.shape[0] > header_row + 3
         if complete:
-            for r in range(1, 5):
+            for r in range(header_row, header_row + 4):
                 v = df.iloc[r, c]
                 if not isinstance(v, str):
                     complete = False
                     break
                 parts.append(v)
         combined[c] = "\n".join(parts) if complete else None
-    return combined, 5
+    return combined, header_row + 4
+
+
+def _extract_block_rows(
+    df, *, header_row: int, block_end: int, sheet: str, source_id: str, path: Path, quarantine: list[dict]
+) -> list[dict]:
+    """Extract every (row label, YTD monthly value) pair from a single
+    title-header-data block spanning df rows [header_row, block_end). Shared
+    by both extract_ytd_workbook() (one block = the whole sheet) and
+    extract_multi_block_ytd_workbook() (each of a sheet's several stacked,
+    independently-titled blocks, e.g. Tax Notes 1-2's "Tax Note 1" and
+    "Tax Note 2" tables). A row with a label but no numeric value in any
+    recognized column (e.g. a section heading) naturally produces zero
+    rows - no special-casing needed, since every column lookup is
+    individually None-checked.
+    """
+    rows: list[dict] = []
+    combined_header, data_start = _combined_header_and_data_start(df, header_row)
+    col_meta = parse_header_row(combined_header, df.shape[1], sheet=sheet, quarantine=quarantine)
+
+    for row_idx in range(data_start, block_end):
+        label_raw = df.iloc[row_idx, 0]
+        if not isinstance(label_raw, str) or not label_raw.strip():
+            continue
+        if FOOTNOTE_ROW.match(label_raw.strip()):
+            break
+        label = clean_label(label_raw)
+        for col_idx, meta in col_meta.items():
+            val = df.iloc[row_idx, col_idx]
+            if pd.isna(val):
+                continue
+            try:
+                amount = float(val) * UNIT_SCALE[meta["unit"]]
+            except (TypeError, ValueError):
+                continue
+            if not meta["is_ytd"]:
+                quarantine.append(
+                    {
+                        "reason": "non_ytd_column_not_supported",
+                        "sheet": sheet,
+                        "label": label,
+                        "column": meta["header_text"],
+                    }
+                )
+                continue
+            rows.append(
+                {
+                    "fy": meta["fy"],
+                    "amount": amount,
+                    "measure_label": label,
+                    "estimate_status": meta["status"],
+                    "month": meta["month"],
+                    "unit": meta["unit"],
+                    "sheet": sheet,
+                    "locator": (
+                        f"source_id:{source_id} | sheet:{sheet} | row:{label} | "
+                        f"col:{meta['header_text']}"
+                    ),
+                    "cached_copy_path": relative_or_str(path),
+                }
+            )
+    return rows
 
 
 def extract_ytd_workbook(path: Path, source_id: str) -> tuple[list[dict], list[dict]]:
@@ -131,14 +198,8 @@ def extract_ytd_workbook(path: Path, source_id: str) -> tuple[list[dict], list[d
     sibling workbook. Shared by every sibling since all of them share the
     same sheet shape: row 0 = title (skipped), row 1 = per-column header,
     data rows follow (row label in column 0) until a footnote row
-    ("(a) ..."). A row with a label but no numeric value in any recognized
-    column (e.g. a section heading like "Expenses by function" or "Other
-    purposes" in the Note 3 workbook) naturally produces zero rows - no
-    special-casing needed, since every column lookup is individually
-    None-checked.
-
-    This function only extracts and quarantines; it does not write to
-    facts.db or decide which measure_type a label maps to - that
+    ("(a) ..."). This function only extracts and quarantines; it does not
+    write to facts.db or decide which measure_type a label maps to - that
     classification is always the loader's job, against a declarative
     semantics file, never guessed here.
     """
@@ -150,51 +211,58 @@ def extract_ytd_workbook(path: Path, source_id: str) -> tuple[list[dict], list[d
         if df.shape[0] < 3 or df.shape[1] < 2:
             quarantine.append({"reason": "sheet_too_small", "sheet": sheet})
             continue
+        rows.extend(
+            _extract_block_rows(
+                df, header_row=1, block_end=df.shape[0], sheet=sheet, source_id=source_id,
+                path=path, quarantine=quarantine,
+            )
+        )
+    return rows, quarantine
 
-        combined_header, data_start = _combined_header_and_data_start(df)
-        col_meta = parse_header_row(combined_header, df.shape[1], sheet=sheet, quarantine=quarantine)
 
-        for row_idx in range(data_start, df.shape[0]):
-            label_raw = df.iloc[row_idx, 0]
-            if not isinstance(label_raw, str) or not label_raw.strip():
-                continue
-            if FOOTNOTE_ROW.match(label_raw.strip()):
-                break
-            label = clean_label(label_raw)
-            for col_idx, meta in col_meta.items():
-                val = df.iloc[row_idx, col_idx]
-                if pd.isna(val):
-                    continue
-                try:
-                    amount = float(val) * UNIT_SCALE[meta["unit"]]
-                except (TypeError, ValueError):
-                    continue
-                if not meta["is_ytd"]:
-                    quarantine.append(
-                        {
-                            "reason": "non_ytd_column_not_supported",
-                            "sheet": sheet,
-                            "label": label,
-                            "column": meta["header_text"],
-                        }
-                    )
-                    continue
-                rows.append(
-                    {
-                        "fy": meta["fy"],
-                        "amount": amount,
-                        "measure_label": label,
-                        "estimate_status": meta["status"],
-                        "month": meta["month"],
-                        "unit": meta["unit"],
-                        "sheet": sheet,
-                        "locator": (
-                            f"source_id:{source_id} | sheet:{sheet} | row:{label} | "
-                            f"col:{meta['header_text']}"
-                        ),
-                        "cached_copy_path": relative_or_str(path),
-                    }
+def extract_multi_block_ytd_workbook(
+    path: Path, source_id: str, title_re: re.Pattern
+) -> tuple[list[dict], list[dict]]:
+    """Like extract_ytd_workbook(), but for a sheet shape that stacks
+    several independently-titled title-header-data blocks in a single
+    sheet (Tax Notes 1-2: "Tax Note 1 - Income Tax" then, further down the
+    same sheet, "Tax Note 2 - Indirect Tax", each with its own header row
+    and its own footnote-row block terminator - extract_ytd_workbook()'s
+    single "stop at the first footnote row" rule would otherwise truncate
+    the sheet at Note 1's footnotes and never reach Note 2's data at all).
+
+    Block boundaries are found by title_re matching column 0 of a row -
+    never assumed from a fixed row offset, since blocks are not always the
+    same length (footnote-row and section-row counts vary by generation).
+    Text before the first matched title row is ignored (there is none in
+    the real Tax Notes 1-2 file, but a stray/malformed sheet should not
+    crash the whole extraction).
+    """
+    rows: list[dict] = []
+    quarantine: list[dict] = []
+    xl = pd.ExcelFile(path)
+    for sheet in xl.sheet_names:
+        df = xl.parse(sheet, header=None)
+        if df.shape[0] < 3 or df.shape[1] < 2:
+            quarantine.append({"reason": "sheet_too_small", "sheet": sheet})
+            continue
+
+        title_rows = [
+            r for r in range(df.shape[0])
+            if isinstance(df.iloc[r, 0], str) and title_re.search(df.iloc[r, 0])
+        ]
+        if not title_rows:
+            quarantine.append({"reason": "no_block_titles_found", "sheet": sheet})
+            continue
+
+        for i, title_row in enumerate(title_rows):
+            block_end = title_rows[i + 1] if i + 1 < len(title_rows) else df.shape[0]
+            rows.extend(
+                _extract_block_rows(
+                    df, header_row=title_row + 1, block_end=block_end, sheet=sheet, source_id=source_id,
+                    path=path, quarantine=quarantine,
                 )
+            )
     return rows, quarantine
 
 
