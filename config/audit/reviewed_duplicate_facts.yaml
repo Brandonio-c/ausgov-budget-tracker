@@ -1612,3 +1612,322 @@ reviewed_duplicate_facts:
       qld_on_time_payment_reports above.
     evidence_report: ops/reports/mfs-tax-notes-1-2-duplicate-fact-investigation-20260814T193000Z.md
     review_date: "2026-08-14"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2019-20"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 256000000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2022-23"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 306888000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2023-24"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 87114000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2024-25"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 81187000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2024-25"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 82518000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2024-25"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 82808000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2024-25"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 84159000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2025-26"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 47582000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Assets held for sale"
+    financial_year: "2025-26"
+    measure_type: mfs_balance_sheet_assets_held_for_sale
+    estimate_status: actual
+    amount_aud: 47858000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Biological assets"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_biological_assets
+    estimate_status: actual
+    amount_aud: 26389000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Biological assets"
+    financial_year: "2019-20"
+    measure_type: mfs_balance_sheet_biological_assets
+    estimate_status: actual
+    amount_aud: 20000000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Biological assets"
+    financial_year: "2020-21"
+    measure_type: mfs_balance_sheet_biological_assets
+    estimate_status: actual
+    amount_aud: 27952000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Deposits held"
+    financial_year: "2017-18"
+    measure_type: mfs_balance_sheet_deposits_held
+    estimate_status: actual
+    amount_aud: 214240000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Deposits held"
+    financial_year: "2017-18"
+    measure_type: mfs_balance_sheet_deposits_held
+    estimate_status: actual
+    amount_aud: 214370000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 222314000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 223100000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2010-11"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 271567000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2014-15"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 290833000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2014-15"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 314116000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2014-15"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 314866000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2015-16"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 304240000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Equity accounted investments"
+    financial_year: "2015-16"
+    measure_type: mfs_balance_sheet_equity_accounted_investments
+    estimate_status: actual
+    amount_aud: 314240000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 191247000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 191261000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2008-09"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 191686000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2009-10"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 53080000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2013-14"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 211626000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2017-18"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 159241000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"
+  - source_key: federal_mfs_balance_sheet
+    node_path: "MFS Balance Sheet: Investment property/properties"
+    financial_year: "2017-18"
+    measure_type: mfs_balance_sheet_investment_property
+    estimate_status: actual
+    amount_aud: 159259000
+    classification: query_false_positive
+    reason: >
+      Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
+    evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
+    review_date: "2026-08-15"

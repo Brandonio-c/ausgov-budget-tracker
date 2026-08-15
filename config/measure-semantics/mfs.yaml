@@ -1384,6 +1384,796 @@ measures:
     source_label_variants: ["Total indirect taxation revenue"]
 
 # ---------------------------------------------------------------------------
+# Balance Sheet (federal_mfs_balance_sheet), one of the five MFS sibling
+# workbooks item 7.1 covers (Monthly Profiles remains the one still
+# outstanding). Verified directly against all 21 real sheets before
+# writing any label mapping - see
+# scripts/ingest/extractors/mfs_balance_sheet.py's module docstring and
+# ops/reports/mfs-balance-sheet-*.md for full evidence. FY2005-06, FY2006-07
+# (a structurally different early layout/label set) and FY2007-08 (a one-off
+# GFS-framed transition year) are deliberately NOT loaded - every measure
+# below spans FY2008-09..FY2025-26 or a documented subset of it. Four
+# headline figures (Total assets/liabilities/Net worth/Net debt) are sourced
+# from the separate federal_mfs_aggregates workbook (mfs_stock_* above) and
+# are deliberately NOT re-extracted from this file under the same
+# measure_type, to avoid two independently-provenanced series colliding.
+# ---------------------------------------------------------------------------
+  mfs_balance_sheet_advances_paid:
+    economic_meaning: >
+      Advances paid
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_advances_paid
+    allowed_comparisons:
+      - mfs_balance_sheet_advances_paid at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Advances paid"]
+
+  mfs_balance_sheet_investments_loans_placements:
+    economic_meaning: >
+      Investments, loans and placements
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_investments_loans_placements
+    allowed_comparisons:
+      - mfs_balance_sheet_investments_loans_placements at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Investments, loans and placements"]
+
+  mfs_balance_sheet_other_receivables:
+    economic_meaning: >
+      Other receivables (excludes advances paid and investments, loans and placements, which are disclosed separately)
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_receivables
+    allowed_comparisons:
+      - mfs_balance_sheet_other_receivables at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other receivables"]
+
+  mfs_balance_sheet_investments_other_public_sector_entities:
+    economic_meaning: >
+      Investments in other public sector entities
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_investments_other_public_sector_entities
+    allowed_comparisons:
+      - mfs_balance_sheet_investments_other_public_sector_entities at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Investments in other public sector entities"]
+
+  mfs_balance_sheet_equity_accounted_investments:
+    economic_meaning: >
+      Equity accounted investments
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_equity_accounted_investments
+    allowed_comparisons:
+      - mfs_balance_sheet_equity_accounted_investments at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Equity accounted investments"]
+
+  mfs_balance_sheet_investments_shares:
+    economic_meaning: >
+      Investments - shares
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_investments_shares
+    allowed_comparisons:
+      - mfs_balance_sheet_investments_shares at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Investments - shares"]
+
+  mfs_balance_sheet_biological_assets:
+    economic_meaning: >
+      Biological assets
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_biological_assets
+    allowed_comparisons:
+      - mfs_balance_sheet_biological_assets at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Biological assets"]
+
+  mfs_balance_sheet_assets_held_for_sale:
+    economic_meaning: >
+      Assets held for sale
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_assets_held_for_sale
+    allowed_comparisons:
+      - mfs_balance_sheet_assets_held_for_sale at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Assets held for sale"]
+
+  mfs_balance_sheet_land:
+    economic_meaning: >
+      Land
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_land
+    allowed_comparisons:
+      - mfs_balance_sheet_land at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Land"]
+
+  mfs_balance_sheet_buildings:
+    economic_meaning: >
+      Buildings
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_buildings
+    allowed_comparisons:
+      - mfs_balance_sheet_buildings at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Buildings"]
+
+  mfs_balance_sheet_plant_equipment_infrastructure:
+    economic_meaning: >
+      Plant, equipment and infrastructure
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_plant_equipment_infrastructure
+    allowed_comparisons:
+      - mfs_balance_sheet_plant_equipment_infrastructure at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Plant, equipment and infrastructure"]
+
+  mfs_balance_sheet_inventories:
+    economic_meaning: >
+      Inventories
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_inventories
+    allowed_comparisons:
+      - mfs_balance_sheet_inventories at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Inventories"]
+
+  mfs_balance_sheet_intangibles:
+    economic_meaning: >
+      Intangibles
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_intangibles
+    allowed_comparisons:
+      - mfs_balance_sheet_intangibles at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Intangibles"]
+
+  mfs_balance_sheet_heritage_cultural_assets:
+    economic_meaning: >
+      Heritage and cultural assets
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_heritage_cultural_assets
+    allowed_comparisons:
+      - mfs_balance_sheet_heritage_cultural_assets at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Heritage and cultural assets"]
+
+  mfs_balance_sheet_other_non_financial_assets:
+    economic_meaning: >
+      Other non-financial assets
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_non_financial_assets
+    allowed_comparisons:
+      - mfs_balance_sheet_other_non_financial_assets at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other non-financial assets"]
+
+  mfs_balance_sheet_deposits_held:
+    economic_meaning: >
+      Deposits held
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_deposits_held
+    allowed_comparisons:
+      - mfs_balance_sheet_deposits_held at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Deposits held"]
+
+  mfs_balance_sheet_government_securities:
+    economic_meaning: >
+      Government securities
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_government_securities
+    allowed_comparisons:
+      - mfs_balance_sheet_government_securities at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Government securities"]
+
+  mfs_balance_sheet_loans:
+    economic_meaning: >
+      Loans
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_loans
+    allowed_comparisons:
+      - mfs_balance_sheet_loans at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Loans"]
+
+  mfs_balance_sheet_superannuation_liability:
+    economic_meaning: >
+      Superannuation liability
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_superannuation_liability
+    allowed_comparisons:
+      - mfs_balance_sheet_superannuation_liability at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Superannuation liability"]
+
+  mfs_balance_sheet_other_employee_liabilities:
+    economic_meaning: >
+      Other employee liabilities
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_employee_liabilities
+    allowed_comparisons:
+      - mfs_balance_sheet_other_employee_liabilities at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other employee liabilities"]
+
+  mfs_balance_sheet_investment_property:
+    economic_meaning: >
+      Investment property (or investment properties, from FY2018-19's wording change) - one continuous measure across a singular/plural wording change only, verified adjacent with no gap.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_investment_property
+    allowed_comparisons:
+      - mfs_balance_sheet_investment_property at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Investment property", "Investment properties"]
+
+  mfs_balance_sheet_suppliers_payable:
+    economic_meaning: >
+      Suppliers payable(s) - one continuous measure across a wording change ("Suppliers payable" -> "Suppliers payables", FY2017-18), verified adjacent with no gap.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_suppliers_payable
+    allowed_comparisons:
+      - mfs_balance_sheet_suppliers_payable at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Suppliers payable", "Suppliers payables"]
+
+  mfs_balance_sheet_personal_benefits_payable:
+    economic_meaning: >
+      Personal benefits payable(s) - one continuous measure across a wording change ("Personal benefits provisions and payable" -> "Personal benefits payables", FY2017-18), verified adjacent with no gap.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_personal_benefits_payable
+    allowed_comparisons:
+      - mfs_balance_sheet_personal_benefits_payable at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Personal benefits provisions and payable", "Personal benefits payables"]
+
+  mfs_balance_sheet_subsidies_payable:
+    economic_meaning: >
+      Subsidies payable(s) - one continuous measure across a wording change ("Subsidies provisions and payable" -> "Subsidies payables", FY2017-18), verified adjacent with no gap.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_subsidies_payable
+    allowed_comparisons:
+      - mfs_balance_sheet_subsidies_payable at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Subsidies provisions and payable", "Subsidies payables"]
+
+  mfs_balance_sheet_grants_payable:
+    economic_meaning: >
+      Grants payable(s) - one continuous measure across a wording change ("Grants provisions and payable" -> "Grants payables", FY2017-18), verified adjacent with no gap.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_grants_payable
+    allowed_comparisons:
+      - mfs_balance_sheet_grants_payable at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Grants provisions and payable", "Grants payables"]
+
+  mfs_balance_sheet_other_borrowing:
+    economic_meaning: >
+      Other borrowing. Disclosed under this label only through FY2018-19 - from FY2019-20 the source's own footnote states this population was reclassified as "Lease liabilities" following the AASB16 leases standard's adoption mid-way through that year (a genuine accounting-standard-driven population change, not a simple rename), so "Lease liabilities"/"Lease liabilities(b)" are deliberately NOT loaded as a continuation of this measure.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_borrowing
+    allowed_comparisons:
+      - mfs_balance_sheet_other_borrowing at a compatible reporting date, a different financial_year (within only_published_financial_years)
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other borrowing"]
+    only_published_financial_years: ["2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17", "2017-18", "2018-19"]
+
+  mfs_balance_sheet_other_provisions_and_payables:
+    economic_meaning: >
+      Other provisions and payables. Disclosed under this single combined label only through FY2016-17 - from FY2017-18 the source splits this into two separate rows ("Other payables" and "Provisions"), a genuine one-to-two split, not a rename, so those two are loaded as their own distinct standalone measures rather than claimed as a continuation of this one.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_provisions_and_payables
+    allowed_comparisons:
+      - mfs_balance_sheet_other_provisions_and_payables at a compatible reporting date, a different financial_year (within only_published_financial_years)
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other provisions and payables"]
+    only_published_financial_years: ["2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17"]
+
+  mfs_balance_sheet_other_payables:
+    economic_meaning: >
+      Other payables - the post-split successor to (part of) "Other provisions and payables" (see mfs_balance_sheet_other_provisions_and_payables), disclosed as its own line only from FY2017-18.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_other_payables
+    allowed_comparisons:
+      - mfs_balance_sheet_other_payables at a compatible reporting date, a different financial_year (within only_published_financial_years)
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Other payables"]
+    only_published_financial_years: ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
+
+  mfs_balance_sheet_provisions:
+    economic_meaning: >
+      Provisions - the other post-split successor to (part of) "Other provisions and payables" (see mfs_balance_sheet_other_provisions_and_payables), disclosed as its own line only from FY2017-18.
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_provisions
+    allowed_comparisons:
+      - mfs_balance_sheet_provisions at a compatible reporting date, a different financial_year (within only_published_financial_years)
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Provisions"]
+    only_published_financial_years: ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
+
+  mfs_balance_sheet_total_financial_assets:
+    economic_meaning: >
+      The published "Total financial assets" subtotal (the sum of every financial-asset line item above), as stated directly by the source (never computed here).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_total_financial_assets
+    allowed_comparisons:
+      - mfs_balance_sheet_total_financial_assets at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Total financial assets"]
+
+  mfs_balance_sheet_total_non_financial_assets:
+    economic_meaning: >
+      The published "Total non-financial assets" subtotal, as stated directly by the source (never computed here).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_total_non_financial_assets
+    allowed_comparisons:
+      - mfs_balance_sheet_total_non_financial_assets at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Total non-financial assets"]
+
+  mfs_balance_sheet_total_interest_bearing_liabilities:
+    economic_meaning: >
+      The published "Total interest bearing liabilities" subtotal, as stated directly by the source (never computed here).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_total_interest_bearing_liabilities
+    allowed_comparisons:
+      - mfs_balance_sheet_total_interest_bearing_liabilities at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Total interest bearing liabilities"]
+
+  mfs_balance_sheet_total_provisions_and_payables:
+    economic_meaning: >
+      The published "Total provisions and payables" subtotal, as stated directly by the source (never computed here).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: mfs_balance_sheet_total_provisions_and_payables
+    allowed_comparisons:
+      - mfs_balance_sheet_total_provisions_and_payables at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Total provisions and payables"]
+
+  mfs_balance_sheet_net_financial_worth:
+    economic_meaning: >
+      Total financial assets minus total liabilities, as stated directly by the source (never computed here) - a derived net-position balance distinct from mfs_stock_net_worth (total assets minus total liabilities, sourced from the separate federal_mfs_aggregates workbook).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_balance_sheet_net_financial_worth
+    allowed_comparisons:
+      - mfs_balance_sheet_net_financial_worth at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Net financial worth"]
+
+  mfs_balance_sheet_net_financial_liabilities:
+    economic_meaning: >
+      Total liabilities less financial assets other than investments in other public sector entities, as stated directly by the source (never computed here).
+    flow_or_stock: stock
+    period_granularity: month
+    period_start: null  # stocks have no accumulation start
+    period_end: reporting_month_end  # the "as at" balance date
+    reporting_month: required
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: mfs_balance_sheet_net_financial_liabilities
+    allowed_comparisons:
+      - mfs_balance_sheet_net_financial_liabilities at a compatible reporting date, a different financial_year
+      - any other mfs_balance_sheet_* measure at the same reporting date, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - summed with mfs_stock_total_assets/mfs_stock_total_liabilities/mfs_stock_net_worth/mfs_stock_net_debt (those are sourced from the separate federal_mfs_aggregates workbook, not this one)
+      - any annual GFS/PBS compatibility_group fact
+    dashboard_treatment: dedicated MFS point-in-time stock series only, never in an additive flow tree
+    source_label_variants: ["Net financial liabilities"]
+
+
+# ---------------------------------------------------------------------------
 # Quarantine rules (applied by the Task 5 loader, in addition to the
 # per-measure gates above)
 # ---------------------------------------------------------------------------

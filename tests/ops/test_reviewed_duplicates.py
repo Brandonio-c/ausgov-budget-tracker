@@ -244,7 +244,16 @@ def test_real_repo_config_has_the_expected_reviewed_false_positive_groups():
     July/August/September, all $0 before the mechanism's first revenue
     landed in October) - see
     ops/reports/mfs-tax-notes-1-2-duplicate-fact-investigation-*.md.
-    Total: 136 + 2 = 138."""
+    Total: 136 + 2 = 138.
+
+    29 more from item 7.1's Balance Sheet load: this database's first
+    stock (point-in-time balance) source to hit the period-not-in-
+    grouping-key false-positive class - a balance genuinely unchanged
+    between two consecutive months is a normal real-world outcome, not a
+    duplicate insert (e.g. mfs_balance_sheet_assets_held_for_sale
+    FY2019-20's March/April 2020 both report $256,000,000). See
+    ops/reports/mfs-balance-sheet-duplicate-fact-investigation-*.md.
+    Total: 138 + 29 = 167."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 138
+    assert result["entry_count"] == 167

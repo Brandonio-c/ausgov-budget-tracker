@@ -122,16 +122,17 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> TestClient:
     return TestClient(app)
 
 
-def test_measures_lists_all_51(client: TestClient):
-    """15 Aggregates measures (unchanged) + 20 Note 3 measures (item 7.1's
-    second MFS sibling workbook load) + 16 Tax Notes 1-2 measures (item
-    7.1's fourth MFS sibling workbook load) - this endpoint is driven
-    entirely by config/measure-semantics/mfs.yaml, so no backend code
-    change was needed for the count to grow from 35 to 51."""
+def test_measures_lists_all_86(client: TestClient):
+    """15 Aggregates measures (unchanged) + 20 Note 3 measures + 16 Tax
+    Notes 1-2 measures + 35 Balance Sheet measures - 3 of the plan's 5 MFS
+    sibling workbooks loaded this session (Operating Statement deferred
+    with evidence, Monthly Profiles still outstanding) - this endpoint is
+    driven entirely by config/measure-semantics/mfs.yaml, so no backend
+    code change was needed for the count to grow from 51 to 86."""
     r = client.get("/v2/mfs/measures")
     assert r.status_code == 200
     body = r.json()
-    assert len(body) == 51
+    assert len(body) == 86
     types = {m["measure_type"] for m in body}
     assert "mfs_ytd_revenue" in types
     assert "mfs_stock_total_assets" in types
@@ -139,6 +140,8 @@ def test_measures_lists_all_51(client: TestClient):
     assert "mfs_note3_total_expenses" in types
     assert "mfs_tax1_company_tax" in types
     assert "mfs_tax2_total_indirect_taxation_revenue" in types
+    assert "mfs_balance_sheet_land" in types
+    assert "mfs_stock_cash_and_deposits" in types
 
 
 def test_series_filters_by_financial_year(client: TestClient):
