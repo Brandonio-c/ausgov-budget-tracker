@@ -67,6 +67,23 @@ Total expenses                                378,005    381,439    382,644     
 """
 
 
+_SAMPLE_BLOCK_5COL = """
+Appendix A: Expenses by Function and Sub-function
+
+                                              2016-17    2017-18    2018-19    2017-18    Change on
+                                              Outcome    Budget     Budget     Estimate   2017-18
+                                                                                at Outcome Budget
+
+General public services
+Total general public services                 26,280     20,703     24,975     24,521      3,818
+Defence                                        28,051     30,051     30,982     29,288       -763
+Public debt interest                           16,076     17,154     17,047     17,025       -129
+Contingency reserve                                 0     (1,301)         0    (2,500)      -2,500
+Total other purposes                           93,057     94,000     95,000     93,057          0
+Total expenses                                460,282    461,000    462,000    460,282          0
+"""
+
+
 def _toc_page(text: str = "Appendix A: Expenses by Function and Sub-function .......... 105") -> str:
     return text
 
@@ -149,21 +166,48 @@ def test_parse_number_handles_dash_placeholder_and_parens():
     assert extractor._parse_number("(1,234)") == -1234.0
 
 
-def test_editions_list_is_only_the_confirmed_tractable_seven_year_slice():
-    fys = [fy for fy, _, _ in extractor._EDITIONS]
-    assert fys == ["2010-11", "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17"]
+def test_five_column_layout_extracts_column_four_not_column_two(tmp_path, monkeypatch):
+    """FY2017-18/FY2018-19 have a genuinely different column ORDER -
+    "Estimate at Outcome" is column 4, not column 2. Column 2 in this
+    layout is a Budget forecast; blindly reusing the earlier years'
+    column-2 convention here would silently load a forecast as an
+    actual, so this must be a distinct, explicit assertion."""
+    pages = ["front matter"] * 60 + [_SAMPLE_BLOCK_5COL]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+
+    rows, quarantine = extractor.extract_edition(
+        path, "2017-18", "x.pdf", num_columns=5, outcome_column_index=4
+    )
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["general_public_services"] == pytest.approx(24_521.0)
+    assert by_key["defence"] == pytest.approx(29_288.0)
+    assert by_key["contingency_reserve"] == pytest.approx(-2_500.0)  # not -1,301 (column 2)
+    assert by_key["total_expenses"] == pytest.approx(460_282.0)  # not 461,000 (column 2)
+
+
+def test_editions_list_is_only_the_confirmed_tractable_nine_year_slice():
+    fys = [fy for fy, _, _, _ in extractor._EDITIONS]
+    assert fys == [
+        "2010-11", "2011-12", "2012-13", "2013-14", "2014-15",
+        "2015-16", "2016-17", "2017-18", "2018-19",
+    ]
     assert len(fys) == len(set(fys))
 
 
-def test_editions_carry_their_own_verified_column_count():
-    by_fy = {fy: n for fy, _, n in extractor._EDITIONS}
-    assert by_fy["2010-11"] == 3
-    assert by_fy["2011-12"] == 3
-    assert by_fy["2012-13"] == 4
-    assert by_fy["2013-14"] == 4
-    assert by_fy["2014-15"] == 4
-    assert by_fy["2015-16"] == 4
-    assert by_fy["2016-17"] == 4
+def test_editions_carry_their_own_verified_column_count_and_outcome_index():
+    by_fy = {fy: (n, idx) for fy, _, n, idx in extractor._EDITIONS}
+    assert by_fy["2010-11"] == (3, 2)
+    assert by_fy["2011-12"] == (3, 2)
+    assert by_fy["2012-13"] == (4, 2)
+    assert by_fy["2013-14"] == (4, 2)
+    assert by_fy["2014-15"] == (4, 2)
+    assert by_fy["2015-16"] == (4, 2)
+    assert by_fy["2016-17"] == (4, 2)
+    assert by_fy["2017-18"] == (5, 4)
+    assert by_fy["2018-19"] == (5, 4)
 
 
 def test_four_column_layout_still_extracts_the_second_estimate_at_outcome_column(tmp_path, monkeypatch):

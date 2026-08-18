@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Load the pre-2019 Final Budget Outcome (FBO) Appendix A: Expenses by
 Function and Sub-function table into data/facts.db (item 8.1, first
-three sub-generations: FY2010-11 through FY2016-17, the confirmed-
+four sub-generations: FY2010-11 through FY2018-19, the confirmed-
 tractable years - see fbo_appendix_a_function.py's own module docstring
-for the 3-column vs 4-column layout split).
+for the 3 distinct column layouts, including FY2017-18/FY2018-19's
+5-column layout where "Estimate at Outcome" sits in a different
+position than every earlier year).
 
 Reads scripts/ingest/extractors/fbo_appendix_a_function.py's extraction,
 classifies every row against config/measure-semantics/fbo_appendix_a_function.yaml,

@@ -1,26 +1,39 @@
 #!/usr/bin/env python3
 """Extractor for the pre-2019 Final Budget Outcome (FBO) "Appendix A:
-Expenses by Function and Sub-function" table - item 8.1's first three
-sub-generations, covering FY2010-11 through FY2016-17 (the confirmed-
-tractable years found in the page-anchor scoping pass and a later
-direct re-check).
+Expenses by Function and Sub-function" table - item 8.1's first four
+sub-generations, covering FY2010-11 through FY2018-19 (the confirmed-
+tractable years found in the page-anchor scoping pass and later direct
+re-checks).
 
-Two distinct, individually-verified column layouts are covered, never
-assumed uniform across years:
+Three distinct, individually-verified column layouts are covered, never
+assumed uniform across years - each edition in _EDITIONS carries its own
+verified (numeric_column_count, estimate_at_outcome_column_index) pair,
+never inferred or guessed:
   - FY2010-11/FY2011-12: 3 numeric columns (prior-year Outcome | current-
-    year Estimate at Outcome | next-year Budget).
+    year Estimate at Outcome | next-year Budget) - Estimate at Outcome
+    is column 2.
   - FY2012-13 through FY2016-17: 4 numeric columns (prior-year Outcome |
     current-year Estimate at Outcome | next-year Budget | "Change on
-    Budget"). FY2014-15..FY2016-17 were originally flagged by the
-    scoping pass as having "different header wording" and excluded; a
-    direct re-check with this module's own (already case-insensitive)
-    anchor regex found they use the identical layout and anchor as
-    FY2012-13/FY2013-14 - the original finding predated the case-
-    insensitivity fix, not a real layout difference.
-Each edition in _EDITIONS below carries its own verified column count -
-never inferred or guessed - and only the second ("Estimate at Outcome")
-column is ever extracted, which sits at the same position in every
-layout covered here.
+    Budget") - Estimate at Outcome is still column 2. FY2014-15..
+    FY2016-17 were originally flagged by the scoping pass as having
+    "different header wording" and excluded; a direct re-check with
+    this module's own (already case-insensitive) anchor regex found
+    they use the identical layout and anchor as FY2012-13/FY2013-14 -
+    the original finding predated the case-insensitivity fix, not a
+    real layout difference.
+  - FY2017-18/FY2018-19: 5 numeric columns (prior-year Outcome |
+    current-year Budget | next-year Budget | current-year Estimate at
+    Outcome | "Change on Budget") - a genuinely different column ORDER,
+    not just an added trailing column: Estimate at Outcome moves to
+    column 4. Blindly reusing column 2 here would silently load a
+    Budget forecast as if it were an actual - caught by directly
+    inspecting both editions' real page text and cross-validating
+    against the published Total other purposes/Total expenses rows
+    (both matched exactly once column 4 was used) before writing any
+    loader-facing code.
+Only the "Estimate at Outcome" column is ever extracted, at whatever
+position that edition's own header genuinely places it - never assumed
+to be a fixed position across sub-generations.
 
 The existing broad `fbo_appendix_a.extract()` is confirmed unsafe to
 reuse (it latches onto unrelated tables earlier in each consolidated FBO,
@@ -93,25 +106,32 @@ _RAW_DIR = (
     / "files"
 )
 
-# (financial_year, filename, numeric_column_count) - only the confirmed-
-# tractable years/layouts (see the page-anchor scoping report and the
+# (financial_year, filename, numeric_column_count,
+# estimate_at_outcome_column_index) - only the confirmed-tractable
+# years/layouts (see the page-anchor scoping report and the
 # data-remediation-progress.md item 8.1 milestone entries). FY2014-15
 # through FY2016-17 were re-checked directly against the anchor logic
 # below (not re-derived from the original scoping pass's narrower,
 # exact-case check) and found to use the SAME 4-column layout and the
 # same case-insensitive-matchable anchor as FY2012-13/FY2013-14 - the
 # original "different header wording" finding predates this module's
-# case-insensitive anchor fix. FY2017-18/FY2018-19 and the entire
-# pre-2010-11 population still need their own dedicated investigation
-# before being added here - never guessed at.
-_EDITIONS: list[tuple[str, str, int]] = [
-    ("2010-11", "FBO_2010-11_Consolidated.pdf", 3),
-    ("2011-12", "FBO_2011-12_Consolidated.pdf", 3),
-    ("2012-13", "2012-13_FBO_Consolidated.pdf", 4),
-    ("2013-14", "2013-14_FBO_Consolidated.pdf", 4),
-    ("2014-15", "FBO-2014-15-Consolidated.pdf", 4),
-    ("2015-16", "FBO-2015-16-Consolidated.pdf.pdf", 4),
-    ("2016-17", "FBO-2016-17.pdf", 4),
+# case-insensitive anchor fix. FY2017-18/FY2018-19 use a genuinely
+# different 5-column layout where Estimate at Outcome is column 4, not
+# column 2 - confirmed by direct page inspection and an exact match on
+# both the Total other purposes and Total expenses cross-checks for both
+# years (see the item 8.1 milestone entry). The entire pre-2010-11
+# population still needs its own dedicated investigation before being
+# added here - never guessed at.
+_EDITIONS: list[tuple[str, str, int, int]] = [
+    ("2010-11", "FBO_2010-11_Consolidated.pdf", 3, 2),
+    ("2011-12", "FBO_2011-12_Consolidated.pdf", 3, 2),
+    ("2012-13", "2012-13_FBO_Consolidated.pdf", 4, 2),
+    ("2013-14", "2013-14_FBO_Consolidated.pdf", 4, 2),
+    ("2014-15", "FBO-2014-15-Consolidated.pdf", 4, 2),
+    ("2015-16", "FBO-2015-16-Consolidated.pdf.pdf", 4, 2),
+    ("2016-17", "FBO-2016-17.pdf", 4, 2),
+    ("2017-18", "FBO_2017-18_Combined.pdf", 5, 4),
+    ("2018-19", "FBO_2018-19_web.pdf", 5, 4),
 ]
 
 _ANCHOR_RE = re.compile(r"appendix a:\s*expenses by function and\s*sub-function", re.I)
@@ -130,8 +150,8 @@ _LABEL_PATTERNS: list[tuple[str, str, bool]] = [
     ("housing_community_amenities", r"Total housing and community\s+amenities", True),
     ("recreation_culture", r"Total recreation and culture", True),
     ("fuel_energy", r"Fuel and energy", False),
-    ("agriculture_forestry_fishing", r"Total agriculture, forestry and fishing", True),
-    ("mining_manufacturing_construction", r"Mining, manufacturing and construction", False),
+    ("agriculture_forestry_fishing", r"Total agriculture, forestry and\s+fishing", True),
+    ("mining_manufacturing_construction", r"Mining, manufacturing and\s+construction", False),
     ("transport_communication", r"Total transport and communication", True),
     ("other_economic_affairs", r"Total other economic affairs", True),
     ("public_debt_interest", r"Public debt interest", False),
@@ -159,12 +179,17 @@ def _find_appendix_a_pages(reader: PdfReader) -> list[int]:
 
 
 def extract_edition(
-    path: Path, financial_year: str, original_filename: str, num_columns: int = 3
+    path: Path,
+    financial_year: str,
+    original_filename: str,
+    num_columns: int = 3,
+    outcome_column_index: int = 2,
 ) -> tuple[list[dict], list[dict]]:
-    """num_columns is the edition's own verified numeric-column count (3
-    for FY2010-11/FY2011-12, 4 for FY2012-13/FY2013-14 - see _EDITIONS).
-    The second column ("Estimate at Outcome") is always extracted,
-    regardless of how many trailing columns follow it."""
+    """num_columns is the edition's own verified numeric-column count;
+    outcome_column_index (1-indexed) is the position of "Estimate at
+    Outcome" within those columns - column 2 for every layout except
+    FY2017-18/FY2018-19, where it is column 4 (see _EDITIONS - never
+    assume a fixed position across sub-generations)."""
     rows: list[dict] = []
     quarantine: list[dict] = []
     try:
@@ -186,10 +211,11 @@ def extract_edition(
         if not m:
             quarantine.append({"reason": "label_not_found", "file": original_filename, "measure_key": measure_key})
             continue
-        value = _parse_number(m.group(2))
+        raw_value = m.group(outcome_column_index)
+        value = _parse_number(raw_value)
         if value is None:
             quarantine.append(
-                {"reason": "unparseable_value", "file": original_filename, "measure_key": measure_key, "raw": m.group(2)}
+                {"reason": "unparseable_value", "file": original_filename, "measure_key": measure_key, "raw": raw_value}
             )
             continue
         rows.append(
@@ -230,12 +256,12 @@ def _relative_or_str(path: Path) -> str:
 def extract_all(raw_dir: Path = _RAW_DIR) -> tuple[list[dict], list[dict]]:
     rows: list[dict] = []
     quarantine: list[dict] = []
-    for fy, filename, num_columns in _EDITIONS:
+    for fy, filename, num_columns, outcome_column_index in _EDITIONS:
         path = raw_dir / filename
         if not path.is_file():
             quarantine.append({"reason": "edition_file_missing_on_disk", "fy": fy, "filename": filename})
             continue
-        edition_rows, edition_quarantine = extract_edition(path, fy, filename, num_columns)
+        edition_rows, edition_quarantine = extract_edition(path, fy, filename, num_columns, outcome_column_index)
         rows.extend(edition_rows)
         quarantine.extend(edition_quarantine)
     return rows, quarantine
