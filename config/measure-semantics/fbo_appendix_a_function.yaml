@@ -1,0 +1,505 @@
+version: 1
+
+global_rules:
+  - id: only_the_confirmed_tractable_two_year_slice_is_loaded
+    text: >
+      Only FY2010-11 and FY2011-12 are loaded this pass - the confirmed
+      3-numeric-column sub-generation found in the page-anchor scoping
+      pass (see ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md).
+      FY2012-13/FY2013-14 add a 4th "Change on Budget" column and are a
+      separate sub-generation, not attempted this pass; every other
+      pre-2019 FBO edition needs its own dedicated investigation.
+  - id: function_level_totals_only_never_sub_function_detail
+    text: >
+      Only the 13 COFOG-style function totals plus the 5 "Other purposes"
+      line items, "Total other purposes", and "Total expenses" are
+      loaded - never the individual sub-function line items beneath each
+      function (a much larger, higher-drift-risk surface not attempted
+      this pass), matching the granularity already chosen for the MFS
+      Note 3 workbook.
+  - id: estimate_at_outcome_column_only
+    text: >
+      Only the middle "<FY> Estimate at Outcome" numeric column is
+      extracted for each row - never the leading prior-year-outcome
+      comparative (independently extracted from that prior year's own
+      edition) or the trailing next-year Budget forecast column (a
+      forecast, never an actual).
+  - id: never_conflated_with_gfs_pbs_mfs
+    text: >
+      This is the FBO's own Appendix A function series - a different
+      source/table from the already-loaded GFS/PBS/MFS families, and
+      never compared, summed, or substituted for any of them even where
+      a function name looks similar.
+
+measures:
+# ---------------------------------------------------------------------------
+# Pre-2019 Final Budget Outcome (FBO) Appendix A: Expenses by Function and
+# Sub-function - item 8.1's first slice (FY2010-11, FY2011-12 only - the
+# confirmed-tractable 3-numeric-column sub-generation; FY2012-13/FY2013-14
+# add a 4th column and are deliberately excluded this pass). Verified directly
+# against both real editions before writing any label mapping - see
+# scripts/ingest/extractors/fbo_appendix_a_function.py's module docstring and
+# ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md.
+#
+# Function-level totals only (13 COFOG-style functions + 5 Other purposes
+# line items + Total other purposes + Total expenses = 20 measures) -
+# deliberately NOT the individual sub-function line items beneath each
+# function, matching the same granularity choice already made for the MFS
+# Note 3 workbook (item 7.1).
+# ---------------------------------------------------------------------------
+  fbo_appendix_a_general_public_services:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      General public services, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_general_public_services
+    allowed_comparisons:
+      - fbo_appendix_a_general_public_services at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["General public services"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_defence:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Defence, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_defence
+    allowed_comparisons:
+      - fbo_appendix_a_defence at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Defence"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_public_order_safety:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Public order and safety, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_public_order_safety
+    allowed_comparisons:
+      - fbo_appendix_a_public_order_safety at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Public order and safety"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_education:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Education, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_education
+    allowed_comparisons:
+      - fbo_appendix_a_education at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Education"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_health:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Health, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_health
+    allowed_comparisons:
+      - fbo_appendix_a_health at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Health"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_social_security_welfare:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Social security and welfare, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_social_security_welfare
+    allowed_comparisons:
+      - fbo_appendix_a_social_security_welfare at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Social security and welfare"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_housing_community_amenities:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Housing and community amenities, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_housing_community_amenities
+    allowed_comparisons:
+      - fbo_appendix_a_housing_community_amenities at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Housing and community amenities"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_recreation_culture:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Recreation and culture, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_recreation_culture
+    allowed_comparisons:
+      - fbo_appendix_a_recreation_culture at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Recreation and culture"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_fuel_energy:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Fuel and energy, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_fuel_energy
+    allowed_comparisons:
+      - fbo_appendix_a_fuel_energy at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Fuel and energy"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_agriculture_forestry_fishing:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Agriculture, forestry and fishing, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_agriculture_forestry_fishing
+    allowed_comparisons:
+      - fbo_appendix_a_agriculture_forestry_fishing at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Agriculture, forestry and fishing"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_mining_manufacturing_construction:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Mining, manufacturing and construction, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_mining_manufacturing_construction
+    allowed_comparisons:
+      - fbo_appendix_a_mining_manufacturing_construction at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Mining, manufacturing and construction"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_transport_communication:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Transport and communication, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_transport_communication
+    allowed_comparisons:
+      - fbo_appendix_a_transport_communication at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Transport and communication"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_other_economic_affairs:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Other economic affairs, an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_other_economic_affairs
+    allowed_comparisons:
+      - fbo_appendix_a_other_economic_affairs at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Other economic affairs"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_public_debt_interest:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Public debt interest (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_public_debt_interest
+    allowed_comparisons:
+      - fbo_appendix_a_public_debt_interest at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Public debt interest"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_nominal_superannuation_interest:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Nominal superannuation interest (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_nominal_superannuation_interest
+    allowed_comparisons:
+      - fbo_appendix_a_nominal_superannuation_interest at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Nominal superannuation interest"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_general_purpose_intergovt_transactions:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      General purpose inter-government transactions (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_general_purpose_intergovt_transactions
+    allowed_comparisons:
+      - fbo_appendix_a_general_purpose_intergovt_transactions at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["General purpose inter-government transactions"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_natural_disaster_relief:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Natural disaster relief (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_natural_disaster_relief
+    allowed_comparisons:
+      - fbo_appendix_a_natural_disaster_relief at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Natural disaster relief"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_contingency_reserve:
+    economic_meaning: >
+      Australian Government general government sector expenses for the
+      Contingency reserve (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
+      figure for the financial year.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: fbo_appendix_a_contingency_reserve
+    allowed_comparisons:
+      - fbo_appendix_a_contingency_reserve at a compatible reporting date, a different financial_year
+      - any other fbo_appendix_a_* measure for the same financial_year, plotted as a distinct series (never summed by the API unless explicitly noted as a source-stated total relationship)
+    forbidden_comparisons:
+      - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Contingency reserve"]
+    root_total_allowed: 1
+
+  fbo_appendix_a_total_other_purposes:
+    economic_meaning: >
+      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified this pass to exactly match the sum of its 5 addends for both loaded editions.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: fbo_appendix_a_total_other_purposes
+    allowed_comparisons:
+      - fbo_appendix_a_total_other_purposes at a compatible reporting date, a different financial_year
+    forbidden_comparisons:
+      - summed with the fbo_appendix_a_* addend measures above (already their total; summing again double-counts)
+      - any annual GFS/PBS/MFS compatibility_group fact
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Total other purposes"]
+    root_total_allowed: 0
+
+  fbo_appendix_a_total_expenses:
+    economic_meaning: >
+      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified this pass to match the sum of the 13 functions plus Total other purposes to within $2 million (0.0006%) for FY2010-11, an immaterial published-rounding difference, and exactly for FY2011-12.
+    flow_or_stock: flow
+    period_granularity: financial_year
+    period_start: financial_year_start
+    period_end: financial_year_end
+    estimate_status: actual
+    accounting_basis: accrual
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: fbo_appendix_a_total_expenses
+    allowed_comparisons:
+      - fbo_appendix_a_total_expenses at a compatible reporting date, a different financial_year
+    forbidden_comparisons:
+      - summed with the fbo_appendix_a_* addend measures above (already their total; summing again double-counts)
+      - any annual GFS/PBS/MFS compatibility_group fact
+    dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
+    source_label_variants: ["Total expenses"]
+    root_total_allowed: 0
+
