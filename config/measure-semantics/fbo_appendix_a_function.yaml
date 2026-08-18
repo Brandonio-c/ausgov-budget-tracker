@@ -1,14 +1,18 @@
 version: 1
 
 global_rules:
-  - id: only_the_confirmed_tractable_two_year_slice_is_loaded
+  - id: only_the_confirmed_tractable_four_year_slice_is_loaded
     text: >
-      Only FY2010-11 and FY2011-12 are loaded this pass - the confirmed
-      3-numeric-column sub-generation found in the page-anchor scoping
-      pass (see ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md).
-      FY2012-13/FY2013-14 add a 4th "Change on Budget" column and are a
-      separate sub-generation, not attempted this pass; every other
-      pre-2019 FBO edition needs its own dedicated investigation.
+      Only FY2010-11 through FY2013-14 are loaded - two individually-
+      verified sub-generations, never assumed uniform: FY2010-11/
+      FY2011-12 has a 3-numeric-column layout (prior-year Outcome |
+      current-year Estimate at Outcome | next-year Budget); FY2012-13/
+      FY2013-14 adds a 4th "Change on Budget" column (see
+      ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md
+      and ops/reports/data-remediation-progress.md's item 8.1 milestone
+      entries). Every other pre-2019 FBO edition (FY2014-15 onward, and
+      the entire pre-2010-11 population) needs its own dedicated
+      investigation before being added here.
   - id: function_level_totals_only_never_sub_function_detail
     text: >
       Only the 13 COFOG-style function totals plus the 5 "Other purposes"
@@ -463,7 +467,7 @@ measures:
 
   fbo_appendix_a_total_other_purposes:
     economic_meaning: >
-      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified this pass to exactly match the sum of its 5 addends for both loaded editions.
+      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified to exactly match the sum of its 5 addends for FY2010-11, FY2011-12, and FY2013-14, and within $1 million (immaterial published rounding) for FY2012-13.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
@@ -484,7 +488,7 @@ measures:
 
   fbo_appendix_a_total_expenses:
     economic_meaning: >
-      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified this pass to match the sum of the 13 functions plus Total other purposes to within $2 million (0.0006%) for FY2010-11, an immaterial published-rounding difference, and exactly for FY2011-12.
+      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified to match the sum of the 13 functions plus Total other purposes exactly for FY2011-12, and within $1-2 million (well under 0.001%, immaterial published rounding) for FY2010-11, FY2012-13, and FY2013-14.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start

@@ -1,10 +1,11 @@
 """Tests for the pre-2019 FBO Appendix A: Expenses by Function and
-Sub-function extractor (item 8.1, first slice).
+Sub-function extractor (item 8.1, first two sub-generations).
 
 Focuses on the page-anchor page-range detection (case-insensitive, both
 physical heading forms, Table-of-Contents exclusion), the middle
-("Estimate at Outcome") column selection out of the 3 numeric columns,
-and negative/quarantine handling.
+("Estimate at Outcome") column selection out of both the 3-numeric-
+column (FY2010-11/FY2011-12) and 4-numeric-column (FY2012-13/FY2013-14)
+layouts, and negative/quarantine handling.
 """
 
 from __future__ import annotations
@@ -46,6 +47,23 @@ Public debt interest                            5,100      5,300      5,500
 Contingency reserve                                 -     (1,468)         -
 Total other purposes                           63,000     64,692     66,000
 Total expenses                                340,000    350,803    360,000
+"""
+
+
+_SAMPLE_BLOCK_4COL = """
+Appendix A: Expenses by Function and Sub-function
+
+                                              2011-12    2012-13    2012-13    Change on
+                                              Outcome    Estimate   2013-14    2013-14
+                                                         at Outcome Budget     Budget
+
+General public services
+Total general public services                 23,419     25,555     25,956        401
+Defence                                        21,692     21,122     21,146         24
+Public debt interest                           11,421     12,209     12,521        312
+Contingency reserve                                 0     (1,301)         0      1,301
+Total other purposes                           70,253     70,741     72,623      1,830
+Total expenses                                378,005    381,439    382,644      1,205
 """
 
 
@@ -131,7 +149,35 @@ def test_parse_number_handles_dash_placeholder_and_parens():
     assert extractor._parse_number("(1,234)") == -1234.0
 
 
-def test_editions_list_is_only_the_confirmed_tractable_two_year_slice():
-    fys = [fy for fy, _ in extractor._EDITIONS]
-    assert fys == ["2010-11", "2011-12"]
+def test_editions_list_is_only_the_confirmed_tractable_four_year_slice():
+    fys = [fy for fy, _, _ in extractor._EDITIONS]
+    assert fys == ["2010-11", "2011-12", "2012-13", "2013-14"]
     assert len(fys) == len(set(fys))
+
+
+def test_editions_carry_their_own_verified_column_count():
+    by_fy = {fy: n for fy, _, n in extractor._EDITIONS}
+    assert by_fy["2010-11"] == 3
+    assert by_fy["2011-12"] == 3
+    assert by_fy["2012-13"] == 4
+    assert by_fy["2013-14"] == 4
+
+
+def test_four_column_layout_still_extracts_the_second_estimate_at_outcome_column(tmp_path, monkeypatch):
+    """FY2012-13/FY2013-14 add a trailing 4th "Change on Budget" column -
+    the extractor must still take the 2nd numeric column, never the
+    trailing one, and never be thrown off by the extra column."""
+    pages = ["front matter"] * 60 + [_SAMPLE_BLOCK_4COL]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+
+    rows, quarantine = extractor.extract_edition(path, "2012-13", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["general_public_services"] == pytest.approx(25_555.0)
+    assert by_key["defence"] == pytest.approx(21_122.0)
+    assert by_key["public_debt_interest"] == pytest.approx(12_209.0)
+    assert by_key["contingency_reserve"] == pytest.approx(-1_301.0)
+    assert by_key["total_other_purposes"] == pytest.approx(70_741.0)
+    assert by_key["total_expenses"] == pytest.approx(381_439.0)
