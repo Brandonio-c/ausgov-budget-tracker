@@ -395,6 +395,57 @@ export const apiMfs = {
   },
 };
 
+export type QldOtpMeasureInfo = {
+  measure_type: string;
+  label: string;
+  economic_meaning: string;
+  unit: string;
+  accounting_basis: string;
+  dashboard_treatment: string;
+};
+
+export type QldOtpCitation = {
+  locator: string;
+  cached_copy_path?: string | null;
+};
+
+export type QldOtpAgencyValue = {
+  agency_code: string;
+  value: number;
+  citation: QldOtpCitation;
+};
+
+export type QldOtpAvailability = {
+  financial_year: string;
+  quarter: number;
+};
+
+export type QldOtpBreakdownResponse = {
+  measure_type: string;
+  label: string;
+  unit: string;
+  financial_year: string;
+  quarter: number;
+  agencies: QldOtpAgencyValue[];
+  total_agencies: number;
+  total_value?: number | null;
+  total_value_note?: string | null;
+};
+
+export const apiQldOtp = {
+  measures: () => getJson<QldOtpMeasureInfo[]>("/v2/qld-otp/measures"),
+  years: (measureType: string) =>
+    getJson<QldOtpAvailability[]>(`/v2/qld-otp/years?measure_type=${encodeURIComponent(measureType)}`),
+  breakdown: (measureType: string, financialYear: string, quarter: number) => {
+    const q = new URLSearchParams({
+      measure_type: measureType,
+      financial_year: financialYear,
+      quarter: String(quarter),
+    });
+    return getJson<QldOtpBreakdownResponse>(`/v2/qld-otp/breakdown?${q.toString()}`);
+  },
+};
+
 export type VicAfsFlowOrStock = "flow" | "stock" | "balance" | "stock_balance";
 
 export type VicAfsMeasureInfo = {

@@ -39,6 +39,9 @@ export default function ExplorersIndex() {
           <Link href="/explorers/family/qgip">QLD QGIP expenditure</Link>
         </li>
         <li>
+          <Link href="/explorers/qld-otp">QLD on-time payments (small business)</Link>
+        </li>
+        <li>
           <Link href="/">Legacy default dashboard</Link>
         </li>
       </ul>

@@ -7,6 +7,7 @@ from . import (
     facts,
     mfs,
     qld_myfer,
+    qld_otp,
     qld_rsf,
     query,
     search,
@@ -30,3 +31,4 @@ router.include_router(vic_bpo_soce_admin.router)
 router.include_router(tas_ggs.router)
 router.include_router(qld_rsf.router)
 router.include_router(qld_myfer.router)
+router.include_router(qld_otp.router)
