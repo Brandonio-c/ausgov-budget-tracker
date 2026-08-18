@@ -149,9 +149,9 @@ def test_parse_number_handles_dash_placeholder_and_parens():
     assert extractor._parse_number("(1,234)") == -1234.0
 
 
-def test_editions_list_is_only_the_confirmed_tractable_four_year_slice():
+def test_editions_list_is_only_the_confirmed_tractable_seven_year_slice():
     fys = [fy for fy, _, _ in extractor._EDITIONS]
-    assert fys == ["2010-11", "2011-12", "2012-13", "2013-14"]
+    assert fys == ["2010-11", "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17"]
     assert len(fys) == len(set(fys))
 
 
@@ -161,6 +161,9 @@ def test_editions_carry_their_own_verified_column_count():
     assert by_fy["2011-12"] == 3
     assert by_fy["2012-13"] == 4
     assert by_fy["2013-14"] == 4
+    assert by_fy["2014-15"] == 4
+    assert by_fy["2015-16"] == 4
+    assert by_fy["2016-17"] == 4
 
 
 def test_four_column_layout_still_extracts_the_second_estimate_at_outcome_column(tmp_path, monkeypatch):

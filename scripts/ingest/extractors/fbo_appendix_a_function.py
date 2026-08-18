@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """Extractor for the pre-2019 Final Budget Outcome (FBO) "Appendix A:
-Expenses by Function and Sub-function" table - item 8.1's first two
-sub-generations, covering FY2010-11 through FY2013-14 (the confirmed-
-tractable years found in the page-anchor scoping pass).
+Expenses by Function and Sub-function" table - item 8.1's first three
+sub-generations, covering FY2010-11 through FY2016-17 (the confirmed-
+tractable years found in the page-anchor scoping pass and a later
+direct re-check).
 
 Two distinct, individually-verified column layouts are covered, never
 assumed uniform across years:
   - FY2010-11/FY2011-12: 3 numeric columns (prior-year Outcome | current-
     year Estimate at Outcome | next-year Budget).
-  - FY2012-13/FY2013-14: 4 numeric columns (prior-year Outcome | current-
-    year Estimate at Outcome | next-year Budget | "Change on Budget").
+  - FY2012-13 through FY2016-17: 4 numeric columns (prior-year Outcome |
+    current-year Estimate at Outcome | next-year Budget | "Change on
+    Budget"). FY2014-15..FY2016-17 were originally flagged by the
+    scoping pass as having "different header wording" and excluded; a
+    direct re-check with this module's own (already case-insensitive)
+    anchor regex found they use the identical layout and anchor as
+    FY2012-13/FY2013-14 - the original finding predated the case-
+    insensitivity fix, not a real layout difference.
 Each edition in _EDITIONS below carries its own verified column count -
 never inferred or guessed - and only the second ("Estimate at Outcome")
-column is ever extracted, which sits at the same position in both
-layouts.
+column is ever extracted, which sits at the same position in every
+layout covered here.
 
 The existing broad `fbo_appendix_a.extract()` is confirmed unsafe to
 reuse (it latches onto unrelated tables earlier in each consolidated FBO,
@@ -87,15 +94,24 @@ _RAW_DIR = (
 )
 
 # (financial_year, filename, numeric_column_count) - only the confirmed-
-# tractable years/layouts (see the page-anchor scoping report). Every
-# other pre-2019 edition (FY2014-15 onward, and the entire pre-2010-11
-# population) needs its own dedicated investigation before being added
-# here - never guessed at.
+# tractable years/layouts (see the page-anchor scoping report and the
+# data-remediation-progress.md item 8.1 milestone entries). FY2014-15
+# through FY2016-17 were re-checked directly against the anchor logic
+# below (not re-derived from the original scoping pass's narrower,
+# exact-case check) and found to use the SAME 4-column layout and the
+# same case-insensitive-matchable anchor as FY2012-13/FY2013-14 - the
+# original "different header wording" finding predates this module's
+# case-insensitive anchor fix. FY2017-18/FY2018-19 and the entire
+# pre-2010-11 population still need their own dedicated investigation
+# before being added here - never guessed at.
 _EDITIONS: list[tuple[str, str, int]] = [
     ("2010-11", "FBO_2010-11_Consolidated.pdf", 3),
     ("2011-12", "FBO_2011-12_Consolidated.pdf", 3),
     ("2012-13", "2012-13_FBO_Consolidated.pdf", 4),
     ("2013-14", "2013-14_FBO_Consolidated.pdf", 4),
+    ("2014-15", "FBO-2014-15-Consolidated.pdf", 4),
+    ("2015-16", "FBO-2015-16-Consolidated.pdf.pdf", 4),
+    ("2016-17", "FBO-2016-17.pdf", 4),
 ]
 
 _ANCHOR_RE = re.compile(r"appendix a:\s*expenses by function and\s*sub-function", re.I)
