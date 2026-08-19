@@ -126,14 +126,22 @@ _RAW_DIR = _RAW_BASE / "20260723T033445Z" / "files"
 # defect (a stray space inserted inside a large number, e.g. "5, 926"
 # for "5,926" in the 2008-09 file) was found and fixed in the shared
 # _NUM pattern - re-verified this fix changes 0 values across every
-# already-loaded year before being applied. FY1998-99..FY2006-07 remain
-# their own dedicated future investigation - a materially more
-# heterogeneous population (2-column and 3-column-with-Estimate-at-
-# Outcome-in-column-3 layouts, an "Appendix B" naming era, and at least
-# 3 files whose PDF fonts require a further decode step) - never
+# already-loaded year before being applied. FY2004-05/FY2005-06/
+# FY2006-07 also use the identical 3-column/column-2 layout, but titled
+# "Appendix B"/"Table B1" (the anchor regex accepts either letter) -
+# confirmed by direct page inspection; extraction unchanged for every
+# other already-loaded year after widening the anchor (re-verified: 0
+# value changes). FY1998-99..FY2003-04 remain their own dedicated
+# future investigation - a materially more heterogeneous population (a
+# 2-column layout, a 3-column layout with Estimate at Outcome in column
+# 3 not 2, at least 3 files whose PDF fonts require a further decode
+# step, and FY1998-99 itself, which has no such table at all) - never
 # guessed at or merged into this generation without individual
-# verification.
+# verification. See ops/reports/fbo-pre-2010-scoping-20260819T182500Z.md.
 _EDITIONS: list[tuple[str, str | None, str, int, int]] = [
+    ("2004-05", "20260723T031046Z", "FBO_2004-05.pdf", 3, 2),
+    ("2005-06", "20260723T033738Z", "2005-06_fbo.pdf", 3, 2),
+    ("2006-07", "20260723T031046Z", "FBO_2006-07.pdf", 3, 2),
     ("2007-08", "20260723T033738Z", "2007-08_FBO_2007_08.pdf", 3, 2),
     ("2008-09", "20260723T031046Z", "2008-09_2008_09_FBO.pdf", 3, 2),
     ("2009-10", "20260723T031046Z", "2009-10_2009_10_FBO.pdf", 3, 2),
@@ -148,7 +156,11 @@ _EDITIONS: list[tuple[str, str | None, str, int, int]] = [
     ("2018-19", None, "FBO_2018-19_web.pdf", 5, 4),
 ]
 
-_ANCHOR_RE = re.compile(r"appendix a:\s*expenses by function and\s*sub-function", re.I)
+# FY2000-01..FY2006-07 title this table "Appendix B" (not "A") - see
+# ops/reports/fbo-pre-2010-scoping-20260819T182500Z.md. Confirmed no
+# already-loaded year has an unrelated "Appendix B: Expenses by
+# Function..." string that this widening could false-positive on.
+_ANCHOR_RE = re.compile(r"appendix [ab]:\s*expenses by function and\s*sub-function", re.I)
 # Digit-group-aware, not a bare [\d,]+ run: some editions' PDF text
 # extraction inserts a stray space right after a thousands comma (e.g.
 # "5, 926" for "5,926" - confirmed in the 2008-09 file's "Total other
@@ -163,7 +175,7 @@ _NUM = r"(\(?-?\d{1,3}(?:,\s?\d{3})*(?:\.\d+)?\)?|-)"
 # False means the bare function-name row itself carries the numbers.
 _LABEL_PATTERNS: list[tuple[str, str, bool]] = [
     ("general_public_services", r"Total general public services", True),
-    ("defence", r"Defence(?:\([a-z]\))?", False),
+    ("defence", r"Defence", False),
     ("public_order_safety", r"Total public order and safety", True),
     ("education", r"Total education", True),
     ("health", r"Total health", True),
@@ -172,14 +184,14 @@ _LABEL_PATTERNS: list[tuple[str, str, bool]] = [
     ("recreation_culture", r"Total recreation and culture", True),
     ("fuel_energy", r"Fuel and energy", False),
     ("agriculture_forestry_fishing", r"Total agriculture, forestry and\s+fishing", True),
-    ("mining_manufacturing_construction", r"Mining, manufacturing and\s+construction", False),
+    ("mining_manufacturing_construction", r"Mining, manufacturing (?:and|&)\s+construction", False),
     ("transport_communication", r"Total transport and communication", True),
     ("other_economic_affairs", r"Total other economic affairs", True),
     ("public_debt_interest", r"Public debt interest", False),
     ("nominal_superannuation_interest", r"Nominal superannuation interest", False),
     ("general_purpose_intergovt_transactions", r"General purpose inter-government\s+transactions", False),
     ("natural_disaster_relief", r"Natural disaster relief", False),
-    ("contingency_reserve", r"Contingency reserve(?:\([a-z]\))?", False),
+    ("contingency_reserve", r"Contingency reserve", False),
     ("total_other_purposes", r"Total other purposes", True),
     ("total_expenses", r"Total expenses", True),
 ]
@@ -228,7 +240,13 @@ def extract_edition(
     num_pattern = r"\s+".join([_NUM] * num_columns)
 
     for measure_key, label_re, _is_total in _LABEL_PATTERNS:
-        m = re.search(rf"{label_re}\s+{num_pattern}", block, re.S)
+        # Case-insensitive (some editions title-case a label, e.g. "Total
+        # Transport and Communication") and tolerant of an optional
+        # footnote-letter marker directly attached with no space (e.g.
+        # "Total other economic affairs(a)", "Defence(a)", "Contingency
+        # reserve(c)" - a recurring convention across several editions
+        # and labels, confirmed by direct inspection, not guessed at).
+        m = re.search(rf"{label_re}(?:\([a-z]\))?\s+{num_pattern}", block, re.I | re.S)
         if not m:
             quarantine.append({"reason": "label_not_found", "file": original_filename, "measure_key": measure_key})
             continue

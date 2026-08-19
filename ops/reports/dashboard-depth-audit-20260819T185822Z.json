@@ -1,0 +1,977 @@
+{
+  "schema_version": 1,
+  "database": "data/facts.db",
+  "projections": [
+    {
+      "label": "federal_actuals_2022_23",
+      "mode": "actuals",
+      "level": "federal",
+      "financial_year": "2022-23",
+      "selected_basis": [
+        "accrual",
+        "gfs"
+      ],
+      "root_total": 639703000000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 11,
+        "2": 22,
+        "3": 11,
+        "4": 57
+      },
+      "max_tree_depth": 4,
+      "max_additive_depth": 2,
+      "max_related_depth": 2,
+      "max_visible_depth": 4,
+      "nodes_hidden_by_folding": 4,
+      "nodes_rejected_by_partition": 4,
+      "branch_counts": {
+        "additive": 22,
+        "related": 79
+      },
+      "projection_origin_counts": {
+        "path_only": 22,
+        "edge_only": 79,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 11,
+      "exact_year_fact_nodes": 88,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "abs_gfs": 30,
+        "final_budget_outcome": 58
+      },
+      "units": {
+        "AUD": 88
+      },
+      "first_level_names": [
+        "Defence",
+        "Economic affairs",
+        "Education",
+        "Environmental protection",
+        "General public services",
+        "Health",
+        "Housing and community amenities",
+        "Public order and safety",
+        "Recreation, culture and religion",
+        "Social protection",
+        "Transport"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Historical FBO Appendix A (audited)"
+        ],
+        "Health": [
+          "Community health services",
+          "Historical FBO Appendix A (audited)",
+          "Hospital services",
+          "Medical products, appliances and equipment",
+          "Other health",
+          "Outpatient services",
+          "Public health services"
+        ],
+        "Health / Historical FBO Appendix A (audited) / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "General administration",
+          "Health services",
+          "Hospital services",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "Social protection": [
+          "Historical FBO Appendix A (audited)"
+        ]
+      },
+      "deepest_path_samples": [
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Immigration",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Industrial relations",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Other economic affairs nec",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Tourism and area promotion",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Vocational and industry training",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / and industry",
+        "Education / Historical FBO Appendix A (audited) / Education / General administration",
+        "Education / Historical FBO Appendix A (audited) / Education / Government schools"
+      ],
+      "citation": {
+        "fact_leaves": 69,
+        "complete": 69,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_actuals_2023_24",
+      "mode": "actuals",
+      "level": "federal",
+      "financial_year": "2023-24",
+      "selected_basis": [
+        "accrual",
+        "gfs"
+      ],
+      "root_total": 687277000000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 11,
+        "2": 22,
+        "3": 11,
+        "4": 57
+      },
+      "max_tree_depth": 4,
+      "max_additive_depth": 2,
+      "max_related_depth": 2,
+      "max_visible_depth": 4,
+      "nodes_hidden_by_folding": 4,
+      "nodes_rejected_by_partition": 4,
+      "branch_counts": {
+        "additive": 22,
+        "related": 79
+      },
+      "projection_origin_counts": {
+        "path_only": 22,
+        "edge_only": 79,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 11,
+      "exact_year_fact_nodes": 88,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "abs_gfs": 30,
+        "final_budget_outcome": 58
+      },
+      "units": {
+        "AUD": 88
+      },
+      "first_level_names": [
+        "Defence",
+        "Economic affairs",
+        "Education",
+        "Environmental protection",
+        "General public services",
+        "Health",
+        "Housing and community amenities",
+        "Public order and safety",
+        "Recreation, culture and religion",
+        "Social protection",
+        "Transport"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Historical FBO Appendix A (audited)"
+        ],
+        "Health": [
+          "Community health services",
+          "Historical FBO Appendix A (audited)",
+          "Hospital services",
+          "Medical products, appliances and equipment",
+          "Other health",
+          "Outpatient services",
+          "Public health services"
+        ],
+        "Health / Historical FBO Appendix A (audited) / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "General administration",
+          "Health services",
+          "Hospital services",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "Social protection": [
+          "Historical FBO Appendix A (audited)"
+        ]
+      },
+      "deepest_path_samples": [
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Immigration",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Industrial relations",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Other economic affairs nec",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Tourism and area promotion",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / Vocational and industry training",
+        "Economic affairs / Historical FBO Appendix A (audited) / Other economic affairs / and industry",
+        "Education / Historical FBO Appendix A (audited) / Education / General administration",
+        "Education / Historical FBO Appendix A (audited) / Education / Government schools"
+      ],
+      "citation": {
+        "fact_leaves": 69,
+        "complete": 69,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_actuals_2024_25",
+      "mode": "actuals",
+      "level": "federal",
+      "financial_year": "2024-25",
+      "selected_basis": [
+        "accrual",
+        "commitment",
+        "gfs"
+      ],
+      "root_total": 745030000000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 11,
+        "2": 58,
+        "3": 85,
+        "4": 35,
+        "5": 108
+      },
+      "max_tree_depth": 5,
+      "max_additive_depth": 2,
+      "max_related_depth": 4,
+      "max_visible_depth": 4,
+      "nodes_hidden_by_folding": 44,
+      "nodes_rejected_by_partition": 4,
+      "branch_counts": {
+        "additive": 22,
+        "related": 275
+      },
+      "projection_origin_counts": {
+        "path_only": 22,
+        "edge_only": 275,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 11,
+      "exact_year_fact_nodes": 245,
+      "fallback_fact_nodes": 49,
+      "source_families": {
+        "abs_gfs": 33,
+        "budget": 60,
+        "contracts": 48,
+        "final_budget_outcome": 57,
+        "grant_awards": 96
+      },
+      "units": {
+        "AUD": 294
+      },
+      "first_level_names": [
+        "Defence",
+        "Economic affairs",
+        "Education",
+        "Environmental protection",
+        "General public services",
+        "Health",
+        "Housing and community amenities",
+        "Public order and safety",
+        "Recreation, culture and religion",
+        "Social protection",
+        "Transport"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Defence",
+          "FBO Appendix A (audited)"
+        ],
+        "Defence / Defence": [
+          "Contracts (AusTender 2019-20)"
+        ],
+        "Health": [
+          "Community health services",
+          "FBO Appendix A (audited)",
+          "Hospital services",
+          "Medical products, appliances and equipment",
+          "Other health",
+          "Outpatient services",
+          "Public health services",
+          "Statement 6 (budget estimates)"
+        ],
+        "Social protection": [
+          "Assistance for Indigenous Australians nec",
+          "Assistance to families with children",
+          "Assistance to people with disabilities",
+          "Assistance to the aged",
+          "Assistance to the unemployed and the sick",
+          "Assistance to veterans and dependants",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Other welfare programs"
+        ]
+      },
+      "deepest_path_samples": [
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aerospace systems and components and equipment / BAE SYSTEMS AUSTRALIA LTD ACCOUNTS RECEIVABLE \u2013 Air Ground Air Radios for Air Traffic Cont",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aerospace systems and components and equipment / DMOJSF OFFICIAL AUSTRALIAN ACCOUNT PSFD \u2013 Reprogramming Lab",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aerospace systems and components and equipment / PRATT & WHITNEY CANADA CIE \u2013 Engine Agreement for Small Special Purpose Aircraft",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aircraft / AIRBUS AUSTRALIA PACIFIC LIMITED \u2013 Maintenance Contract",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aircraft / AIRBUS AUSTRALIA PACIFIC LIMITED \u2013 Prime Contract",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Aircraft / FMS ACCOUNT RESERVE BANK OF AUSTRALIA \u2013 Sustainment",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Building construction and support and maintenance and repair services / BROADSPECTRUM (AUSTRALIA) PTY LTD - GEMS PROJECT \u2013 Estate Maintenance and Operations Servi",
+        "Defence / Defence / Contracts (AusTender 2019-20) / Building construction and support and maintenance and repair services / LAING O'ROURKE AUSTRALIA CONSTRUCTION PTY LTD \u2013 ASMTI SWBTA Facilities Project - Managing"
+      ],
+      "citation": {
+        "fact_leaves": 240,
+        "complete": 240,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_budget_2022_23",
+      "mode": "budget",
+      "level": "federal",
+      "financial_year": "2022-23",
+      "selected_basis": [
+        "accrual"
+      ],
+      "root_total": 1629222000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 5,
+        "2": 82
+      },
+      "max_tree_depth": 2,
+      "max_additive_depth": 2,
+      "max_related_depth": 0,
+      "max_visible_depth": 2,
+      "nodes_hidden_by_folding": 53,
+      "nodes_rejected_by_partition": 0,
+      "branch_counts": {
+        "additive": 87
+      },
+      "projection_origin_counts": {
+        "path_only": 87,
+        "edge_only": 0,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 0,
+      "exact_year_fact_nodes": 82,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "budget": 82
+      },
+      "units": {
+        "AUD": 82
+      },
+      "first_level_names": [
+        "Agriculture Fisheries and Forestry",
+        "Attorney-General's",
+        "department of parliamentary services 2025 26 Parliamentary Departments",
+        "department of the senate pbs",
+        "department of the senate pbs DoS 2024 25"
+      ],
+      "selected_child_name_sets": {},
+      "deepest_path_samples": [
+        "Agriculture Fisheries and Forestry / Adjusted opening balance",
+        "Attorney-General's / Adjusted opening balance (10,126)",
+        "Attorney-General's / Adjusted opening balance (111,036)",
+        "Attorney-General's / Adjusted opening balance (32,801)",
+        "Attorney-General's / Adjusted opening balance (57,822)",
+        "Attorney-General's / Adjusted opening balance (9,784)",
+        "Attorney-General's / Adjusted opening balance (94,627)",
+        "Attorney-General's / Budget May 2024 Opening balance/cash reserves at 1 July 14,239 9,654 Funds from Government Annual appropriations - ordinary annual services (a) Outcome"
+      ],
+      "citation": {
+        "fact_leaves": 82,
+        "complete": 82,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_budget_2023_24",
+      "mode": "budget",
+      "level": "federal",
+      "financial_year": "2023-24",
+      "selected_basis": [
+        "accrual"
+      ],
+      "root_total": 1787437333000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 13,
+        "2": 692
+      },
+      "max_tree_depth": 2,
+      "max_additive_depth": 2,
+      "max_related_depth": 0,
+      "max_visible_depth": 2,
+      "nodes_hidden_by_folding": 608,
+      "nodes_rejected_by_partition": 0,
+      "branch_counts": {
+        "additive": 705
+      },
+      "projection_origin_counts": {
+        "path_only": 705,
+        "edge_only": 0,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 0,
+      "exact_year_fact_nodes": 692,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "budget": 692
+      },
+      "units": {
+        "AUD": 692
+      },
+      "first_level_names": [
+        "Agriculture Fisheries and Forestry",
+        "Attorney-General's",
+        "Climate Change Energy the Environment and Water",
+        "Defence",
+        "Home Affairs",
+        "Industry Science and Resources",
+        "Infrastructure Transport Regional Development Communications Sport and the Arts",
+        "Social Services",
+        "Treasury",
+        "Veterans' Affairs",
+        "department of parliamentary services 2025 26 Parliamentary Departments",
+        "department of the senate pbs",
+        "department of the senate pbs DoS 2024 25"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Program 1.1 - Operations Contributing to the Safety of the Immediate Neighbourhood Total funded expenditure",
+          "Program 1.2 - Operations Supporting Wider Interests Total funded expenditure",
+          "Program 1.3 - Defence Contribution to National Support Tasks in Australia Total funded expenditure",
+          "Program 2.1 Strategy, Policy and Industry Total funded expenditure",
+          "Program 2.12 Defence People Total funded expenditure",
+          "Program 2.13 Defence Science and Technology Total funded expenditure",
+          "Program 2.14 Defence Intelligence Total funded expenditure",
+          "Program 2.15 Naval Shipbuilding and Sustainment Total funded expenditure",
+          "Program 2.16 Nuclear-Powered Submarines Total funded expenditure",
+          "Program 2.2 Defence E xecutive Support Total funded expenditure",
+          "Program 2.3 Defence Finance Total funded expenditure",
+          "Program 2.5 Navy Capabilities Total funded expenditure",
+          "Program 2.6 Army Capabilities Total funded expenditure",
+          "Program 2.8 Australian Defence Force Headquarters Total funded expenditure",
+          "Program 2.9 Capability Acquisition and Sustainment Total funded expenditure"
+        ]
+      },
+      "deepest_path_samples": [
+        "Agriculture Fisheries and Forestry / 2025\u201326 2026\u201327 2027\u201328 Cash and cash equivalents at beginning of reporting period",
+        "Agriculture Fisheries and Forestry / 2025\u201326 2026\u201327 2027\u201328 NEW CAPITAL APPROPRIATIONS Capital budget \u2013 Bill (No. 1) (DCB)",
+        "Agriculture Fisheries and Forestry / Accumulated depreciation/ amortisation and impairment \u2013 ROU(a) - 6,458 81 - 6,539 Opening net book balance",
+        "Agriculture Fisheries and Forestry / Accumulated depreciation/ amortisation and impairment \u2013 ROU(a) - 7,863 143 - 8,006 Closing net book balance",
+        "Agriculture Fisheries and Forestry / Adjusted opening balance",
+        "Agriculture Fisheries and Forestry / Administered expenses Special appropriation Dairy Produce Act 1986, s. 6(1) \u2013 payments under funding contract",
+        "Agriculture Fisheries and Forestry / Administered expenses Special appropriation Wool Services Privatisation Act 2000, s. 31(4) \u2013 funding contract with research body",
+        "Agriculture Fisheries and Forestry / AgriFutures Australia"
+      ],
+      "citation": {
+        "fact_leaves": 692,
+        "complete": 692,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_budget_2024_25",
+      "mode": "budget",
+      "level": "federal",
+      "financial_year": "2024-25",
+      "selected_basis": [
+        "accrual",
+        "commitment"
+      ],
+      "root_total": 5362117461545.58,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 34,
+        "2": 1938,
+        "3": 714
+      },
+      "max_tree_depth": 3,
+      "max_additive_depth": 3,
+      "max_related_depth": 3,
+      "max_visible_depth": 3,
+      "nodes_hidden_by_folding": 1920,
+      "nodes_rejected_by_partition": 7,
+      "branch_counts": {
+        "additive": 1811,
+        "related": 875
+      },
+      "projection_origin_counts": {
+        "path_only": 1742,
+        "edge_only": 944,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 6,
+      "exact_year_fact_nodes": 2538,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "budget": 1789,
+        "grant_awards": 749
+      },
+      "units": {
+        "AUD": 2538
+      },
+      "first_level_names": [
+        "Agriculture Fisheries and Forestry",
+        "Agriculture, forestry and fishing",
+        "Attorney-General's",
+        "Climate Change Energy the Environment and Water",
+        "Defence",
+        "Education",
+        "Employment and Workplace Relations",
+        "Finance",
+        "Foreign Affairs and Trade",
+        "Fuel and energy",
+        "General public services",
+        "Health",
+        "Health Disability and Ageing",
+        "Home Affairs",
+        "Housing and community amenities",
+        "Industry Science and Resources",
+        "Infrastructure Transport Regional Development Communications Sport and the Arts",
+        "Mining, manufacturing and construction",
+        "Other economic affairs",
+        "Other purposes",
+        "Prime Minister and Cabinet",
+        "Public order and safety",
+        "Recreation and culture",
+        "Social Services",
+        "Social security and welfare",
+        "Transport and communication",
+        "Treasury",
+        "Veterans' Affairs",
+        "department of parliamentary services 2025 26 Parliamentary Departments",
+        "department of parliamentary services DPS 2024 25",
+        "department of the house of representatives doc",
+        "department of the senate pbs",
+        "department of the senate pbs DoS 2024 25",
+        "parliamentary budget office"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Key cost category",
+          "Program 1.1 - Operations Contributing to the Safety of the Immediate Neighbourhood Total funded expenditure",
+          "Program 1.2 - Operations Supporting Wider Interests Total funded expenditure",
+          "Program 1.3 - Defence Contribution to National Support Tasks in Australia Total funded expenditure",
+          "Program 2.1 Strategy, Policy and Industry Total funded expenditure",
+          "Program 2.10 Security and E state Total funded expenditure",
+          "Program 2.11 Defence Digital Total funded expenditure",
+          "Program 2.12 Defence People Total funded expenditure",
+          "Program 2.13 Defence Science and Technology Total funded expenditure",
+          "Program 2.14 Defence Intelligence Total funded expenditure",
+          "Program 2.15 Naval Shipbuilding and Sustainment Total funded expenditure",
+          "Program 2.16 Nuclear-Powered Submarines Total funded expenditure",
+          "Program 2.2 Defence E xecutive Support Total funded expenditure",
+          "Program 2.3 Defence Finance Total funded expenditure",
+          "Program 2.4 Joint Capabilities Total funded expenditure",
+          "Program 2.5 Navy Capabilities Total funded expenditure",
+          "Program 2.6 Army Capabilities Total funded expenditure",
+          "Program 2.7 Air Force Capabilities Total funded expenditure",
+          "Program 2.8 Australian D efence F orce H eadquarters Total funded expenditure",
+          "Program 2.8 Australian Defence Force Headquarters Total funded expenditure",
+          "Program 2.9 Capability Acquisition and Sustainment Total funded expenditure"
+        ],
+        "Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ]
+      },
+      "deepest_path_samples": [
+        "Agriculture, forestry and fishing / Accelerate Adoption of Wood Processing Innovation / A.J. Forster Pty Ltd",
+        "Agriculture, forestry and fishing / Animal Health Australia membership / Animal Health Australia",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: National Soil Community of Practice / Australian Society of Soil Science Incorporated",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: Regional Soil Coordinators / University of Southern Queensland",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: Regional Soil Coordinators / University of Tasmania",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: Regional Soils Coordinators / Charles Darwin University",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: Regional Soils Coordinators / Charles Sturt University",
+        "Agriculture, forestry and fishing / Climate-Smart Agriculture Program \u2013 Capacity Building: Regional Soils Coordinators / Grower Group Alliance (Inc)"
+      ],
+      "citation": {
+        "fact_leaves": 2521,
+        "complete": 2521,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_budget_latest",
+      "mode": "budget",
+      "level": "federal",
+      "financial_year": "2029-30",
+      "selected_basis": [
+        "accrual"
+      ],
+      "root_total": 5282190045000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 31,
+        "2": 1583,
+        "3": 58,
+        "4": 13
+      },
+      "max_tree_depth": 4,
+      "max_additive_depth": 4,
+      "max_related_depth": 0,
+      "max_visible_depth": 4,
+      "nodes_hidden_by_folding": 1434,
+      "nodes_rejected_by_partition": 3,
+      "branch_counts": {
+        "additive": 1685
+      },
+      "projection_origin_counts": {
+        "path_only": 1566,
+        "edge_only": 119,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 0,
+      "exact_year_fact_nodes": 1652,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "budget": 1652
+      },
+      "units": {
+        "AUD": 1652
+      },
+      "first_level_names": [
+        "Agriculture Fisheries and Forestry",
+        "Agriculture, forestry and fishing",
+        "Attorney-General's",
+        "Climate Change Energy the Environment and Water",
+        "Defence",
+        "Education",
+        "Employment and Workplace Relations",
+        "Finance",
+        "Foreign Affairs and Trade",
+        "Fuel and energy",
+        "General public services",
+        "Health",
+        "Health Disability and Ageing",
+        "Home Affairs",
+        "Housing and community amenities",
+        "Industry Science and Resources",
+        "Infrastructure Transport Regional Development Communications Sport and the Arts",
+        "Mining, manufacturing and construction",
+        "Other economic affairs",
+        "Other purposes",
+        "Prime Minister and Cabinet",
+        "Public order and safety",
+        "Recreation and culture",
+        "Social Services",
+        "Social security and welfare",
+        "Transport and communication",
+        "Treasury",
+        "Veterans' Affairs",
+        "house representatives DHR 2026 27",
+        "parliamentary services 2026 27 Portfolio Budget Statement",
+        "senate"
+      ],
+      "selected_child_name_sets": {
+        "Defence": [
+          "Program 1.1 - Operations Contributing to the Safety of the Immediate Neighbourhood Total funded expenditure",
+          "Program 1.2 - Operations Supporting Wider Interests Total funded expenditure",
+          "Program 1.3 - Defence Contribution to National Support Tasks in Australia Total funded expenditure",
+          "Program 2.1 Strategy, Policy and Industry Total funded expenditure",
+          "Program 2.10 Security and Estate Total funded expenditure",
+          "Program 2.11 Defence Digital Total funded expenditure",
+          "Program 2.12 Defence People Total funded expenditure",
+          "Program 2.13 Defence Science and Technology Total funded expenditure",
+          "Program 2.14 Defence Intelligence Total funded expenditure",
+          "Program 2.15 Naval Shipbuilding and Sustainment Total funded expenditure",
+          "Program 2.16 Nuclear-Powered Submarines Total funded expenditure",
+          "Program 2.2 Defence Executive Support Total funded expenditure",
+          "Program 2.3 Defence Finance Total funded expenditure",
+          "Program 2.4 Joint Capabilities Total funded expenditure",
+          "Program 2.5 Navy Capabilities Total funded expenditure",
+          "Program 2.6 Army Capabilities Total funded expenditure",
+          "Program 2.7 Air Force Capabilities Total funded expenditure",
+          "Program 2.8 Australian Defence Force Headquarters Total funded expenditure",
+          "Program 2.9 Capability Acquisition and Sustainment Total funded expenditure"
+        ],
+        "Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ]
+      },
+      "deepest_path_samples": [
+        "Health / Medical services and benefits / Medical Benefits / Medical Benefits",
+        "Health / Medical services and benefits / Medical benefits / Medical Benefits",
+        "Social security and welfare / Assistance to families with children / Child Care Subsidy / Child Care Subsidy",
+        "Social security and welfare / Assistance to families with children / Child care subsidy / Child Care Subsidy",
+        "Social security and welfare / Assistance to people with disabilities / Financial Support for Carers / Financial Support for Carers",
+        "Social security and welfare / Assistance to people with disabilities / Financial Support for People with Disability / Financial Support for People with Disability",
+        "Social security and welfare / Assistance to people with disabilities / Financial support for carers / Financial Support for Carers",
+        "Social security and welfare / Assistance to people with disabilities / Financial support for people with disability / Financial Support for People with Disability"
+      ],
+      "citation": {
+        "fact_leaves": 1628,
+        "complete": 1628,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "state_debt_latest",
+      "mode": "debt",
+      "level": "state",
+      "financial_year": "2026-27",
+      "selected_basis": [
+        "gfs"
+      ],
+      "root_total": 0.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 12,
+        "5": 133
+      },
+      "max_tree_depth": 5,
+      "max_additive_depth": 5,
+      "max_related_depth": 0,
+      "max_visible_depth": 5,
+      "nodes_hidden_by_folding": 66,
+      "nodes_rejected_by_partition": 0,
+      "branch_counts": {
+        "additive": 160
+      },
+      "projection_origin_counts": {
+        "path_only": 160,
+        "edge_only": 0,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 0,
+      "exact_year_fact_nodes": 133,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "state_borrowing": 133
+      },
+      "units": {
+        "AUD": 133
+      },
+      "first_level_names": [
+        "NSW",
+        "QLD",
+        "SA",
+        "VIC",
+        "WA"
+      ],
+      "selected_child_name_sets": {},
+      "deepest_path_samples": [
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 01 May 2030 6.00%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 07 May 2041 2.25%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 08 Mar 2033 2.00%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 15 Nov 2028 3.00%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 17 Oct 2034 5.25%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 20 Apr 2029 3.00%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 20 Feb 2030 3.00%",
+        "NSW / Debt securities / TCorp / Fixed-rate bonds / 20 Feb 2032 1.50%"
+      ],
+      "citation": {
+        "fact_leaves": 133,
+        "complete": 133,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "local_actuals_latest",
+      "mode": "actuals",
+      "level": "local",
+      "financial_year": "2024-25",
+      "selected_basis": [
+        "accrual",
+        "commitment",
+        "gfs"
+      ],
+      "root_total": 54218000000.0,
+      "root_unit": "AUD",
+      "node_count_by_depth": {
+        "1": 7,
+        "2": 70,
+        "3": 406,
+        "4": 630,
+        "5": 511
+      },
+      "max_tree_depth": 5,
+      "max_additive_depth": 2,
+      "max_related_depth": 4,
+      "max_visible_depth": 4,
+      "nodes_hidden_by_folding": 264,
+      "nodes_rejected_by_partition": 295,
+      "branch_counts": {
+        "additive": 77,
+        "related": 1547
+      },
+      "projection_origin_counts": {
+        "path_only": 77,
+        "edge_only": 1547,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 70,
+      "exact_year_fact_nodes": 1617,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "abs_gfs": 140,
+        "budget": 413,
+        "final_budget_outcome": 392,
+        "grant_awards": 672
+      },
+      "units": {
+        "AUD": 1617
+      },
+      "first_level_names": [
+        "NSW",
+        "NT",
+        "QLD",
+        "SA",
+        "TAS",
+        "VIC",
+        "WA"
+      ],
+      "selected_child_name_sets": {
+        "NSW / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "NT / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "QLD / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "SA / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "TAS / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "VIC / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ],
+        "WA / Health": [
+          "Aboriginal and Torres Strait Islander health",
+          "Assistance to the states for public hospitals",
+          "FBO Appendix A (audited)",
+          "General administration",
+          "Health services",
+          "Hospital services(a)",
+          "Medical services and benefits",
+          "Pharmaceutical benefits and services"
+        ]
+      },
+      "deepest_path_samples": [
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / Curtin University",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / Other recipients (30)",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / RMIT University",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / The Australian National University",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / The University of Queensland",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / The University of Western Australia",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / University of New South Wales",
+        "NSW / General public services / General public services / 2025 New Colombo Plan Mobility Program / University of Newcastle"
+      ],
+      "citation": {
+        "fact_leaves": 1351,
+        "complete": 1351,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    },
+    {
+      "label": "federal_ratios_latest",
+      "mode": "ratios",
+      "level": "federal",
+      "financial_year": "2024-25",
+      "selected_basis": [
+        "not_applicable"
+      ],
+      "root_total": 0.0,
+      "root_unit": "percent",
+      "node_count_by_depth": {
+        "1": 1,
+        "2": 1
+      },
+      "max_tree_depth": 2,
+      "max_additive_depth": 2,
+      "max_related_depth": 0,
+      "max_visible_depth": 2,
+      "nodes_hidden_by_folding": 0,
+      "nodes_rejected_by_partition": 0,
+      "branch_counts": {
+        "additive": 2
+      },
+      "projection_origin_counts": {
+        "path_only": 2,
+        "edge_only": 0,
+        "path_plus_edge": 0
+      },
+      "canonical_nodes_with_related_children": 0,
+      "exact_year_fact_nodes": 1,
+      "fallback_fact_nodes": 0,
+      "source_families": {
+        "abs_gdp_tax": 1
+      },
+      "units": {
+        "percent": 1
+      },
+      "first_level_names": [
+        "Derived ratios"
+      ],
+      "selected_child_name_sets": {},
+      "deepest_path_samples": [
+        "Derived ratios / Taxation revenue as % of GDP"
+      ],
+      "citation": {
+        "fact_leaves": 1,
+        "complete": 1,
+        "missing": 0
+      },
+      "hard_failure_count": 0
+    }
+  ],
+  "graph": {
+    "edge_count": 13923,
+    "duplicate_semantic_edges": 0,
+    "cycles": 0
+  },
+  "hard_failures": [],
+  "hard_failure_count": 0,
+  "generated_at": "2026-08-19T18:58:22.460850+00:00",
+  "fixture_matches": true
+}

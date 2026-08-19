@@ -188,17 +188,20 @@ def test_five_column_layout_extracts_column_four_not_column_two(tmp_path, monkey
     assert by_key["total_expenses"] == pytest.approx(460_282.0)  # not 461,000 (column 2)
 
 
-def test_editions_list_is_only_the_confirmed_tractable_twelve_year_slice():
+def test_editions_list_is_only_the_confirmed_tractable_fifteen_year_slice():
     fys = [fy for fy, _, _, _, _ in extractor._EDITIONS]
     assert fys == [
-        "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14",
-        "2014-15", "2015-16", "2016-17", "2017-18", "2018-19",
+        "2004-05", "2005-06", "2006-07", "2007-08", "2008-09", "2009-10", "2010-11",
+        "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17", "2017-18", "2018-19",
     ]
     assert len(fys) == len(set(fys))
 
 
 def test_editions_carry_their_own_verified_column_count_and_outcome_index():
     by_fy = {fy: (n, idx) for fy, _, _, n, idx in extractor._EDITIONS}
+    assert by_fy["2004-05"] == (3, 2)
+    assert by_fy["2005-06"] == (3, 2)
+    assert by_fy["2006-07"] == (3, 2)
     assert by_fy["2007-08"] == (3, 2)
     assert by_fy["2008-09"] == (3, 2)
     assert by_fy["2009-10"] == (3, 2)
@@ -237,6 +240,39 @@ def test_defence_and_contingency_reserve_tolerate_a_footnote_marker(tmp_path, mo
     by_key = {r["measure_key"]: r["amount"] for r in rows}
     assert by_key["defence"] == pytest.approx(21_122.0)
     assert by_key["contingency_reserve"] == pytest.approx(-1_301.0)
+
+
+def test_label_matching_is_case_insensitive(tmp_path, monkeypatch):
+    """The 2004-05 file has "Total Transport and Communication"
+    (title-cased) where every other edition uses lowercase - the label
+    regex must still match regardless of case."""
+    block = _SAMPLE_BLOCK_4COL.replace(
+        "Total other purposes", "TOTAL OTHER PURPOSES"
+    )
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "2012-13", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["total_other_purposes"] == pytest.approx(70_741.0)
+
+
+def test_mining_manufacturing_construction_tolerates_an_ampersand(tmp_path, monkeypatch):
+    """Pre-2007-08 editions use "Mining, manufacturing & construction"
+    (an ampersand) instead of "...and construction"."""
+    block = _SAMPLE_BLOCK_4COL.replace(
+        "Total other purposes", "Mining, manufacturing & construction"
+    )
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "2012-13", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["mining_manufacturing_construction"] == pytest.approx(70_741.0)
 
 
 def test_num_pattern_rejects_a_stray_space_inside_a_thousands_group(tmp_path, monkeypatch):
