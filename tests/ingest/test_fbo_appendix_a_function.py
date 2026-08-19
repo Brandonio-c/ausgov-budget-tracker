@@ -188,17 +188,24 @@ def test_five_column_layout_extracts_column_four_not_column_two(tmp_path, monkey
     assert by_key["total_expenses"] == pytest.approx(460_282.0)  # not 461,000 (column 2)
 
 
-def test_editions_list_is_only_the_confirmed_tractable_fifteen_year_slice():
-    fys = [fy for fy, _, _, _, _ in extractor._EDITIONS]
+def test_editions_list_is_only_the_confirmed_tractable_twenty_year_slice():
+    fys = [fy for fy, _, _, _, _, _ in extractor._EDITIONS]
     assert fys == [
+        "1999-00", "2000-01", "2001-02", "2002-03", "2003-04",
         "2004-05", "2005-06", "2006-07", "2007-08", "2008-09", "2009-10", "2010-11",
         "2011-12", "2012-13", "2013-14", "2014-15", "2015-16", "2016-17", "2017-18", "2018-19",
     ]
     assert len(fys) == len(set(fys))
+    assert "1998-99" not in fys  # predates accrual/functional reporting - permanently excluded
 
 
 def test_editions_carry_their_own_verified_column_count_and_outcome_index():
-    by_fy = {fy: (n, idx) for fy, _, _, n, idx in extractor._EDITIONS}
+    by_fy = {fy: (n, idx) for fy, _, _, n, idx, _ in extractor._EDITIONS}
+    assert by_fy["1999-00"] == (2, 2)
+    assert by_fy["2000-01"] == (2, 2)
+    assert by_fy["2001-02"] == (3, 3)
+    assert by_fy["2002-03"] == (3, 3)
+    assert by_fy["2003-04"] == (3, 3)
     assert by_fy["2004-05"] == (3, 2)
     assert by_fy["2005-06"] == (3, 2)
     assert by_fy["2006-07"] == (3, 2)
@@ -216,12 +223,115 @@ def test_editions_carry_their_own_verified_column_count_and_outcome_index():
     assert by_fy["2018-19"] == (5, 4)
 
 
+def test_editions_needs_shift_decode_only_for_the_three_broken_font_files():
+    by_fy = {fy: shift for fy, _, _, _, _, shift in extractor._EDITIONS}
+    assert by_fy["1999-00"] is True
+    assert by_fy["2001-02"] is True
+    assert by_fy["2002-03"] is True
+    assert by_fy["2000-01"] is False
+    assert by_fy["2003-04"] is False
+    assert by_fy["2010-11"] is False
+
+
 def test_editions_pre_2010_11_resolve_to_their_own_snapshot_directory():
-    by_fy = {fy: snap for fy, snap, _, _, _ in extractor._EDITIONS}
+    by_fy = {fy: snap for fy, snap, _, _, _, _ in extractor._EDITIONS}
     assert by_fy["2007-08"] == "20260723T033738Z"
     assert by_fy["2008-09"] == "20260723T031046Z"
     assert by_fy["2009-10"] == "20260723T031046Z"
     assert by_fy["2010-11"] is None
+
+
+def test_decode_shift29_recovers_real_words():
+    assert extractor._decode_shift29("7DEOH") == "Table"
+    assert extractor._decode_shift29("&RPPRQZHDOWK") == "Commonwealth"
+    assert extractor._decode_shift29("hello world") != "hello world"  # non-space chars do shift
+
+
+def test_two_column_layout_has_no_prior_year_comparative(tmp_path, monkeypatch):
+    """FY1999-00/FY2000-01 have only 2 numeric columns (next-year Budget
+    then current-year Estimate at Outcome) - no prior-year column at
+    all, unlike every other loaded sub-generation."""
+    block = """
+Appendix B: Expenses by Function and Sub-function
+
+                                    2000-01    1999-00
+                                    Budget     Outcome
+
+General public services
+Total general public services         600        573
+Defence                            10,500     9,956
+Total expenses                    148,000    145,000
+"""
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "1999-00", "x.pdf", num_columns=2, outcome_column_index=2)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["general_public_services"] == pytest.approx(573.0)
+    assert by_key["defence"] == pytest.approx(9_956.0)
+
+
+def test_three_column_layout_with_outcome_in_column_three_not_two(tmp_path, monkeypatch):
+    """FY2001-02/FY2002-03/FY2003-04 have Estimate at Outcome in column
+    3 (prior-year Outcome | next-year Budget | current-year Estimate at
+    Outcome) - a blind column-2 read would load the next year's Budget
+    forecast as an actual."""
+    block = """
+Appendix B: Expenses by Function and Sub-function
+
+                                    2000-01    2002-03    2001-02
+                                    Outcome    Budget     Outcome
+
+General public services
+Total general public services         600        650        778
+Defence                             9,956     11,200     12,017
+Total expenses                    145,000    150,000    148,000
+"""
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "2001-02", "x.pdf", num_columns=3, outcome_column_index=3)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["general_public_services"] == pytest.approx(778.0)  # column 3, not column 2 (650)
+    assert by_key["defence"] == pytest.approx(12_017.0)
+
+
+def test_bare_letter_footnote_with_no_parentheses_is_tolerated(tmp_path, monkeypatch):
+    """The 2002-03 file's decoded text has footnote markers as a bare
+    space-separated letter with no parentheses (e.g. "Total health a"),
+    a different real form from "Defence(a)"."""
+    block_with_bare_footnote = _SAMPLE_BLOCK_4COL.replace(
+        "Total other purposes", "Total other purposes a"
+    )
+    pages = ["front matter"] * 60 + [block_with_bare_footnote]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "2012-13", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["total_other_purposes"] == pytest.approx(70_741.0)
+
+
+def test_agriculture_label_accepts_the_reordered_1999_00_wording(tmp_path, monkeypatch):
+    """FY1999-00 words this label "Total agriculture, fisheries and
+    forestry" - the same concept, reordered - not "...forestry and
+    fishing" used everywhere else."""
+    block = _SAMPLE_BLOCK_4COL.replace(
+        "Total other purposes", "Total agriculture, fisheries and forestry"
+    )
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "1999-00", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["agriculture_forestry_fishing"] == pytest.approx(70_741.0)
 
 
 def test_defence_and_contingency_reserve_tolerate_a_footnote_marker(tmp_path, monkeypatch):

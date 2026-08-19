@@ -1,51 +1,68 @@
 version: 1
 
 global_rules:
-  - id: only_the_confirmed_tractable_fifteen_year_slice_is_loaded
+  - id: only_the_confirmed_tractable_twenty_year_slice_is_loaded
     text: >
-      Only FY2004-05 through FY2018-19 are loaded - three individually-
-      verified column layouts, never assumed uniform (see
-      ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md
-      and ops/reports/data-remediation-progress.md's item 8.1 milestone
-      entries): FY2004-05 through FY2011-12 has a 3-numeric-column
-      layout (prior-year Outcome | current-year Estimate at Outcome |
-      next-year Budget); FY2012-13 through FY2016-17 adds a 4th "Change
-      on Budget" column, Estimate at Outcome still in position 2
-      (FY2014-15..FY2016-17 were originally excluded on a "different
-      header wording" finding that a later direct re-check found was
-      stale - they use the identical layout as FY2012-13/FY2013-14);
-      FY2017-18/FY2018-19 use a genuinely different 5-column layout
-      where Estimate at Outcome moves to position 4 (prior-year Outcome
-      | current-year Budget | next-year Budget | current-year Estimate
-      at Outcome | Change on Budget) - confirmed by direct page
-      inspection and an exact match on both cross-checks for both
-      years, since blindly reusing position 2 there would have silently
-      loaded a Budget forecast as an actual. FY2004-05/FY2005-06/
-      FY2006-07 title the table "Appendix B"/"Table B1" (the anchor
-      regex accepts either letter); FY2007-08 onward use "Appendix A"/
-      "Table A1". Building FY2004-05..FY2009-10 required fixing several
-      real, evidence-confirmed defects in the shared label/number
-      matching, each re-verified to change 0 values across every
-      already-loaded year before being applied: a stray space inserted
-      inside a large number by the 2008-09 file's own text extraction
-      (e.g. "5, 926" for "5,926"); footnote letters directly attached to
-      several different labels with no space across several editions
-      (e.g. "Defence(a)", "Total other economic affairs(a)"), generalized
-      into an optional footnote-marker suffix tolerated on every label,
-      not patched one at a time; label case variation across editions
-      (e.g. "Total Transport and Communication" title-cased in the
-      2004-05 file), generalized into case-insensitive label matching;
-      and an ampersand variant of one label ("Mining, manufacturing &
-      construction" instead of "...and construction") in the pre-2007-08
-      editions. FY1998-99 through FY2003-04 remain their own dedicated
-      future investigation - a materially more heterogeneous population
-      spanning at least a 2-column layout, a 3-column layout with
-      Estimate at Outcome in column 3 (not 2), at least 3 files whose
-      PDF fonts require a further decode step (a discovered, consistent
-      +29 character-code shift, not yet built into any extractor), and
-      FY1998-99 itself, which predates accrual/functional reporting
-      entirely and has no such table at all - see
-      ops/reports/fbo-pre-2010-scoping-20260819T182500Z.md.
+      Only FY1999-00 through FY2018-19 are loaded - FY1998-99 is
+      permanently excluded, not a gap to fill later: it predates
+      accrual/functional expense reporting entirely and has no such
+      table at all (confirmed via its own full table of contents). Four
+      individually-verified column layouts are covered, never assumed
+      uniform (see
+      ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md,
+      ops/reports/fbo-pre-2010-scoping-20260819T182500Z.md, and
+      ops/reports/data-remediation-progress.md's item 8.1 milestone
+      entries): FY1999-00/FY2000-01 has a 2-numeric-column layout
+      (next-year Budget | current-year Estimate at Outcome, no prior-
+      year comparative at all); FY2001-02 through FY2011-12 has a
+      3-numeric-column layout, but Estimate at Outcome sits in column 3
+      for FY2001-02/FY2002-03/FY2003-04 (prior-year Outcome | next-year
+      Budget | current-year Estimate at Outcome) and moves back to
+      column 2 for FY2004-05 onward (prior-year Outcome | current-year
+      Estimate at Outcome | next-year Budget) - the same column-order
+      trap already caught once for FY2017-19, each year individually
+      verified, never inferred from a neighbour; FY2012-13 through
+      FY2016-17 adds a 4th "Change on Budget" column, Estimate at
+      Outcome still in position 2; FY2017-18/FY2018-19 use a 5-column
+      layout where Estimate at Outcome moves to position 4. FY1999-00,
+      FY2001-02, and FY2002-03 additionally require a pre-processing
+      decode step (see fbo_appendix_a_function.py's `_decode_shift29` -
+      pypdf cannot read these 3 files' embedded font at all; `pdftotext`
+      recovers it with a consistent +29 ASCII-code shift, verified
+      against multiple independently-decoded words). FY2004-05/
+      FY2005-06/FY2006-07 title the table "Appendix B"/"Table B1" (the
+      anchor regex accepts either letter, and a 2nd alternative catches
+      FY2000-01's continuation pages which omit the "Appendix B:" line
+      entirely); FY2007-08 onward use "Appendix A"/"Table A1". Building
+      this population required fixing several real, evidence-confirmed
+      label/number defects, each re-verified to change 0 values across
+      every already-loaded year before being applied: a stray space
+      inserted inside a large number (e.g. "5, 926" for "5,926");
+      footnote markers in 2 different real forms - directly attached
+      with no space ("Defence(a)") and a bare letter with a space and no
+      parentheses ("Total health a") - both generalized into a single
+      shared optional-suffix pattern; label case variation ("Total
+      Transport and Communication" title-cased), generalized into
+      case-insensitive matching; an ampersand variant of one label
+      ("Mining, manufacturing & construction"); and a genuine word-
+      reordering of another ("Total agriculture, fisheries and
+      forestry" in FY1999-00, the same concept as "Total agriculture,
+      forestry and fishing" elsewhere, added as an accepted alternative).
+      Three genuine, confirmed-real absences remain deliberately
+      unmatched rather than force-fit: `mining_manufacturing_construction`
+      is not loaded for FY1999-00 through FY2002-03, whose editions
+      scope this function narrower ("...other than fuels") - a real
+      scope difference, not a label variant; `nominal_superannuation_interest`
+      is not loaded for FY1999-00, whose "Other purposes" section has no
+      such line item at all; and FY2000-01/FY2001-02 have a genuine 6th
+      "Other purposes" line item ("Asset sales", $31m/$64m respectively,
+      confirmed present by direct inspection and fully explaining what
+      would otherwise look like an unexplained cross-check gap) that
+      this workbook deliberately does not model as its own measure - it
+      was phased out by FY2002-03 (confirmed absent there) and never
+      appears in any other loaded year, so the 5-addend `total_other_purposes`
+      cross-check legitimately does not reconcile for exactly these 2
+      years, by design, not by extraction error.
   - id: function_level_totals_only_never_sub_function_detail
     text: >
       Only the 13 COFOG-style function totals plus the 5 "Other purposes"
@@ -311,14 +328,20 @@ measures:
     forbidden_comparisons:
       - any annual GFS/PBS/MFS compatibility_group fact (this is the FBO's own Appendix A function series, a different source/table from the already-loaded GFS/PBS/MFS families)
     dashboard_treatment: dedicated FBO Appendix A timeline/comparison API only
-    source_label_variants: ["Agriculture, forestry and fishing"]
+    source_label_variants: ["Agriculture, forestry and fishing", "Agriculture, fisheries and forestry (FY1999-00 word order)"]
     root_total_allowed: 1
 
   fbo_appendix_a_mining_manufacturing_construction:
     economic_meaning: >
       Australian Government general government sector expenses for the
       Mining, manufacturing and construction, an actual (Final Budget Outcome "Estimate at Outcome")
-      figure for the financial year.
+      figure for the financial year. Not loaded for FY1999-00 through
+      FY2002-03: those editions scope this function as "Mining and
+      mineral resources (other than fuels), manufacturing and
+      construction" - a genuinely different, narrower scope (fuels
+      explicitly excluded) rather than a label-wording variant, so it is
+      correctly left unmatched/quarantined for those 4 years rather than
+      conflated with this measure's later, broader scope.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
@@ -410,7 +433,11 @@ measures:
     economic_meaning: >
       Australian Government general government sector expenses for the
       Nominal superannuation interest (Other purposes), an actual (Final Budget Outcome "Estimate at Outcome")
-      figure for the financial year.
+      figure for the financial year. Not loaded for FY1999-00: that
+      edition's "Other purposes" section has no such line item at all
+      (confirmed by direct inspection of the full section, not an
+      extraction gap) - the published Total other purposes for that
+      year reconciles against its own 4 present addends without it.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
@@ -500,7 +527,7 @@ measures:
 
   fbo_appendix_a_total_other_purposes:
     economic_meaning: >
-      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified to exactly match the sum of its 5 addends for 10 of the 15 loaded years (FY2004-05, FY2007-08, FY2009-10, FY2010-11, FY2011-12, FY2013-14, FY2014-15, FY2016-17, FY2017-18, FY2018-19), and within $1 million (immaterial published rounding) for the other 5 (FY2005-06, FY2006-07, FY2008-09, FY2012-13, FY2015-16).
+      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified to exactly match the sum of its 5 addends for 11 of the 20 loaded years (FY2003-04, FY2004-05, FY2007-08, FY2009-10, FY2010-11, FY2011-12, FY2013-14, FY2014-15, FY2016-17, FY2017-18, FY2018-19), and within $1 million (immaterial published rounding) for 6 more (FY2002-03, FY2005-06, FY2006-07, FY2008-09, FY2012-13, FY2015-16). The remaining 3 years legitimately do not reconcile against only these 5 addends, by design, not by extraction error: FY1999-00 has no `nominal_superannuation_interest` line item at all that year; FY2000-01/FY2001-02 have a genuine, confirmed 6th "Other purposes" line item ("Asset sales") this workbook deliberately does not model - see this file's global_rules for the full evidence.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
@@ -521,7 +548,7 @@ measures:
 
   fbo_appendix_a_total_expenses:
     economic_meaning: >
-      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified to match the sum of the 13 functions plus Total other purposes exactly for 7 of the 15 loaded years (FY2004-05, FY2006-07, FY2009-10, FY2011-12, FY2014-15, FY2017-18, FY2018-19), and within $1-2 million (well under 0.001%, immaterial published rounding) for the other 8 (FY2005-06, FY2007-08, FY2008-09, FY2010-11, FY2012-13, FY2013-14, FY2015-16, FY2016-17).
+      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified to match the sum of the 13 functions plus Total other purposes exactly for 7 of the 20 loaded years (FY2004-05, FY2006-07, FY2009-10, FY2011-12, FY2014-15, FY2017-18, FY2018-19), and within $1-2 million (well under 0.001%, immaterial published rounding) for 9 more (FY2003-04, FY2005-06, FY2007-08, FY2008-09, FY2010-11, FY2012-13, FY2013-14, FY2015-16, FY2016-17). The remaining 4 years (FY1999-00 through FY2002-03) legitimately do not reconcile against only the 13 modeled functions, by design: `mining_manufacturing_construction` is not loaded for those years (see this file's global_rules) - the residual gap in each case matches that one function's own real published value almost exactly (within the same $0-2m rounding seen everywhere else), confirming the extraction is correct once the deliberately-unmodeled function is accounted for.
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
