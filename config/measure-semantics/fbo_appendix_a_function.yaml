@@ -1,28 +1,41 @@
 version: 1
 
 global_rules:
-  - id: only_the_confirmed_tractable_nine_year_slice_is_loaded
+  - id: only_the_confirmed_tractable_twelve_year_slice_is_loaded
     text: >
-      Only FY2010-11 through FY2018-19 are loaded - three individually-
+      Only FY2007-08 through FY2018-19 are loaded - three individually-
       verified column layouts, never assumed uniform (see
       ops/reports/fbo-appendix-a-page-anchor-scoping-20260818T160000Z.md
       and ops/reports/data-remediation-progress.md's item 8.1 milestone
-      entries): FY2010-11/FY2011-12 has a 3-numeric-column layout
-      (prior-year Outcome | current-year Estimate at Outcome | next-year
-      Budget); FY2012-13 through FY2016-17 adds a 4th "Change on Budget"
-      column, Estimate at Outcome still in position 2 (FY2014-15..
-      FY2016-17 were originally excluded on a "different header
-      wording" finding that a later direct re-check found was stale -
-      they use the identical layout as FY2012-13/FY2013-14);
+      entries): FY2007-08 through FY2011-12 has a 3-numeric-column
+      layout (prior-year Outcome | current-year Estimate at Outcome |
+      next-year Budget); FY2012-13 through FY2016-17 adds a 4th "Change
+      on Budget" column, Estimate at Outcome still in position 2
+      (FY2014-15..FY2016-17 were originally excluded on a "different
+      header wording" finding that a later direct re-check found was
+      stale - they use the identical layout as FY2012-13/FY2013-14);
       FY2017-18/FY2018-19 use a genuinely different 5-column layout
       where Estimate at Outcome moves to position 4 (prior-year Outcome
       | current-year Budget | next-year Budget | current-year Estimate
       at Outcome | Change on Budget) - confirmed by direct page
       inspection and an exact match on both cross-checks for both
       years, since blindly reusing position 2 there would have silently
-      loaded a Budget forecast as an actual. The entire pre-2010-11
-      population still needs its own dedicated investigation before
-      being added here.
+      loaded a Budget forecast as an actual. FY2007-08/FY2008-09 use the
+      title "Appendix A"/"Table A1" (like every later year); FY2009-10
+      also does. The pre-2010-11 slice additionally required fixing a
+      real PDF-text-extraction defect (a stray space inserted inside a
+      large number in the 2008-09 file, e.g. "5, 926" for "5,926") in
+      the shared number-matching pattern, re-verified to change 0
+      values across every already-loaded year before being applied.
+      FY1998-99 through FY2006-07 remain their own dedicated future
+      investigation - a materially more heterogeneous population
+      spanning at least a 2-column layout, a 3-column layout with
+      Estimate at Outcome in column 3 (not 2), an "Appendix B" naming
+      era, at least 3 files whose PDF fonts require a further decode
+      step (a discovered, consistent +29 character-code shift, not yet
+      built into any extractor), and FY1998-99 itself, which predates
+      accrual/functional reporting entirely and has no such table at
+      all - see ops/reports/fbo-pre-2010-scoping-20260819T182500Z.md.
   - id: function_level_totals_only_never_sub_function_detail
     text: >
       Only the 13 COFOG-style function totals plus the 5 "Other purposes"
@@ -477,7 +490,7 @@ measures:
 
   fbo_appendix_a_total_other_purposes:
     economic_meaning: >
-      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified to exactly match the sum of its 5 addends for 7 of the 9 loaded years (FY2010-11, FY2011-12, FY2013-14, FY2014-15, FY2016-17, FY2017-18, FY2018-19), and within $1 million (immaterial published rounding) for the other 2 (FY2012-13, FY2015-16).
+      The published "Total other purposes" subtotal (the sum of the 5 Other purposes line items above), as stated directly by the source (never computed here) - verified to exactly match the sum of its 5 addends for 9 of the 12 loaded years (FY2007-08, FY2009-10, FY2010-11, FY2011-12, FY2013-14, FY2014-15, FY2016-17, FY2017-18, FY2018-19), and within $1 million (immaterial published rounding) for the other 3 (FY2008-09, FY2012-13, FY2015-16).
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start
@@ -498,7 +511,7 @@ measures:
 
   fbo_appendix_a_total_expenses:
     economic_meaning: >
-      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified to match the sum of the 13 functions plus Total other purposes exactly for 4 of the 9 loaded years (FY2011-12, FY2014-15, FY2017-18, FY2018-19), and within $1-2 million (well under 0.001%, immaterial published rounding) for the other 5 (FY2010-11, FY2012-13, FY2013-14, FY2015-16, FY2016-17).
+      The published "Total expenses" bottom line of the Appendix A function breakdown, as stated directly by the source (never computed here) - verified to match the sum of the 13 functions plus Total other purposes exactly for 5 of the 12 loaded years (FY2009-10, FY2011-12, FY2014-15, FY2017-18, FY2018-19), and within $1-2 million (well under 0.001%, immaterial published rounding) for the other 7 (FY2007-08, FY2008-09, FY2010-11, FY2012-13, FY2013-14, FY2015-16, FY2016-17).
     flow_or_stock: flow
     period_granularity: financial_year
     period_start: financial_year_start

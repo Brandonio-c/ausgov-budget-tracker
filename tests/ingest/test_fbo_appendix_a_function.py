@@ -188,17 +188,20 @@ def test_five_column_layout_extracts_column_four_not_column_two(tmp_path, monkey
     assert by_key["total_expenses"] == pytest.approx(460_282.0)  # not 461,000 (column 2)
 
 
-def test_editions_list_is_only_the_confirmed_tractable_nine_year_slice():
-    fys = [fy for fy, _, _, _ in extractor._EDITIONS]
+def test_editions_list_is_only_the_confirmed_tractable_twelve_year_slice():
+    fys = [fy for fy, _, _, _, _ in extractor._EDITIONS]
     assert fys == [
-        "2010-11", "2011-12", "2012-13", "2013-14", "2014-15",
-        "2015-16", "2016-17", "2017-18", "2018-19",
+        "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14",
+        "2014-15", "2015-16", "2016-17", "2017-18", "2018-19",
     ]
     assert len(fys) == len(set(fys))
 
 
 def test_editions_carry_their_own_verified_column_count_and_outcome_index():
-    by_fy = {fy: (n, idx) for fy, _, n, idx in extractor._EDITIONS}
+    by_fy = {fy: (n, idx) for fy, _, _, n, idx in extractor._EDITIONS}
+    assert by_fy["2007-08"] == (3, 2)
+    assert by_fy["2008-09"] == (3, 2)
+    assert by_fy["2009-10"] == (3, 2)
     assert by_fy["2010-11"] == (3, 2)
     assert by_fy["2011-12"] == (3, 2)
     assert by_fy["2012-13"] == (4, 2)
@@ -208,6 +211,48 @@ def test_editions_carry_their_own_verified_column_count_and_outcome_index():
     assert by_fy["2016-17"] == (4, 2)
     assert by_fy["2017-18"] == (5, 4)
     assert by_fy["2018-19"] == (5, 4)
+
+
+def test_editions_pre_2010_11_resolve_to_their_own_snapshot_directory():
+    by_fy = {fy: snap for fy, snap, _, _, _ in extractor._EDITIONS}
+    assert by_fy["2007-08"] == "20260723T033738Z"
+    assert by_fy["2008-09"] == "20260723T031046Z"
+    assert by_fy["2009-10"] == "20260723T031046Z"
+    assert by_fy["2010-11"] is None
+
+
+def test_defence_and_contingency_reserve_tolerate_a_footnote_marker(tmp_path, monkeypatch):
+    """FY2007-08's real file has "Defence(a)" and "Contingency reserve(c)"
+    - a footnote letter directly attached with no space - which the
+    label regex must still match."""
+    block_with_footnotes = _SAMPLE_BLOCK_4COL.replace("Defence", "Defence(a)").replace(
+        "Contingency reserve", "Contingency reserve(c)"
+    )
+    pages = ["front matter"] * 60 + [block_with_footnotes]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, quarantine = extractor.extract_edition(path, "2012-13", "x.pdf", num_columns=4)
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["defence"] == pytest.approx(21_122.0)
+    assert by_key["contingency_reserve"] == pytest.approx(-1_301.0)
+
+
+def test_num_pattern_rejects_a_stray_space_inside_a_thousands_group(tmp_path, monkeypatch):
+    """A real PDF-text-extraction defect found in the 2008-09 file: a
+    stray space inserted right after a thousands comma (e.g. "5, 926"
+    for "5,926") must not be read as two separate numbers - each comma
+    group must be exactly 3 digits."""
+    block = _SAMPLE_BLOCK.replace("21,239", "21, 239")
+    pages = ["front matter"] * 60 + [block]
+    fake = _FakeReader(pages)
+    monkeypatch.setattr(extractor, "PdfReader", lambda _path: fake)
+    path = tmp_path / "x.pdf"
+    path.write_bytes(b"stub")
+    rows, _ = extractor.extract_edition(path, "2010-11", "x.pdf")
+    by_key = {r["measure_key"]: r["amount"] for r in rows}
+    assert by_key["general_public_services"] == pytest.approx(21_239.0)
 
 
 def test_four_column_layout_still_extracts_the_second_estimate_at_outcome_column(tmp_path, monkeypatch):

@@ -95,54 +95,75 @@ OUT_DIR = REPO_ROOT / "data" / "staging" / "breakdowns"
 QUARANTINE_DIR = REPO_ROOT / "data" / "staging" / "quarantine"
 SOURCE_ID = "fbo_appendix_a_function"
 
-_RAW_DIR = (
-    REPO_ROOT
-    / "data"
-    / "raw"
-    / "federal"
-    / "federal_budget_archive_function_series"
-    / "snapshots"
-    / "20260723T033445Z"
-    / "files"
+_RAW_BASE = (
+    REPO_ROOT / "data" / "raw" / "federal" / "federal_budget_archive_function_series" / "snapshots"
 )
+# Default snapshot for the FY2010-11..FY2018-19 editions; the pre-2010-11
+# editions were acquired into different snapshot folders (see _EDITIONS'
+# own per-edition snapshot field) and are resolved relative to _RAW_BASE.
+_RAW_DIR = _RAW_BASE / "20260723T033445Z" / "files"
 
-# (financial_year, filename, numeric_column_count,
+# (financial_year, snapshot_dir_or_None, filename, numeric_column_count,
 # estimate_at_outcome_column_index) - only the confirmed-tractable
 # years/layouts (see the page-anchor scoping report and the
-# data-remediation-progress.md item 8.1 milestone entries). FY2014-15
-# through FY2016-17 were re-checked directly against the anchor logic
-# below (not re-derived from the original scoping pass's narrower,
-# exact-case check) and found to use the SAME 4-column layout and the
-# same case-insensitive-matchable anchor as FY2012-13/FY2013-14 - the
-# original "different header wording" finding predates this module's
-# case-insensitive anchor fix. FY2017-18/FY2018-19 use a genuinely
-# different 5-column layout where Estimate at Outcome is column 4, not
-# column 2 - confirmed by direct page inspection and an exact match on
-# both the Total other purposes and Total expenses cross-checks for both
-# years (see the item 8.1 milestone entry). The entire pre-2010-11
-# population still needs its own dedicated investigation before being
-# added here - never guessed at.
-_EDITIONS: list[tuple[str, str, int, int]] = [
-    ("2010-11", "FBO_2010-11_Consolidated.pdf", 3, 2),
-    ("2011-12", "FBO_2011-12_Consolidated.pdf", 3, 2),
-    ("2012-13", "2012-13_FBO_Consolidated.pdf", 4, 2),
-    ("2013-14", "2013-14_FBO_Consolidated.pdf", 4, 2),
-    ("2014-15", "FBO-2014-15-Consolidated.pdf", 4, 2),
-    ("2015-16", "FBO-2015-16-Consolidated.pdf.pdf", 4, 2),
-    ("2016-17", "FBO-2016-17.pdf", 4, 2),
-    ("2017-18", "FBO_2017-18_Combined.pdf", 5, 4),
-    ("2018-19", "FBO_2018-19_web.pdf", 5, 4),
+# data-remediation-progress.md item 8.1 milestone entries).
+# snapshot_dir_or_None resolves relative to _RAW_BASE; None means the
+# default _RAW_DIR (20260723T033445Z). FY2014-15 through FY2016-17 were
+# re-checked directly against the anchor logic below (not re-derived
+# from the original scoping pass's narrower, exact-case check) and
+# found to use the SAME 4-column layout and the same case-insensitive-
+# matchable anchor as FY2012-13/FY2013-14 - the original "different
+# header wording" finding predates this module's case-insensitive
+# anchor fix. FY2017-18/FY2018-19 use a genuinely different 5-column
+# layout where Estimate at Outcome is column 4, not column 2 -
+# confirmed by direct page inspection and an exact match on both the
+# Total other purposes and Total expenses cross-checks for both years
+# (see the item 8.1 milestone entry). FY2007-08/FY2008-09/FY2009-10 use
+# the identical 3-column/column-2 layout as FY2010-11..FY2016-17 (still
+# titled "Appendix A"/"Table A1", unlike FY2000-01..FY2006-07's
+# "Appendix B"), confirmed by direct page inspection and an exact/near-
+# exact match on both cross-checks once a real PDF-text-extraction
+# defect (a stray space inserted inside a large number, e.g. "5, 926"
+# for "5,926" in the 2008-09 file) was found and fixed in the shared
+# _NUM pattern - re-verified this fix changes 0 values across every
+# already-loaded year before being applied. FY1998-99..FY2006-07 remain
+# their own dedicated future investigation - a materially more
+# heterogeneous population (2-column and 3-column-with-Estimate-at-
+# Outcome-in-column-3 layouts, an "Appendix B" naming era, and at least
+# 3 files whose PDF fonts require a further decode step) - never
+# guessed at or merged into this generation without individual
+# verification.
+_EDITIONS: list[tuple[str, str | None, str, int, int]] = [
+    ("2007-08", "20260723T033738Z", "2007-08_FBO_2007_08.pdf", 3, 2),
+    ("2008-09", "20260723T031046Z", "2008-09_2008_09_FBO.pdf", 3, 2),
+    ("2009-10", "20260723T031046Z", "2009-10_2009_10_FBO.pdf", 3, 2),
+    ("2010-11", None, "FBO_2010-11_Consolidated.pdf", 3, 2),
+    ("2011-12", None, "FBO_2011-12_Consolidated.pdf", 3, 2),
+    ("2012-13", None, "2012-13_FBO_Consolidated.pdf", 4, 2),
+    ("2013-14", None, "2013-14_FBO_Consolidated.pdf", 4, 2),
+    ("2014-15", None, "FBO-2014-15-Consolidated.pdf", 4, 2),
+    ("2015-16", None, "FBO-2015-16-Consolidated.pdf.pdf", 4, 2),
+    ("2016-17", None, "FBO-2016-17.pdf", 4, 2),
+    ("2017-18", None, "FBO_2017-18_Combined.pdf", 5, 4),
+    ("2018-19", None, "FBO_2018-19_web.pdf", 5, 4),
 ]
 
 _ANCHOR_RE = re.compile(r"appendix a:\s*expenses by function and\s*sub-function", re.I)
-_NUM = r"(\(?-?[\d,]+(?:\.\d+)?\)?|-)"
+# Digit-group-aware, not a bare [\d,]+ run: some editions' PDF text
+# extraction inserts a stray space right after a thousands comma (e.g.
+# "5, 926" for "5,926" - confirmed in the 2008-09 file's "Total other
+# economic affairs" row), which a bare [\d,]+ run would silently split
+# into two separate tokens and shift every subsequent column by one.
+# Requiring each comma-separated group to be exactly 3 digits (with an
+# optional stray space tolerated after the comma) rejects that split.
+_NUM = r"(\(?-?\d{1,3}(?:,\s?\d{3})*(?:\.\d+)?\)?|-)"
 
 # measure_key -> (search_label_regex_fragment, is_total_terminated)
 # is_total_terminated=True means the search text is a "Total <label>" row;
 # False means the bare function-name row itself carries the numbers.
 _LABEL_PATTERNS: list[tuple[str, str, bool]] = [
     ("general_public_services", r"Total general public services", True),
-    ("defence", r"Defence", False),
+    ("defence", r"Defence(?:\([a-z]\))?", False),
     ("public_order_safety", r"Total public order and safety", True),
     ("education", r"Total education", True),
     ("health", r"Total health", True),
@@ -158,7 +179,7 @@ _LABEL_PATTERNS: list[tuple[str, str, bool]] = [
     ("nominal_superannuation_interest", r"Nominal superannuation interest", False),
     ("general_purpose_intergovt_transactions", r"General purpose inter-government\s+transactions", False),
     ("natural_disaster_relief", r"Natural disaster relief", False),
-    ("contingency_reserve", r"Contingency reserve", False),
+    ("contingency_reserve", r"Contingency reserve(?:\([a-z]\))?", False),
     ("total_other_purposes", r"Total other purposes", True),
     ("total_expenses", r"Total expenses", True),
 ]
@@ -238,7 +259,10 @@ def _parse_number(raw: str) -> float | None:
     if raw == "-" or not raw:
         return 0.0
     negative = raw.startswith("(") and raw.endswith(")")
-    cleaned = raw.strip("()").replace(",", "")
+    # A captured token may include a stray space the _NUM pattern
+    # deliberately tolerates after a thousands comma (e.g. "5, 926") -
+    # strip all internal whitespace too, not just leading/trailing.
+    cleaned = re.sub(r"\s+", "", raw.strip("()").replace(",", ""))
     try:
         value = float(cleaned)
     except ValueError:
@@ -256,8 +280,9 @@ def _relative_or_str(path: Path) -> str:
 def extract_all(raw_dir: Path = _RAW_DIR) -> tuple[list[dict], list[dict]]:
     rows: list[dict] = []
     quarantine: list[dict] = []
-    for fy, filename, num_columns, outcome_column_index in _EDITIONS:
-        path = raw_dir / filename
+    for fy, snapshot_dir, filename, num_columns, outcome_column_index in _EDITIONS:
+        edition_dir = raw_dir if snapshot_dir is None else (_RAW_BASE / snapshot_dir / "files")
+        path = edition_dir / filename
         if not path.is_file():
             quarantine.append({"reason": "edition_file_missing_on_disk", "fy": fy, "filename": filename})
             continue
