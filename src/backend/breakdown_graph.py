@@ -3,9 +3,55 @@
 from __future__ import annotations
 
 from collections import Counter
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
+import yaml
+
 from backend.edge_set_policy import EdgeSetPolicy, load_edge_set_registry
+
+_HERE = Path(__file__).resolve().parent
+
+
+def _cofog_crosswalk_path() -> Path:
+    candidates = [
+        Path("/app/config/breakdowns/crosswalks/cofog_to_budget_function.yaml"),
+        _HERE.parents[1] / "config" / "breakdowns" / "crosswalks" / "cofog_to_budget_function.yaml",
+        _HERE.parent / "config" / "breakdowns" / "crosswalks" / "cofog_to_budget_function.yaml",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path
+    return candidates[0]
+
+
+@lru_cache(maxsize=1)
+def _budget_to_abs_purpose() -> dict[str, str]:
+    """Reverse-index config/breakdowns/crosswalks/cofog_to_budget_function.yaml
+    (budget-function name, lowercased) -> ABS COFOG purpose name - the name
+    related_breakdown edges are actually attached under in the DB (e.g.
+    "Social security and welfare" -> "Social protection"). Exact-quality
+    mappings win over approx ones when more than one ABS purpose maps to the
+    same budget function (e.g. "Environmental protection" also maps
+    approximately onto "Housing and community amenities", which already has
+    its own exact self-mapping)."""
+    path = _cofog_crosswalk_path()
+    if not path.is_file():
+        return {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    by_budget: dict[str, tuple[str, str]] = {}
+    for mapping in data.get("mappings", []):
+        abs_name = mapping.get("abs")
+        budget_name = mapping.get("budget")
+        quality = mapping.get("quality", "approx")
+        if not abs_name or not budget_name:
+            continue
+        key = budget_name.lower()
+        existing = by_budget.get(key)
+        if existing is None or (existing[1] != "exact" and quality == "exact"):
+            by_budget[key] = (abs_name, quality)
+    return {key: abs_name for key, (abs_name, _quality) in by_budget.items()}
 
 RELATED_BANNER = (
     "Related breakdown from a different measure family — amounts are shown for "
@@ -706,13 +752,7 @@ def resolve_related_parent_node_id(
     if lookup.lower().startswith("total "):
         rest = lookup[6:].strip()
         lookup = rest[:1].upper() + rest[1:] if rest else lookup
-    aliases = {
-        "health": "Health",
-        "education": "Education",
-        "defence": "Defence",
-        "general public services": "General public services",
-    }
-    purpose = aliases.get(lookup.lower(), lookup)
+    purpose = _budget_to_abs_purpose().get(lookup.lower(), lookup)
 
     candidates = [purpose, f"Total {purpose}", f"Total {purpose[0].lower() + purpose[1:]}"]
     for cand in candidates:

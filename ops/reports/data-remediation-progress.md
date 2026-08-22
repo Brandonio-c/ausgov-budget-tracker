@@ -2294,3 +2294,23 @@ The production deployment lag (see the CRITICAL note at the top of this ledger) 
 ### Next item
 
 Investigate the pre-2017 quarterly era next (starting with re-verifying which of the ~24 files beyond the already-known-corrupted `consolidated-fund-2012-march.pdf` extract cleanly), build the quarter-only 3-month flow table as a 3rd distinct measure family, or pursue a dedicated FBO Appendix A/B / QLD CFFR explorer surface - or address the outstanding production redeployment decision, still the highest-impact single action available to make this session's UI/API work visible to real users.
+
+## Mission reopen: Federal depth & visualization correctness (new phase)
+
+A new directive reopened the mission on live-product-correctness grounds: earlier "complete" ledger dispositions do not by themselves prove the live dashboard satisfies the actual mission (truthful, adequately deep, non-misleading). Full detail, evidence, and ongoing loop entries: `ops/reports/federal-depth-visualization-remediation-20260820T151500Z.md`. Ledger summary below; the dedicated report is authoritative for this phase's evidence.
+
+**Standing constraint reaffirmed**: production deployment (rebuilding the `ausgov-budget-tracker-backend-1` Docker image, or redeploying the frontend) remains a human decision this loop does not trigger itself - unchanged despite the new directive's own deployment section, since a live/user-facing/hard-to-reverse action requires explicit human authorization regardless of which prompt is asking.
+
+### Loop 1 — P0: Social Security/Social Protection crosswalk resolution (fixed, not yet deployed)
+
+**Root cause**: `resolve_related_parent_node_id()` in `src/backend/breakdown_graph.py` used its own independent 4-entry hardcoded alias dict (Health/Education/Defence/General public services - all cases where the ABS purpose name and budget-function name are already identical strings) instead of consulting the already-correct, already-complete declarative crosswalk at `config/breakdowns/crosswalks/cofog_to_budget_function.yaml`. Confirmed via `grep -rn "cofog_to_budget_function" src/`: the YAML was referenced only from offline ingest/audit scripts, never from `src/backend/`. Any function requiring a genuine APPROX crosswalk translation (Social security and welfare↔Social protection, Recreation and culture↔Recreation/culture/religion, Other economic affairs↔Economic affairs, Transport and communication↔Transport) silently resolved to `None` and got 0 related children - confirmed live against the running production container before the fix.
+
+**Fix**: added a small cached crosswalk loader (`_budget_to_abs_purpose()`) mirroring the existing repo-checkout-vs-Docker-mount path pattern already used in `edge_set_policy.py`; replaced the 4-entry dict with a lookup into it, with exact-quality mappings taking priority over approx ones for the one case with 2 competing entries (Housing and community amenities).
+
+**Verified at 3 levels**: (1) unit-level against the real config file - all 10 mappings resolve correctly; (2) direct DB-level against real live `data/facts.db` - Social security and welfare 0→17 related children, Recreation and culture 0→10, Other economic affairs 0→13, Transport and communication 0→13, zero change to the 5 already-working functions; (3) live API-level via a fresh local backend process (not the production container) - `Social security and welfare → Assistance to the aged → Aged care services → Aged Care Services → {Social Support - Group, CHSP Transport, ...}` now reachable, down to individual funded-organization line items, real PBS/recipient-level data that was already correctly attached to "Social protection" in the graph and was purely unreachable from the budget-function name before this fix.
+
+5 new tests (`tests/unit/test_breakdown_graph_cofog_crosswalk.py`), full suite 848 passed (843 baseline + 5), 0 regressions. Pure code fix, zero data/graph impact. **Not yet deployed** - requires an image rebuild (code is baked into the container image, only `config/`/data are bind-mounted), the same standing redeploy decision reserved for the user.
+
+### Next item (this phase)
+
+Audit `src/frontend/lib/sunburstTree.ts` and backend projection logic for whether related (non-additive) branches can silently enter the "Canonical actual" additive sunburst (the next P0 item in the reopened directive), then continue through the remaining P0/P1 visualization and depth-metrics items in priority order.
