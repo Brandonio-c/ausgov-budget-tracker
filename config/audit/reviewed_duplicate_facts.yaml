@@ -1931,3 +1931,91 @@ reviewed_duplicate_facts:
       Two or more different reporting months within the same financial year genuinely report the identical point-in-time balance for this measure - verified directly against the extracted staging data (a stock balance can legitimately remain unchanged from one month-end to the next, e.g. Assets held for sale FY2019-20's March/April 2020 both report $256,000,000). task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the reporting_month/period_end in its grouping key, so it cannot distinguish two genuinely different months that happen to share a value from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, and qld_on_time_payment_reports above.
     evidence_report: ops/reports/mfs-balance-sheet-duplicate-fact-investigation-20260815T160000Z.md
     review_date: "2026-08-15"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2017-18"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 29174634000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2018-19"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 29186453000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2019-20"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 27474146000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2020-21"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 22785045000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2021-22"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 26621065000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2022-23"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 28980403000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2023-24"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 36682494000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"
+  - source_key: qld_cffr_quarterly_ytd
+    node_path: "QLD CFFR Quarterly: Consolidated Fund balance as at 1 July"
+    financial_year: "2024-25"
+    measure_type: qld_cffr_quarterly_ytd_opening_balance
+    estimate_status: actual
+    amount_aud: 32499263000
+    classification: query_false_positive
+    reason: >
+      All 3 of this financial year's own loaded quarterly editions (September/December/March) genuinely report the identical "Balance as at 1 July" figure, verified directly against the extracted staging data - this measure restates the same real-world point-in-time balance at the top of every quarter's own Statement of Receipts and Payments within one financial year, it does not change quarter to quarter. task9_sql_integrity_checks.py duplicate_facts() groups by (node, financial_year, measure_type, estimate_status, value) and does not include the quarter/period_end in its grouping key, so it cannot distinguish 3 genuinely different quarterly editions restating the same figure from a true duplicate - the same class of false positive already documented for federal_mfs_aggregates, federal_mfs_note3_function, federal_mfs_tax_notes_1_2, federal_mfs_balance_sheet, and qld_on_time_payment_reports above. Each group's 3 underlying facts were individually confirmed to have distinct fact_keys (differing in their Q{quarter} component), genuinely 3 separate, independently-sourced facts.
+    evidence_report: ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-20260819T200500Z.md
+    review_date: "2026-08-19"

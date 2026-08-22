@@ -1,0 +1,296 @@
+# Queensland Treasury's quarterly Consolidated Fund Financial Report
+# (CFFR) "Quarterly Statement" editions - item 7.4's quarterly slice.
+# Verified directly against 26 real quarterly editions (FY2016-17 Q3
+# through FY2025-26 Q3, Sep/Dec/Mar quarters) before writing any label
+# mapping - see scripts/ingest/extractors/qld_cffr_quarterly_ytd.py's
+# module docstring and
+# ops/reports/qld-cffr-quarterly-scoping-20260819T194500Z.md for the
+# full evidence, including an independent cross-source proof: every
+# quarter's own "Balance as at 1 July" figure was checked directly
+# against the already-loaded annual edition's own opening balance for
+# the same financial year - 8 of 9 comparable years matched exactly,
+# the 9th within $1,000 (immaterial published rounding, the same
+# pattern already established for every other source this session).
+#
+# Genuinely Gross Cash Basis, identical to the already-loaded annual
+# qld_cffr_* family - but a materially DIFFERENT VINTAGE (a cumulative
+# Year-to-Date figure as at a quarter end, not a full financial-year
+# figure) and therefore modeled as an entirely distinct measure family
+# (qld_cffr_quarterly_ytd_*), never sharing a compatibility_group with
+# the annual qld_cffr_* measures, per this program's standing
+# never-sum-incompatible-vintages rule.
+#
+# Scope of this pass: only the 26 confirmed-tractable, confirmed-clean
+# editions FY2016-17 Q3 through FY2025-26 Q3 (2017 onward, per the
+# scoping report's recommended first slice; FY2016-17 Q3 was included
+# because its own file - "Consolidated-Fund-Financial-Report-March-2017.pdf"
+# - is part of the same clean naming/format era already spot-checked).
+# Deliberately NOT loaded: the pre-2017 era (FY2008-09 Q1 through
+# FY2016-17 Q2, ~24 files - one of which, consolidated-fund-2012-march.pdf,
+# is already known to have real OCR-quality character corruption, and
+# the rest have not been individually re-verified with this pass's
+# rigor); `cffr-sept-2025.pdf` (FY2025-26 Q1, zero extractable text on
+# any page via both pypdf and pdftotext - a genuinely unreadable/
+# image-only PDF); `quarterly-statement-consolidated-fund-dec2025.pdf`
+# (FY2025-26 Q2, a fundamentally different, positionally-broken text
+# layout where labels and numbers render in two entirely separate
+# blocks rather than interleaved per row - not a regex-tolerable
+# defect, needs a positional/columnar extraction approach in a future
+# pass); the quarter-only 3-month "Quarter Ended" flow table present
+# for December/March editions (a genuinely different vintage from the
+# cumulative Year-to-Date table this pass loads - never blended); the
+# Operating/Investment Account column split (only the Total column is
+# extracted, matching the annual editions' own convention); the receipt
+# sub-line-items with genuine multi-generation composition ambiguity
+# already documented for the annual editions; Note 1/Note 2's
+# department-level breakdown detail.
+version: 1
+
+global_rules:
+  - id: quarterly_ytd_only_never_blended_with_annual_or_quarter_only_flow
+    text: >
+      Only the cumulative Year-to-Date figure (as at the reporting
+      quarter's end date, always measured from 1 July) is loaded here.
+      This is a genuinely different vintage from both the already-loaded
+      annual qld_cffr_* "Year Ended 30 June" figures and from the
+      quarter-only 3-month "Quarter Ended" flow table present in the
+      same source document for December/March editions - none of these
+      three may ever be summed, compared as if equivalent, or presented
+      interchangeably under the same measure_type.
+  - id: only_the_confirmed_tractable_twenty_seven_edition_slice_is_loaded
+    text: >
+      Only FY2016-17 Q3 through FY2025-26 Q3 are loaded (26 editions).
+      The pre-2017 era, one confirmed-unreadable file (FY2025-26 Q1),
+      and one confirmed-structurally-incompatible file (FY2025-26 Q2)
+      are deliberately excluded - see
+      ops/reports/qld-cffr-quarterly-scoping-20260819T194500Z.md and
+      this file's own header comment for the full evidence.
+  - id: total_column_only_never_the_operating_investment_split
+    text: >
+      Each source row has 4 numeric columns (Operating Account,
+      Investment Account, Total, Total - prior year same-period
+      comparative). Only the Total (current period) column is extracted -
+      identical to the annual editions' own convention.
+  - id: cash_basis_never_conflated_with_accrual_measures
+    text: >
+      Explicitly Gross Cash Basis per the source's own statement - never
+      compared, summed, or substituted for any accrual-basis GFS/PBS/MFS
+      measure describing the same or a related entity.
+
+measures:
+  qld_cffr_quarterly_ytd_opening_balance:
+    economic_meaning: >
+      The Consolidated Fund's total balance (Operating Account plus
+      Investment Account) as at 1 July, the start of the financial year,
+      as restated in a quarterly Year-to-Date statement - a point-in-time
+      cash-basis stock, not a flow. Verified to match the already-loaded
+      annual edition's own opening balance for the same financial year
+      (8 of 9 comparable years exactly, the 9th within $1,000 immaterial
+      rounding).
+    flow_or_stock: stock
+    period_granularity: year_to_date
+    period_start: null
+    period_end: financial_year_start
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_opening_balance
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_opening_balance at a compatible reporting date, a different financial_year or quarter
+      - qld_cffr_opening_balance for the same financial_year (must be numerically identical or within immaterial published rounding - a real cross-source continuity check)
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS balance-sheet-style measure
+      - the quarter-only 3-month flow table's own opening balance for the same edition (a different vintage, not loaded here)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Balance as at 1 July", "Balance as at 1July"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_closing_balance:
+    economic_meaning: >
+      The Consolidated Fund's total balance as at the reporting
+      quarter's end date (30 September / 31 December / 31 March) - a
+      point-in-time cash-basis stock, cumulative Year-to-Date position.
+    flow_or_stock: stock
+    period_granularity: year_to_date
+    period_start: null
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_closing_balance
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_closing_balance at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS balance-sheet-style measure
+      - qld_cffr_closing_balance (the annual 30 June figure - a different reporting date, never presented as equivalent)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Consolidated Fund Balance as at 30 September", "Consolidated Fund Balance as at 31 December", "Consolidated Fund Balance as at 31 March"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_collections_from_departments:
+    economic_meaning: >
+      Cash collections received from Queensland Government departments
+      into the Consolidated Fund, cumulative from 1 July to the
+      reporting quarter end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: qld_cffr_quarterly_ytd_collections_from_departments
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_collections_from_departments at a compatible reporting date, a different financial_year or quarter
+      - any other qld_cffr_quarterly_ytd_* receipt/payment measure for the same edition, plotted as a distinct series (never summed by the API)
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS revenue measure
+      - qld_cffr_collections_from_departments (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Collections received from Departments", "Collections received from departments"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_investment_interest:
+    economic_meaning: >
+      Cash investment interest received into the Consolidated Fund,
+      cumulative from 1 July to the reporting quarter end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_investment_interest
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_investment_interest at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS revenue measure
+      - qld_cffr_investment_interest (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Investment Interest", "Investment interest"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_dividends_income_tax_equivalents:
+    economic_meaning: >
+      Cash dividends and income tax equivalents received into the
+      Consolidated Fund, cumulative from 1 July to the reporting quarter
+      end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: qld_cffr_quarterly_ytd_dividends_income_tax_equivalents
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_dividends_income_tax_equivalents at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS revenue measure
+      - qld_cffr_dividends_income_tax_equivalents (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Dividends and Income Tax Equivalents", "Dividends and income tax equivalents"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_non_appropriated_equity_adjustments:
+    economic_meaning: >
+      Non-appropriated equity adjustments recorded against the
+      Consolidated Fund, cumulative from 1 July to the reporting quarter
+      end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_non_appropriated_equity_adjustments
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_non_appropriated_equity_adjustments at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS measure
+      - qld_cffr_non_appropriated_equity_adjustments (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Non-Appropriated Equity Adjustments", "Non-appropriated equity adjustments"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_superannuation_lsl_qgif_alcs_contributions:
+    economic_meaning: >
+      Cash superannuation, long service leave, Queensland Government
+      Insurance Fund and ALCS (Annual Leave Central Scheme) contributions
+      received into the Consolidated Fund, cumulative from 1 July to the
+      reporting quarter end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: positive
+    compatibility_group: qld_cffr_quarterly_ytd_superannuation_lsl_qgif_alcs_contributions
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_superannuation_lsl_qgif_alcs_contributions at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS measure
+      - qld_cffr_superannuation_lsl_qgif_alcs_contributions (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants:
+      - "Superannuation, long service leave, Queensland Government Insurance Fund and ALCS contributions"
+      - "Superannuation, Long Service Leave, Queensland Government Insurance Fund and ALCS Contributions"
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_other_receipts:
+    economic_meaning: >
+      Other cash receipts into the Consolidated Fund not separately
+      itemised above, cumulative from 1 July to the reporting quarter
+      end.
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_other_receipts
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_other_receipts at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS measure
+      - qld_cffr_other_receipts (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Other Receipts", "Other receipts"]
+    root_total_allowed: 1
+
+  qld_cffr_quarterly_ytd_appropriations_provided_to_departments:
+    economic_meaning: >
+      Cash appropriations paid from the Consolidated Fund to Queensland
+      Government departments, cumulative from 1 July to the reporting
+      quarter end - the Consolidated Fund's entire Payments section for
+      every edition inspected (no other payment line item exists in
+      this table).
+    flow_or_stock: flow
+    period_granularity: year_to_date
+    period_start: financial_year_start
+    period_end: quarter_end
+    estimate_status: actual
+    accounting_basis: cash
+    unit: AUD
+    sign_convention: signed
+    compatibility_group: qld_cffr_quarterly_ytd_appropriations_provided_to_departments
+    allowed_comparisons:
+      - qld_cffr_quarterly_ytd_appropriations_provided_to_departments at a compatible reporting date, a different financial_year or quarter
+    forbidden_comparisons:
+      - any accrual-basis GFS/PBS/MFS expense measure (this is a cash appropriation payment, not an accrual expense)
+      - qld_cffr_appropriations_provided_to_departments (the annual full-year figure - a different vintage)
+    dashboard_treatment: dedicated QLD CFFR Quarterly timeline/comparison API only
+    source_label_variants: ["Appropriations provided to Departments", "Appropriations provided to departments"]
+    root_total_allowed: 1

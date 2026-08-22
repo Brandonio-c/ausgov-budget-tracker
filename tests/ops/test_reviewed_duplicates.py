@@ -253,7 +253,15 @@ def test_real_repo_config_has_the_expected_reviewed_false_positive_groups():
     duplicate insert (e.g. mfs_balance_sheet_assets_held_for_sale
     FY2019-20's March/April 2020 both report $256,000,000). See
     ops/reports/mfs-balance-sheet-duplicate-fact-investigation-*.md.
-    Total: 138 + 29 = 167."""
+    Total: 138 + 29 = 167.
+
+    8 more from item 7.4's QLD CFFR quarterly Year-to-Date load: a
+    financial year's own "Balance as at 1 July" figure genuinely repeats
+    identically across that year's 3 quarterly editions (September/
+    December/March), since it restates the same real-world start-of-year
+    balance each time, not a duplicate insert - see
+    ops/reports/qld-cffr-quarterly-duplicate-fact-investigation-*.md.
+    Total: 167 + 8 = 175."""
     result = validate_config()
     assert result["valid"] is True
-    assert result["entry_count"] == 167
+    assert result["entry_count"] == 175
