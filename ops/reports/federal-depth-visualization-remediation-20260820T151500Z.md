@@ -318,3 +318,76 @@ Continue the loop into the next P0 item: replace the single global `maxVisibleDe
 number with per-function depth metrics (canonical additive max depth, related max depth,
 spend-weighted median depth, coverage thresholds) so no single number is presented as if
 every wedge in the chart shares it.
+
+## Loop 3 — P0: single aggregated "Safe levels" number implying uniform depth (fixed, not yet deployed)
+
+Commit: `0bc6850`
+
+### Observe
+
+`RingDepthControl`'s "Safe levels ... of N" is fed by `maxRingDepth = Math.max(1,
+maxVisibleDepth(rawChildren, activeBranchChoice))` in `HomeClient.tsx` — the deepest path
+reachable *anywhere* among the current level's siblings, combined into one number. This is
+a legitimate rendering necessity (an ECharts sunburst nests all rings to one shared depth,
+so the chart genuinely cannot draw more rings than the deepest branch supports), but
+presented alone it invites reading "of 3" as "every wedge here has 3 levels" — exactly the
+directive's named failure mode ("Six reported rings are not success if Social Security
+stops at the first ring").
+
+### Diagnose
+
+Confirmed live, for FY2025-26 under the "Budget Statement 6" related branch: the
+aggregated number is 3, but of the 17 federal top-level functions, 10 are leaves at depth
+1, 5 reach depth 2, and only Health and Social security and welfare actually reach depth
+3. Under "Canonical actual" for the same year, all 17 functions are genuinely depth-1
+leaves — no native additive sub-purpose breakdown exists in this dataset at all; only the
+related branches carry deeper structure. Both facts needed to be true and disclosed, not
+one asserted as if it applied everywhere.
+
+### Implementation
+
+`src/frontend/lib/sunburstTree.ts`: new `perFunctionDepth(nodes, branchChoice)`, returning
+each top-level node's own depth (not the aggregate) under the currently active branch, by
+calling the existing `nestableChildren`/`maxVisibleDepth` per node instead of across all of
+them combined. `src/frontend/app/HomeClient.tsx`: wired into a `<details>` disclosure
+rendered next to the branch-note text, listing every top-level function's own depth
+("Health: 3 levels", "Social security and welfare: 3 levels", "Defence: 1 (leaf)", ...) —
+shown only when `functionDepths` actually vary, so it adds nothing when there is nothing
+uneven to disclose (verified: correctly absent under "Canonical actual").
+
+### Tests
+
+New case in `test-chart-semantics.mjs`: a 2-node fixture (one leaf, one 3-deep chain)
+asserts `perFunctionDepth` returns each node's own depth, not the aggregate. `npm run
+test:unit`, `tsc --noEmit`, `next build` all pass/succeed. `lint:ci` 25/24 baseline drift
+confirmed pre-existing/unrelated via `git stash` (identical problem list before and after).
+
+### Browser verification
+
+Same fresh local backend + production-style static export setup as Loops 1-2. FY2025-26,
+"Budget Statement 6" branch: screenshot confirms the expanded disclosure lists all 17
+federal functions with their true individual depths (10 leaves, 5 at 2 levels, 2 at 3
+levels) directly beneath the "Safe levels ... of 3 · default 3" control it qualifies. Under
+"Canonical actual" the disclosure is correctly absent (all functions genuinely depth-1).
+0 console errors in both states.
+
+### Data/graph impact
+
+None — pure frontend code fix. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-2.
+
+### Next
+
+P0 items 1-4 from the reopened directive are now addressed (crosswalk resolution, canonical
+sunburst purity, related-data visual/structural distinction via the branch selector, and
+per-function depth disclosure replacing the misleading single number). Continue into the P1
+items in priority order: top-level folding (never fold the first ring for federal
+functions), "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling, stable
+semantic per-function colors, stale selected-node metadata on year/mode/branch changes,
+explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change
+disclosure (FY2024-25 GFS/COFOG vs FY2025-26 accrual/Commonwealth function classification),
+and FY2025-26 golden regression fixtures — before moving to the data-depth ingestion
+mission and the high-value dead-end audit.

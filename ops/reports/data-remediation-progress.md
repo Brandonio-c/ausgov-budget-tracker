@@ -2321,6 +2321,16 @@ A new directive reopened the mission on live-product-correctness grounds: earlie
 
 Committed `2bddc08`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 3 — P0: single aggregated "Safe levels" number implying uniform depth (fixed, not yet deployed)
+
+**Root cause**: `RingDepthControl`'s "Safe levels ... of N" is fed by one aggregated `maxVisibleDepth()` call across all of the current level's siblings combined - a legitimate rendering clamp (an ECharts sunburst nests all rings to one shared depth), but presented alone it invites reading "of 3" as uniform depth. Confirmed live for FY2025-26 under "Budget Statement 6": the aggregate is 3, but 10 of 17 federal functions are leaves at depth 1, 5 reach depth 2, only Health and Social security and welfare reach 3. Under "Canonical actual" the same year, all 17 functions are genuinely depth-1 leaves - no native additive sub-purpose breakdown exists in this dataset at all.
+
+**Fix**: new `perFunctionDepth()` in `sunburstTree.ts` computing each top-level node's own depth (not the aggregate); wired into `HomeClient.tsx` as a `<details>` disclosure next to the branch note, listing every function's true individual depth, shown only when depths actually vary (correctly absent under Canonical, where they don't).
+
+**Verified**: new unit case, `npm run test:unit`/`tsc`/`next build` pass, `lint:ci` 25/24 drift confirmed pre-existing via `git stash`. Live browser check (fresh local backend + production-style static export): disclosure correctly lists all 17 functions' true depths under Statement 6, correctly absent under Canonical, 0 console errors. Full narrative and screenshots in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 3).
+
+Committed `0bc6850`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-Replace the single global `maxVisibleDepth()` number with per-function depth metrics (canonical additive max depth, related max depth, spend-weighted median depth, coverage thresholds) so no one number is presented as if every wedge in the chart shares it - the next P0 item in the reopened directive - then continue through the remaining P0/P1 visualization and depth-metrics items in priority order.
+P0 items 1-4 are now addressed. Continue into the P1 items in priority order: top-level folding (never fold the first ring for federal functions), "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling, stable semantic per-function colors, stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
