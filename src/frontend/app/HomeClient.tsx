@@ -15,7 +15,7 @@ import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
 import DebtViewer from "@/components/DebtViewer";
-import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
+import { maxVisibleDepth, additiveChildren, perFunctionDepth } from "@/lib/sunburstTree";
 
 const BRANCH_LABELS: Record<string, string> = {
   canonical: "Canonical actual",
@@ -179,6 +179,10 @@ export default function HomeClient() {
     : "canonical";
   const maxRingDepth = useMemo(
     () => Math.max(1, maxVisibleDepth(rawChildren, activeBranchChoice)),
+    [rawChildren, activeBranchChoice],
+  );
+  const functionDepths = useMemo(
+    () => perFunctionDepth(rawChildren, activeBranchChoice),
     [rawChildren, activeBranchChoice],
   );
   const centerLabel =
@@ -480,6 +484,20 @@ export default function HomeClient() {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Canonical is the default. Related branches are alternatives and never change the canonical total.
           </p>
+          {functionDepths.length > 1 && functionDepths.some((f) => f.depth !== functionDepths[0].depth) ? (
+            <details className="text-xs text-zinc-500 dark:text-zinc-400">
+              <summary className="cursor-pointer">
+                Depth varies by function in this branch (up to {maxRingDepth} — not every wedge goes that deep)
+              </summary>
+              <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 pl-1">
+                {functionDepths.map((f) => (
+                  <li key={f.name}>
+                    {f.name}: {f.depth} {f.depth === 1 ? "(leaf)" : "levels"}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
           {selectedNode?.relationship ? (
             <div className="flex flex-wrap gap-1 text-xs" role="status">
               <span className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">

@@ -176,6 +176,31 @@ export function maxVisibleDepth(
   return deepest;
 }
 
+export type FunctionDepth = { name: string; depth: number };
+
+/**
+ * Per-top-level-node depth under the current branch, so a single aggregated
+ * "of N" number (see `maxVisibleDepth`) never gets read as "every wedge has
+ * N levels." `maxVisibleDepth` reports the deepest path reachable *anywhere*
+ * among these nodes — genuinely necessary as a rendering clamp, since an
+ * ECharts sunburst nests all rings to one shared depth — but presenting that
+ * single number as a standalone fact would misleadingly imply every
+ * top-level function goes that deep. A function whose own cascade stops at
+ * depth 1 is a truthful leaf even when a sibling reaches much deeper under
+ * the same branch choice; callers should surface this breakdown alongside
+ * (not instead of) the rendering-depth control.
+ */
+export function perFunctionDepth(
+  nodes: TreeNode[] | null | undefined,
+  branchChoice: BranchChoice = "canonical",
+): FunctionDepth[] {
+  return ringRootChildren(nodes, branchChoice).map((n) => {
+    const nest = nestableChildren(n, branchChoice);
+    const depth = nest.length ? 1 + maxVisibleDepth(nest, branchChoice) : 1;
+    return { name: n.name, depth };
+  });
+}
+
 export function pathKey(names: string[]): string {
   return names.join("\u0001");
 }

@@ -30,7 +30,7 @@ try {
   );
 
   const { foldToTopN, formatMeasureValue } = require(path.join(buildDir, "colors.js"));
-  const { buildSunburst } = require(path.join(buildDir, "sunburstTree.js"));
+  const { buildSunburst, perFunctionDepth } = require(path.join(buildDir, "sunburstTree.js"));
   const { formatApiAvailability } = require(path.join(buildDir, "availability.js"));
   const { additiveSiblingTotal, commonUnit, reportedAriaSummary, reportedTooltip } = require(
     path.join(buildDir, "chartSemantics.js"),
@@ -149,6 +149,24 @@ try {
     "related",
     "the related branch view must still correctly label this data as related, not additive",
   );
+
+  // Regression: a P0 defect where the chart exposed a single aggregated
+  // "of N" depth number (maxVisibleDepth over ALL top-level functions
+  // combined) with no disclosure that most functions stop far shallower —
+  // e.g. "6 reported rings" implying uniform depth when Social Security
+  // stops at the first ring. perFunctionDepth() must report each top-level
+  // function's own depth so a UI can disclose the true, uneven picture.
+  const shallowFunction = node("Social security and welfare", 200, relationship());
+  const deepFunction = node("Health", 100, relationship(), [
+    node("Medical services", 100, relationship(), [
+      node("MBS", 100, relationship()),
+    ]),
+  ]);
+  const depths = perFunctionDepth([shallowFunction, deepFunction], "canonical");
+  assert.deepEqual(depths, [
+    { name: "Social security and welfare", depth: 1 },
+    { name: "Health", depth: 3 },
+  ]);
 
   const relatedTooltip = reportedTooltip(
     "Recipients",
