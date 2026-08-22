@@ -50,37 +50,48 @@ export function lightenHex(hex: string, amount: number): string {
 }
 
 /**
- * Related-breakdown *folders* (Statement 6 / FBO packs, zero-value synthetics)
- * are not part of the parent’s additive total. Purpose nodes may still carry
- * `breakdown.kind === "related_breakdown"` so the UI can cascade into PBS/etc.
- * — those must stay in the sunburst (same rule as dashboard `_to_tree_node`).
+ * A sunburst wedge encodes "this is part of my parent's total" — so only
+ * genuinely additive (`branch_kind !== "related"`) children may ever appear
+ * here. `related_breakdown` data (Statement 6 estimates, contracts, grants,
+ * PBS programs, recipient counts — a different measure family, vintage, or
+ * accounting basis) must never be scaled into the canonical partition
+ * alongside true additive siblings, however small the resulting visual
+ * distortion looks (see `relatedFolderChildren` for the deliberate,
+ * separately-surfaced way to reach this data via a branch selector).
  *
- * Folders that preserve the parent amount (FBO Appendix A, Statement 6) must be
- * excluded from *sibling* additive sums; otherwise child totals double the parent
- * and nestableChildren refuses to expand. Rings instead *prefer* Statement 6
- * folder children via `ringRootChildren` / `nestableChildren` (exclusive path).
+ * A GFS purpose with no native sub-purpose breakdown at all (e.g. ABS
+ * Table_4 "Social protection") may correctly have ZERO additive children
+ * once related data is excluded here — that is the truthful outcome, not a
+ * regression: the richer Statement 6/PBS detail still exists and remains
+ * reachable through the branch selector, just never blended into canonical
+ * as if it partitioned the GFS actual.
  */
 export function additiveChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
   return (nodes ?? []).filter((n) => {
     if (!(n.value > 0)) return false;
-    return !(
-      (n.children?.length ?? 0) > 0 &&
-      ((n.relationship?.branch_kind === "related" &&
-        n.relationship.presentation_role === "navigation") ||
-        (!n.relationship &&
-          n.breakdown?.kind === "related_breakdown" &&
-          (n.name.startsWith("Statement 6") ||
-            n.name.startsWith("FBO Appendix A"))))
-    );
+    if (n.relationship?.branch_kind === "related") return false;
+    if (!n.relationship && n.breakdown?.kind === "related_breakdown") return false;
+    return true;
   });
 }
 
-/** Positive-value children of a declared related navigation folder, if present. */
+/**
+ * Positive-value related children for `branchFamily`, wherever they live:
+ * either nested inside a single declared navigation folder (the common case
+ * when a purpose has real additive siblings *and* a Statement 6/FBO pack
+ * attached alongside them), or attached directly as bare siblings (the case
+ * for a GFS purpose with no native additive breakdown at all, where the
+ * backend grafts the first related family straight onto the leaf — see
+ * `attach_related_to_tree`'s "leaf exposes the first declared related
+ * family directly" branch in breakdown_graph.py). Both shapes must remain
+ * reachable once `additiveChildren` stops treating either as canonical.
+ */
 function relatedFolderChildren(
   nodes: TreeNode[] | null | undefined,
   branchFamily: string,
 ): TreeNode[] | null {
-  const folder = (nodes ?? []).find(
+  const list = nodes ?? [];
+  const folder = list.find(
     (n) =>
       ((n.relationship?.branch_kind === "related" &&
         n.relationship.presentation_role === "navigation" &&
@@ -92,9 +103,18 @@ function relatedFolderChildren(
             : n.name.startsWith("FBO Appendix A")))) &&
       (n.children?.length ?? 0) > 0,
   );
-  if (!folder?.children?.length) return null;
-  const positive = folder.children.filter((c) => c.value > 0);
-  return positive.length ? positive : null;
+  if (folder?.children?.length) {
+    const positive = folder.children.filter((c) => c.value > 0);
+    if (positive.length) return positive;
+  }
+
+  const bareSiblings = list.filter(
+    (n) =>
+      n.value > 0 &&
+      n.relationship?.branch_kind === "related" &&
+      n.relationship.branch_family === branchFamily,
+  );
+  return bareSiblings.length ? bareSiblings : null;
 }
 
 /**
@@ -167,7 +187,7 @@ export function nestableChildren(
 ): TreeNode[] {
   if (branchChoice !== "canonical") {
     const related = relatedFolderChildren(parent.children, branchChoice);
-    if (related) return unwrapSameName(parent.name, prepareRingNodes(related));
+    if (related) return unwrapSameName(parent.name, prepareRingNodes(related), positiveChildren);
   }
 
   let kids = prepareRingNodes(additiveChildren(parent.children));
@@ -197,19 +217,36 @@ export function nestableChildren(
   return kids;
 }
 
-/** Skip Defence → Defence → Defence wrapper levels when nesting rings. */
-function unwrapSameName(parentName: string, kids: TreeNode[]): TreeNode[] {
+/**
+ * Skip Defence → Defence → Defence wrapper levels when nesting rings.
+ * `childrenOf` selects which projection continues the unwrap: `additiveChildren`
+ * on the canonical path (never let a same-name wrapper smuggle related data
+ * back in), or a plain positive-value filter on an already-related path (once
+ * inside a related family's own cascade — e.g. Statement 6 → component → PBS
+ * program — its internal nesting should render as-is, not be re-excluded for
+ * carrying `branch_kind: "related"` a second time).
+ */
+function unwrapSameName(
+  parentName: string,
+  kids: TreeNode[],
+  childrenOf: (nodes: TreeNode[] | null | undefined) => TreeNode[] = additiveChildren,
+): TreeNode[] {
   let cur = kids;
   while (
     cur.length === 1 &&
     cur[0].name === parentName &&
     (cur[0].children?.length ?? 0) > 0
   ) {
-    const next = prepareRingNodes(additiveChildren(cur[0].children));
+    const next = prepareRingNodes(childrenOf(cur[0].children));
     if (next.length === 0) break;
     cur = next;
   }
   return cur;
+}
+
+/** Positive-value children, for continuing an unwrap already inside a related cascade. */
+function positiveChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
+  return (nodes ?? []).filter((n) => n.value > 0);
 }
 
 /** Scale a sunburst subtree so values sum to `target` (keeps ECharts arcs aligned). */

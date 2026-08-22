@@ -109,6 +109,47 @@ try {
   const fboRings = buildSunburst([purpose], 3, false, "fbo");
   assert.equal(fboRings.data[0].children[0].name, "Audited subfunction");
 
+  // Regression: a P0 defect where additiveChildren() gated exclusion on
+  // "is this a folder-shaped navigation node" instead of on branch_kind
+  // alone, so bare (non-folder) related_breakdown children — the shape a
+  // GFS purpose with NO native additive sub-breakdown gets when the backend
+  // grafts a related family straight onto the leaf (e.g. real production
+  // "Social protection", which has zero same_group children of its own and
+  // only Statement 6 category estimates attached directly) — silently
+  // rendered as if they partitioned the canonical additive total. Confirmed
+  // live against the running production backend before the fix: Social
+  // security and welfare showed 0 children under this exact shape until the
+  // resolver bug was fixed, and even after that fix the sunburst itself
+  // still needed this separate correction to stop treating those related
+  // children as additive once they *were* reachable.
+  const noNativeBreakdown = node("Social protection", 286_605, relationship(), [
+    node(
+      "Assistance to the aged",
+      101_767,
+      relationship({ branch_kind: "related", branch_family: "statement_6" }),
+    ),
+    node(
+      "Assistance to people with disabilities",
+      86_338,
+      relationship({ branch_kind: "related", branch_family: "statement_6" }),
+    ),
+  ]);
+  const canonicalNoBreakdown = buildSunburst([noNativeBreakdown], 3, false, "canonical");
+  assert.equal(
+    canonicalNoBreakdown.data[0].children,
+    undefined,
+    "a purpose with no native additive breakdown must render as a leaf in canonical mode, " +
+      "never silently absorbing bare related siblings as if they partitioned it",
+  );
+  const statement6NoBreakdown = buildSunburst([noNativeBreakdown], 3, false, "statement_6");
+  assert.equal(statement6NoBreakdown.data[0].children.length, 2);
+  assert.equal(statement6NoBreakdown.data[0].children[0].name, "Assistance to the aged");
+  assert.equal(
+    statement6NoBreakdown.data[0].children[0].relationship.branch_kind,
+    "related",
+    "the related branch view must still correctly label this data as related, not additive",
+  );
+
   const relatedTooltip = reportedTooltip(
     "Recipients",
     {
