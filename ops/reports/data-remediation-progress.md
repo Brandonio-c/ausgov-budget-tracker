@@ -2311,6 +2311,16 @@ A new directive reopened the mission on live-product-correctness grounds: earlie
 
 5 new tests (`tests/unit/test_breakdown_graph_cofog_crosswalk.py`), full suite 848 passed (843 baseline + 5), 0 regressions. Pure code fix, zero data/graph impact. **Not yet deployed** - requires an image rebuild (code is baked into the container image, only `config/`/data are bind-mounted), the same standing redeploy decision reserved for the user.
 
+### Loop 2 — P0: "Canonical actual" silently absorbing related sunburst children (fixed, not yet deployed)
+
+**Root cause**: `additiveChildren()` in `src/frontend/lib/sunburstTree.ts` gated exclusion of related data on a folder-shape/`presentation_role` heuristic instead of `branch_kind` itself. Purposes with no native additive sub-breakdown (e.g. "Social security and welfare", whose Statement 6 children are grafted as bare siblings directly onto the leaf by `attach_related_to_tree()`'s "leaf exposes first related family directly" path) passed the old check and rendered as if they partitioned the canonical additive total, with `scaleToSum()` forcing a false visual partition of non-additive data.
+
+**Fix**: rewrote `additiveChildren()` to exclude any `branch_kind === "related"` node unconditionally; rewrote `relatedFolderChildren()` to also recognize bare-sibling related data (not just folder-wrapped), so the tightened exclusion doesn't make that data unreachable via the related branch selector; gave `unwrapSameName()` a `childrenOf` parameter so the canonical cascade still uses `additiveChildren()` while the related cascade uses a new `positiveChildren()` helper (avoids re-excluding a node already known to be related).
+
+**Verified**: 2 new regression cases in `src/frontend/scripts/test-chart-semantics.mjs` (canonical renders the no-native-breakdown fixture as a leaf; the related branch still returns both children correctly labeled), full `npm run test:unit` pass (including the pre-existing `fboRings` case, which caught a second-order `unwrapSameName()` regression during development), `tsc --noEmit` clean, `npm run build` succeeds, `lint:ci`'s 25/13 vs 24-baseline confirmed pre-existing/unrelated via `git stash`. Live browser verification against a fresh local backend + production-style static export (FY2025-26): "Canonical actual" shows Social security and welfare as a leaf ("Safe levels: of 1 · default 1"); switching to the "Budget Statement 6" related branch exposes real depth ("Safe levels: of 3 · default 3"); 0 console errors. Screenshots and full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 2).
+
+Committed `2bddc08`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-Audit `src/frontend/lib/sunburstTree.ts` and backend projection logic for whether related (non-additive) branches can silently enter the "Canonical actual" additive sunburst (the next P0 item in the reopened directive), then continue through the remaining P0/P1 visualization and depth-metrics items in priority order.
+Replace the single global `maxVisibleDepth()` number with per-function depth metrics (canonical additive max depth, related max depth, spend-weighted median depth, coverage thresholds) so no one number is presented as if every wedge in the chart shares it - the next P0 item in the reopened directive - then continue through the remaining P0/P1 visualization and depth-metrics items in priority order.

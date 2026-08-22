@@ -214,3 +214,107 @@ redeploy, alongside every other pending backend code change this program has acc
 Continue the loop into the next P0 item: audit "Canonical actual" filtering in
 `src/frontend/lib/sunburstTree.ts` and the backend projection logic for whether related
 (non-additive) branches can silently enter the canonical additive sunburst.
+
+## Loop 2 — P0: "Canonical actual" silently absorbing related sunburst children (fixed, not yet deployed)
+
+Commit: `2bddc08`
+
+### Observe
+
+With Loop 1's crosswalk fix live locally, "Social security and welfare" became reachable
+for the first time — but reachable data is not the same as *correctly labeled* data.
+Inspecting `additiveChildren()` in `src/frontend/lib/sunburstTree.ts` showed it gated
+exclusion of related data on a folder-shape / `presentation_role` heuristic ("does this
+node look like a navigation folder?"), not on `branch_kind` itself. `Social security and
+welfare`'s Statement 6 children are attached as **bare siblings directly on the leaf** (no
+wrapping folder) — the exact shape `attach_related_to_tree()`'s "leaf exposes first
+declared related family directly" branch produces when a GFS purpose has zero native
+additive sub-breakdown. That shape passed the old folder-shape check and would have
+rendered as if it partitioned the canonical additive total, with `scaleToSum()` forcing the
+children's raw dollar sum to visually equal the parent — a false quantitative partition of
+data that is not, in fact, additive.
+
+### Diagnose
+
+Read `attach_related_to_tree()` (`src/backend/breakdown_graph.py:840+`) end to end to
+confirm the bare-sibling shape is deliberate backend behavior for purposes with no native
+additive breakdown (not a mistagging bug to fix upstream). Confirmed via a fixture-driven
+unit test that the *old* `additiveChildren()` returned these bare `branch_kind: "related"`
+siblings as if additive, and that naively excluding all related nodes without also fixing
+`relatedFolderChildren()` would make this same data completely unreachable via the related
+branch selector — a regression, not a fix.
+
+### Implementation
+
+`src/frontend/lib/sunburstTree.ts`:
+- `additiveChildren()`: excludes any child with `branch_kind === "related"`
+  unconditionally (plus the pre-existing legacy `related_breakdown` check), regardless of
+  folder shape or `presentation_role`.
+- `relatedFolderChildren()`: rewritten to recognize both folder-wrapped related data
+  (existing behavior) **and** bare-sibling related data attached directly on a leaf (new),
+  so tightening `additiveChildren()` does not orphan this data from the related branch
+  selector.
+- `unwrapSameName()`: gained a `childrenOf` parameter (default `additiveChildren`, used by
+  the canonical call site) because it is also called from the related cascade in
+  `nestableChildren()`, which must not re-exclude a node it already knows is
+  `branch_kind: "related"`. Related call site now passes a new `positiveChildren()` helper
+  (filters on `value > 0` only).
+
+### Tests
+
+`src/frontend/scripts/test-chart-semantics.mjs`: two new assertions using a fixture
+purpose ("Social protection", $286,605, two bare `branch_kind: "related"` /
+`branch_family: "statement_6"` children) proving (a) canonical mode renders it as a leaf
+with `children === undefined` — no fabricated additive depth — and (b) the `statement_6`
+related branch still returns both children, correctly labeled `branch_kind: "related"`.
+`npm run test:unit`: all cases pass, including the pre-existing `fboRings` case that
+exercises the same `unwrapSameName()` path (this caught the `childrenOf` regression during
+development — see below). `npx tsc --noEmit -p .`: clean. `npm run build`: succeeds.
+`npm run lint:ci`: 25 errors / 13 warnings, confirmed via `git stash` / `git stash pop` to
+be pre-existing baseline drift (24-error baseline) unrelated to this change — all errors
+are in files this fix does not touch (`FactCitationViewer.tsx`, `GlobalSearchBar.tsx`,
+`SpendingChart.tsx`, two unrelated `tests-e2e/*.spec.ts` files).
+
+Caught during development: the first version of the `additiveChildren()` fix alone broke
+the existing `fboRings` test (`fboRings.data[0].children[0].name` returned `"Health"`
+instead of `"Audited subfunction"`) because `unwrapSameName()` always called
+`additiveChildren()` internally regardless of which branch called it — harmless under the
+old loose check, but wrong once the check correctly started excluding related leaves. Fixed
+by parameterizing `unwrapSameName()`'s child-selection function per call site, then
+re-ran the full unit suite to confirm the regression was resolved.
+
+### Browser verification
+
+Rebuilt the frontend (`next build`, `NEXT_PUBLIC_API_BASE=http://127.0.0.1:8099`) and
+served the static export from a correctly-symlinked `ausgov-budget-tracker/` path (Next's
+`basePath` requires the app be reached at `/ausgov-budget-tracker/`, not the server root —
+serving from the parent directory and navigating to that path was the fix for an earlier
+`ERR_ABORTED`/hydration failure). Ran against a fresh local backend on port 8099 (never the
+production container). Playwright + full-page screenshots for FY2025-26:
+
+- **Canonical actual** (default branch): "Social security and welfare" renders as a single
+  wedge with "Safe levels: of 1 · default 1" — confirming it is correctly reported as a
+  leaf with no fabricated additive depth.
+- **Budget Statement 6** (related branch, selected via the "Ring branch" button group):
+  same top-level view, but "Safe levels" changes to "of 3 · default 3" — confirming real,
+  reachable depth exists and is now correctly exposed only under the related branch, not
+  folded into canonical.
+- 0 browser console errors in both states.
+
+### Data/graph impact
+
+None — pure frontend code fix. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loop 1: this is a frontend static-export
+change requiring an authorized rebuild/redeploy of the production frontend, which this
+program continues to treat as a human-authorized action. Verified end-to-end against a
+disposable local static export + local backend only.
+
+### Next
+
+Continue the loop into the next P0 item: replace the single global `maxVisibleDepth()`
+number with per-function depth metrics (canonical additive max depth, related max depth,
+spend-weighted median depth, coverage thresholds) so no single number is presented as if
+every wedge in the chart shares it.
