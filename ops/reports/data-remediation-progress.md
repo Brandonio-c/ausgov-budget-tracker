@@ -2341,6 +2341,16 @@ Committed `0bc6850`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `0070d35`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 5 — P1: chart colors reassigned by sort position instead of function identity (fixed, not yet deployed)
+
+**Root cause**: Loop 4's own fix exposed this - `colorsFor()` assigned color via `palette[i % 7]` on the value-sorted array. With folding removed at the undrilled top level, 17 real federal functions against a 7-hue palette meant positions 0/7/14, 1/8/15, 2/9/16 shared identical hex values (arithmetic collision, not a rendering bug), and any function's color silently reassigned whenever sort order changed across years/modes/branches.
+
+**Fix**: `colorsFor()` now derives each node's palette index from a deterministic hash of its own name, not array position. Deeper rings already derived color by lightening the (now-stable) parent color, so they inherit the fix automatically.
+
+**Verified**: new unit case proves byte-identical hex values for the same function name across ascending vs descending sort order (exact string equality). `npm run test:unit`/`tsc`/`next build` pass, `lint:ci` 25/24 drift confirmed pre-existing. Live browser check across FY2025-26 Actuals/Debt/FY2024-25 Actuals: 0 console errors, no crashes. Full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 5), including a disclosed residual limitation: with 7 hues and up to 17 functions, some hue reuse is mathematically unavoidable without growing the palette - a design decision explicitly left for human sign-off, not made unilaterally. Also incidentally observed (not fixed here, tracked under the labeling P1 item): FY2024-25's rings view has overlapping/illegible labels.
+
+Committed `19cad2c`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4 and the top-level-folding P1 item are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling, stable semantic per-function colors (note: top-level color assignment is still array-position-based, which will now shift per function whenever the unfolded 17-function set changes order by value), stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4, top-level folding, and stable colors are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling (including the FY2024-25 label-overlap defect just observed), stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.

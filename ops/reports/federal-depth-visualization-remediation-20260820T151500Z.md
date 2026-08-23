@@ -458,10 +458,85 @@ None — pure frontend code fix. No migration, no facts.db mutation, no backend 
 
 Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy (a folded
 bucket must never be counted as if it were a real hierarchy level), persistent chart
-labeling, stable semantic per-function colors (fixed per canonical function, not
-array-position-based — note the current top-level color assignment is still
-array-position-based via `colorsFor`, which will now shift per-function colors whenever the
-now-unfolded set of 17 changes order by value across years/modes), stale selected-node
-metadata on year/mode/branch changes, explicit/exclusive related-branch selection with
-coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression
-fixtures.
+labeling, stale selected-node metadata on year/mode/branch changes, explicit/exclusive
+related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and
+FY2025-26 golden regression fixtures.
+
+## Loop 5 — P1: chart colors reassigned by sort position instead of function identity (fixed, not yet deployed)
+
+Commit: `19cad2c`
+
+### Observe
+
+Loop 4's own fix exposed a fresh, concrete correctness problem: `colorsFor()` assigned
+color via `palette[i % palette.length]` on the value-sorted array. With folding removed at
+the undrilled top level, 17 real federal functions are now shown against only a 7-hue
+palette — positions 0/7/14, 1/8/15, and 2/9/16 all receive the identical hex value by
+construction (`17 % 7` wraps twice), so up to 3 unrelated functions could render in the
+exact same color simultaneously. Independent of collision, position-based assignment also
+meant a single function's color silently reassigns whenever value-based sort order changes
+across years, modes, or branches — the opposite of the "stable semantic colors, fixed per
+canonical function" requirement.
+
+### Diagnose
+
+Confirmed the collision arithmetically: `Array.from({length:17}, (_,i) => i % 7)` produces
+`[0,1,2,3,4,5,6,0,1,2,3,4,5,6,0,1,2]` — three colors repeat exactly 3 times each. This is
+inherent to a 7-color palette applied to more than 7 categories (pigeonhole), not something
+introduced by a rendering bug — it existed the moment 17 functions became simultaneously
+visible, which Loop 4 caused.
+
+### Implementation
+
+`colors.ts`: `colorsFor()` now derives each node's palette index from a deterministic hash
+of its own `name` (`stableColorIndex`), not its position in the (sorted) input array.
+Deeper rings are unaffected — `buildLevel()` in `sunburstTree.ts` already derives their
+color by lightening the parent's (now-stable) color, not by a separate position-based call.
+
+### Tests
+
+New case in `test-chart-semantics.mjs`: `colorsFor()` on the same 3 named nodes
+(Health/Defence/Social security and welfare) in ascending vs descending value order
+produces byte-identical hex values per name (`assert.deepEqual`, exact string equality —
+not visual inspection). `npm run test:unit`, `tsc --noEmit`, `next build` all pass/succeed.
+`lint:ci` 25/24 baseline drift confirmed pre-existing via `git stash`.
+
+### Browser verification
+
+Fresh local backend + production-style static export. Navigated FY2025-26 Actuals → Debt
+mode → back to Actuals → FY2024-25 Actuals (three different value orderings and, for
+FY2024-25, a different GFS-basis category set entirely) with 0 console errors and no
+crashes; drill-down and citation panel continued working. Exact color-identity proof for
+this fix rests on the unit test above (string equality), which is more reliable than
+comparing hues by eye across PNG screenshots.
+
+Incidentally observed during this check, out of scope for this fix: FY2024-25's rings view
+shows overlapping/illegible labels ("Health" and "General public services" text
+collide) — a pre-existing legibility defect, tracked under the still-open "persistent chart
+labeling" P1 item below, not fixed here.
+
+### Data/graph impact
+
+None — pure frontend code fix. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-4.
+
+### Disclosed limitation (not fixed, by design)
+
+With only 7 palette hues and up to 17 named federal functions, some hue reuse remains
+mathematically unavoidable without growing the palette (a design decision affecting the
+site's visual identity, not made unilaterally in this remediation loop). This fix
+guarantees **stability** (the same function always renders in the same color, in every
+view) — it does not guarantee **zero collision** between different functions. If
+zero-collision is required, expanding `CATEGORICAL_LIGHT`/`CATEGORICAL_DARK` past 7 entries
+is a separate, disclosed follow-up item, left for explicit product/design sign-off.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, persistent
+chart labeling (including the FY2024-25 label-overlap defect just observed), stale
+selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch
+selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden
+regression fixtures.
