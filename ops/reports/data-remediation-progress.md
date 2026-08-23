@@ -2426,3 +2426,23 @@ Top-level folding, "Other" synthetic-depth, stable colors, first-level labeling,
 ### Next item (this phase)
 
 Move to the data-depth ingestion mission and the high-value dead-end audit - categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes.
+
+## Federal deep-data mission (new phase)
+
+A new master directive reopened the mission with a changed emphasis: maximize genuine Federal expenditure drill-down depth (target 10+ meaningful semantic levels on high-value branches where official data genuinely supports it), starting with a full audit rather than assuming the prior phase's correctness work covers everything. Full detail and ongoing loop entries: `ops/reports/federal-deep-data-mission-20260823T151600Z.md`.
+
+**Loop 1** (done first, as explicitly requested): closed the inherited Loop-11 second-level-legend verification gap via a deterministic ECharts test hook. Commit `f2e003d` (documented in the prior phase's report as its own Loop 12).
+
+**Loop 2**: built `scripts/ops/federal_depth_opportunity_matrix.mjs` (commit `509d509`), reusing the shipped frontend depth logic against a live backend. Confirmed Federal Actuals mode has zero native additive sub-function depth (all 17 functions are genuine canonical leaves; depth only exists via related branches, consistent with the prior phase). This audit's own numbers for Federal Budget mode looked suspicious (depth 4, $324.9B for Social security and welfare) and became the lead for Loop 3.
+
+**Loop 3 - P0 correctness defect found and fixed**: Federal Budget mode's root total was inflated ~6-7x (live-verified: "Total: $5,282,190,045,000" for FY2029-30 against a real ~$780-950B budget). Root cause: three compounding bugs summing incompatible classification axes (Statement 6 COFOG functions + PBS portfolio/agency rollups + a reconciliation-only graph edge + duplicate rows in the components dataset) as flat additive siblings. Fixed in `src/backend/routers/v2/dashboard.py` (commit `8ee0d36`): restricted the federal budget_expense query to the two sources that reconcile correctly (`federal_budget_statement_6_a61` + `_components`), scoped per-year so FY2022-23/FY2023-24 (which predate Statement 6 coverage) keep their prior, already-reviewed behavior unchanged; removed a harmful graph-edge cascade call; fixed a children-rollup double-count via the existing `preserve_amount` mechanism.
+
+**Verified**: full backend suite 325/325 passed (a first-pass version of the fix broke FY2022-23/FY2023-24 with 404s - caught by this same suite, fixed via a per-year coverage gate before committing). Golden fixture regenerated and reconfirmed idempotent - only the 5 `federal_budget_*` projections changed, all in the corrected direction, everything else byte-identical. Live browser check: Budget mode FY2025-26 now shows the correct $812,063,000,000, matching Statement 6's own published "Total expenses" figure exactly. Actuals mode completely unaffected.
+
+**Depth bonus**: this correctness fix also *increased* usable depth - Social security and welfare now correctly shows real depth-3 hierarchy (Assistance to the aged → Aged care services $41.4B / Support for seniors $65.3B; Assistance to people with disabilities → NDIS $53.778B) already loaded and now correctly exposed, directly serving the mission's Priority 1 (Social Security) and Priority 2 (NDIS) without further ingestion.
+
+Committed `8ee0d36`, `509d509`. **Not yet deployed** - same standing redeploy decision (this fix needs a backend Docker image rebuild).
+
+### Next item (this phase)
+
+Continue Priority 1 (Social Security depth): investigate whether `federal_dss_pbs_programs`/`federal_health_pbs_programs` can be safely wired as an explicit related branch for even deeper navigation. Investigate `federal_pbs_programs_s6_bridge`'s extraction-quality problems (duplicate rows, operating-statement rows mixed into program rows) as a dedicated extractor task before any reuse. Then continue through NDIS, Aged Care/Health, Defence, Education per the mission's priority order.
