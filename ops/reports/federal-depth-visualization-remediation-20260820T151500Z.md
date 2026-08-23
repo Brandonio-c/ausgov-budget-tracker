@@ -940,14 +940,72 @@ None — pure frontend code addition. No migration, no facts.db mutation, no bac
 1. Top-level folding — fixed (Loop 4).
 2. "Other" synthetic-depth-as-real-hierarchy — resolved by Loop 4, confirmed by code trace
    (Loop 10).
-3. Persistent chart labeling — first level fixed (Loop 6), second level implemented with an
-   honestly-incomplete browser check (Loop 11).
+3. Persistent chart labeling — first level fixed (Loop 6), second level implemented and
+   fully browser-verified (Loop 11, closed by Loop 12).
 4. Stable semantic colors — fixed (Loop 5).
 5. Stale selected-node metadata — fixed (Loop 7).
 6. Explicit/exclusive related-branch selection with coverage disclosure — fixed (Loop 8).
 7. Taxonomy/basis-change disclosure — fixed (Loop 9); FY2025-26 golden regression fixtures —
    fixed (Loop 10).
 
-Next: either revisit Loop 11's verification with a more tractable hover-testing approach, or
-move to the data-depth ingestion mission and the high-value dead-end audit — categorically
-larger, data-acquisition-heavy efforts distinct from this session's code fixes.
+## Loop 12 — closing the Loop 11 browser-verification gap with a deterministic test hook
+
+Commit: `f2e003d`
+
+### Observe
+
+Loop 11's second-level legend shipped with an honestly-disclosed gap: blind pixel/angle
+sampling against the sunburst canvas never conclusively confirmed a hover on a specific
+ring-1 wedge renders the correct "Inside X" legend.
+
+### Root causes found (both were test-methodology bugs, not app bugs)
+
+1. The percentages in `sunburstLevelStyles()` (10%/54%/98%) do not map onto "half of the
+   canvas's measured CSS bounding box" the way a naive `fittedRadius` calculation assumed —
+   confirmed by reading ECharts' own internal layout (`cx`, `cy`, `r0`, `r` in canvas-local
+   pixel units), which did not match that assumption.
+2. `document.elementFromPoint`/`page.mouse.move` operate on the *current viewport*, not
+   absolute page coordinates. The canvas sits below the fold at typical scroll position;
+   computed target points landed outside the visible viewport, so `elementFromPoint`
+   returned `null` and no hover fired — confirmed directly once checked.
+
+### Implementation
+
+`SpendingChart.tsx`: exposes the live ECharts instance on the chart's container element via
+a read-only `__echartsInstance` property (a harmless property assignment in an effect, no
+rendering impact) specifically so a test can query a named data item's real rendered
+layout directly from ECharts' own data structure, rather than inferring it from CSS. New
+permanent test `tests-e2e/second-level-legend.spec.ts`: resolves the exact pixel for
+"Social security and welfare" via the exposed instance, scrolls the canvas into view first,
+drives a genuine `page.mouse.move()` there (the real `onEvents.mouseover` path fires, not a
+synthetic dispatch), and asserts the second-level legend shows the correct 8 children.
+
+### Tests
+
+New E2E test passes deterministically and repeatably. `tsc --noEmit` clean (the sole
+pre-existing `SpendingChart.tsx` lint error confirmed unrelated via `git stash`). `npm run
+test:unit` unaffected. `lint:ci` 25/24 baseline drift confirmed pre-existing.
+
+### Browser verification
+
+Fresh local backend + production-style static export, FY2025-26, Statement 6 branch:
+screenshot confirms "Inside Social security and welfare:" lists all 8 real children
+(Assistance to the aged $109,975M, Assistance to people with disabilities $93,358M,
+Assistance to families with children $51,750M, Assistance to the unemployed and the sick
+$17,641M, Assistance to veterans and dependants $13,431M, General administration $5,912M,
+Other welfare programs $1,801M, Assistance for Indigenous Australians nec $3,938M) —
+cross-checked against the citation panel's own data grid row for "Social security and
+welfare" ($269,505M for FY2025-26), consistent. 0 console errors.
+
+### Data/graph impact
+
+None — pure frontend test infrastructure. No migration, no facts.db mutation, no backend
+change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-11.
+
+Next: move to the data-depth ingestion mission and the high-value dead-end audit —
+categorically larger, data-acquisition-heavy efforts distinct from this session's code
+fixes.

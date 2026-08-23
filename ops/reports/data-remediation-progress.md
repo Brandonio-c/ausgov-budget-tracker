@@ -2409,10 +2409,20 @@ Committed `59721c2`. Full narrative in `federal-depth-visualization-remediation-
 
 Committed `2e7f7e5`. Pure frontend addition, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
-### P1 items: all 7 now have a disposition (6 fully verified live, 1 partially verified)
+### Loop 12 — closed the Loop 11 browser-verification gap with a deterministic test hook
 
-Top-level folding, "Other" synthetic-depth, stable colors, first-level labeling, stale selected-node metadata, branch coverage disclosure, and taxonomy/basis disclosure are all fixed and live-browser-verified. Second-level labeling is implemented but its browser verification is honestly incomplete (see Loop 11 above).
+**Root causes (both test-methodology bugs, not app bugs)**: (1) `sunburstLevelStyles()`'s percentages don't map onto "half of the canvas's CSS bounding box" the way a naive calculation assumed; (2) `elementFromPoint`/`mouse.move` operate on the current viewport, and the canvas sits below the fold at typical scroll position, so computed target points landed outside the visible viewport entirely.
+
+**Fix**: `SpendingChart.tsx` exposes the live ECharts instance on the chart container (`__echartsInstance`, read-only, harmless) so a test can read a named data item's real rendered layout directly rather than inferring it from CSS. New permanent test `tests-e2e/second-level-legend.spec.ts` resolves the exact pixel, scrolls into view, drives a genuine mouse hover, and asserts the second-level legend shows the correct children.
+
+**Verified**: new E2E test passes deterministically. `tsc`/`test:unit` clean/unaffected, `lint:ci` pre-existing drift confirmed. Live browser check: "Inside Social security and welfare:" lists all 8 real children with correct dollar values, cross-checked against the citation panel's own data - exact match. 0 console errors. Full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 12).
+
+Committed `f2e003d`. Pure frontend test infrastructure, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
+### P1 items: all 7 now have a disposition, all fully verified live
+
+Top-level folding, "Other" synthetic-depth, stable colors, first-level labeling, stale selected-node metadata, branch coverage disclosure, taxonomy/basis disclosure, and second-level labeling are all fixed and live-browser-verified.
 
 ### Next item (this phase)
 
-Move to the data-depth ingestion mission and the high-value dead-end audit - categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes - or revisit Loop 11's verification with a more tractable approach first.
+Move to the data-depth ingestion mission and the high-value dead-end audit - categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes.
