@@ -530,6 +530,35 @@ change included: 325/325 passing.
   original disclosure (unchanged by this loop, not pursued further — same accuracy-vs-effort
   tradeoff already documented there).
 
+### Matrix regeneration and a disclosed measurement limitation (not a regression)
+
+Regenerated `ops/reports/federal-depth-opportunity-matrix-20260823T194438Z.{csv,json}` per
+the mission's requirement that the matrix become the authoritative engineering queue after
+the bridge repair. While reviewing it, every `federal_budget_2025_26` row showed
+`max_related_depth: 0`, despite this loop having just live-verified that "Recreation and
+culture" genuinely has reachable related PBS-bridge children (National Gallery, Creative
+Australia, etc., confirmed via `/v2/dashboard/item/257942/children`).
+
+Root cause, confirmed via `git blame`: `dashboard_tree()` only calls `attach_related_to_tree()`
+- which inlines the related overlay directly into the initial full-tree response - when
+`mode == "actuals"` (`src/backend/routers/v2/dashboard.py:889`, dating to commit `64c0f6d8`,
+2026-07-24 - **pre-dating this entire session**, not something Loop 3 or Loop 6 introduced).
+Budget mode's related children are real and reachable, but only via a separate, per-node
+`/item/{id}/children` call (the same lazy mechanism the frontend uses on click/hover to
+progressively disclose deeper rings) - never inlined into the single-call tree payload the
+matrix script reads. So the matrix's `max_related_depth` column is a genuine **measurement
+blind spot for budget-mode projections specifically**, not evidence those functions lack
+related depth. `canonical_additive_depth` (which the matrix computes correctly for both
+modes, from the same inline payload) remains a trustworthy signal either way.
+
+Not fixed here: extending the matrix to recursively probe `/item/{id}/children` for every
+budget-mode leaf is a materially larger change (many additional HTTP calls per run, needs its
+own care around request volume and caching) than "regenerate the matrix," and is better done
+as its own scoped, tested unit of work. Flagging this explicitly so a future loop doesn't
+read a `0` in this column for a budget-mode function and wrongly conclude no related depth
+exists there — check via the live API (`/item/{fact_id}/children`) before treating a
+budget-mode function as a dead end on this basis alone.
+
 ## Next
 
 1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
