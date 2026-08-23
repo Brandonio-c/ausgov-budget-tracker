@@ -237,24 +237,75 @@ Exact command recorded here for when authorized:
 `data/`/`config/` are already bind-mounted so this fix's frontend-visible effect requires
 only the backend rebuild, not a frontend redeploy).
 
+## Loop 4 — Priority 1 audit: how deep is Social Security *already*, live, right now?
+
+Before writing any new extractor, checked what the existing graph already exposes via the
+live API (Federal Actuals FY2025-26), per the mission's own "re-audit existing data before
+acquiring more" instruction.
+
+### Finding: Job Seeker Income Support already reaches genuine 5-level depth, live
+
+```
+Federal
+  → Social security and welfare                          (additive, canonical)
+    → Assistance to the unemployed and the sick           (related, branch_family=statement_6)
+      → Job Seeker Income Support                          (related, branch_family=pbs)
+        → Recipients by state                               (related, branch_family=recipients)
+          → New South Wales: 280,995 · Victoria: 236,045 · Queensland: 218,530 · ...
+        → Recipients by age                                 (related, branch_family=recipients)
+```
+
+Confirmed live via direct API query (not just graph inspection): every hop correctly labeled
+`branch_kind: "related"` with the correct `branch_family` at each transition
+(statement_6 → pbs → recipients), never presented as a false additive partition — exactly
+the "explicit sub-branch selectors, not falsely nested" pattern the mission directive
+requires. Traced the underlying graph edges: this reachability runs through
+`federal_dss_payment_demographics` (source_family `recipient_statistics`, 52 already-loaded
+facts, source: DSS JobSeeker monthly recipient profile) connected via a `dss_demo_under_pbs`
+crosswalk, itself dependent on the `cofog_to_budget_function` crosswalk fixed in the prior
+visualization-remediation phase's Loop 1 (`36744f4`). No new code or data was needed for
+this specific path — it was already fully wired and already correct, simply not previously
+confirmed end-to-end.
+
+### Finding: NDIS currently stops at depth 3 — a genuine, concrete opportunity (category D)
+
+`Assistance to people with disabilities → National Disability Insurance Scheme` reaches only
+one further "related/pbs" hop reporting a near-duplicate of the Statement 6 figure itself
+($53,777,000,000 vs the parent's $53,778,000,000) — not genuinely deeper detail, consistent
+with the earlier finding that `federal_dss_pbs_programs`/`federal_health_pbs_programs`
+largely duplicate `federal_budget_statement_6_components`'s level-3 figures rather than
+adding a level 4. `dss_payment_demographics_2024_25.csv` (the source of the Job Seeker
+recipients-by-state/age depth above) covers *only* JobSeeker payments — no equivalent
+NDIS participant/geography dataset is currently staged or loaded. This is a genuine,
+well-scoped **category D** opportunity (official source likely exists — NDIS Quarterly
+Reports publish participant counts by state/age/disability type/support category — but must
+be acquired and extracted) for a future ingestion loop, not a wiring or graph gap.
+
+### Disposition
+
+Social Security's Priority 1 status: **substantially deeper than the pre-fix baseline
+suggested**, once the Budget-mode correctness fix (Loop 3) and existing-data audit are both
+accounted for. Statement 6 alone provides depth 3 for every major sub-function; the
+JobSeeker-specific recipient demographic branch already reaches depth 5. NDIS, Aged Care
+(beyond "Aged care services"/"Support for seniors"), and the other Social Security
+sub-programs remain at depth 3 pending genuinely new ingestion (participant/recipient
+demographic data equivalent to what JobSeeker already has) — tracked as the concrete next
+target, not a vague "go deeper" instruction.
+
 ## Next
 
-1. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` once more
-   (no change expected there — this loop only touched Budget mode — but re-confirming is
-   cheap and keeps the evidence trail current).
-2. Continue the mission's Priority 1 (Social Security depth): the corrected Budget-mode data
-   already reaches depth 3 for every major Social Security sub-function; investigate whether
-   `federal_dss_pbs_programs`/`federal_health_pbs_programs` (currently excluded from the
-   canonical query, per this fix's own scoping — they were never part of the false-total
-   problem specifically but are also not yet wired as a *related* branch) can be safely
-   attached as an explicit related dimension for even deeper (level 4+) Social Security/
-   Health navigation, following the same disciplined verify-before-wire approach as this
-   loop.
-3. Investigate `federal_pbs_programs_s6_bridge`'s extraction-quality problems (duplicate
+1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
+   category, from NDIS Quarterly Reports or the NDIA's published data) to bring NDIS to
+   parity with JobSeeker's depth-5 recipient breakdown — the mission's Priority 2, and now
+   the clearest concrete next step for Priority 1/2 combined.
+2. Investigate `federal_pbs_programs_s6_bridge`'s extraction-quality problems (duplicate
    "Total for Program" rows, operating-statement rows mixed into program rows) as a
    dedicated extractor-quality task before considering it for any related-branch wiring —
    per the mission's own standard ("do not build a permissive parser that happens to work on
    one PDF... add negative tests"), this needs generation-specific extractor work, not reuse
    as-is.
-4. Continue through NDIS, Aged Care/Health, Defence, Education per the mission's priority
-   order, applying the same audit-before-ingest discipline this loop established.
+3. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` to confirm
+   it's unaffected by the Budget-mode fix (expected — this loop only touched Budget mode).
+4. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
+   applying the same audit-before-ingest discipline this loop established: check what's
+   already loaded and connected before acquiring anything new.
