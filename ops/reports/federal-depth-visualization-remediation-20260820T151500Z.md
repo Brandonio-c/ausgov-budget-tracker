@@ -735,3 +735,77 @@ None — pure frontend code fix. No migration, no facts.db mutation, no backend 
 Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
 persistent labeling, taxonomy/basis-change disclosure, and FY2025-26 golden regression
 fixtures.
+
+## Loop 9 — P1: basis note didn't say a basis change means a different taxonomy (fixed, not yet deployed)
+
+Commit: `485212a`
+
+### Observe
+
+The existing FY basis note ("FY 2025-26 uses ACCRUAL...", "FY 2024-25 uses GFS
+(preferred)...") disclosed the accounting basis but left the reader to infer that this also
+means a completely different category classification — GFS-basis years use ABS/COFOG
+purpose categories; accrual-basis years use the Department of Finance's own Commonwealth
+function classification.
+
+### Diagnose (and a false alarm resolved along the way)
+
+Confirmed live via direct API calls and screenshots: GFS FY2024-25 shows 11 categories
+(Health, Defence, Economic affairs, Environmental protection, Housing, Education, General
+public services, Public order and safety, Recreation/culture/religion, Social protection,
+Transport) with materially different groupings from accrual's same-named buckets — e.g.
+GFS's "General public services" totals $159B vs accrual FY2025-26's $29B for a
+similarly-named category; the two systems bundle differently, not just rename. Accrual
+FY2025-26 shows a distinct 17-category set (fully visible for the first time since Loop 4).
+
+While building the live verification test, a first-pass wait condition (waiting only for
+"Loading…" to disappear after a year change) produced a screenshot that appeared to show
+FY2024-25 rendering FY2025-26's exact data — investigated as a possible serious stale-data
+bug in the year-change flow. Root cause of the *false alarm*: "Loading…" only renders when
+`tree` is `null`; switching years leaves the previous year's tree non-null while the new
+fetch is in flight, so waiting for "Loading…" to disappear is trivially already satisfied
+before the new data arrives. Re-tested by polling for FY2024-25-specific content
+("Economic affairs", which does not exist in FY2025-26's data) instead — confirmed the
+underlying year-change fetch and render flow is correct; only the disclosure text needed
+this fix, not the data flow.
+
+### Implementation
+
+`HomeClient.tsx`: new module-level `CLASSIFICATION_BY_BASIS` mapping `gfs`/`accrual` to a
+plain-language classification name, appended as a clause to every branch of the existing
+`availabilityNote` computation.
+
+### Tests
+
+No new pure-logic unit test (this is presentation text derived from already-fetched data);
+verified via live browser check. `tsc --noEmit`, `next build` pass/succeed. `npm run
+test:unit` unaffected. `lint:ci` 25/24 baseline drift confirmed pre-existing.
+
+### Browser verification
+
+Fresh local backend + production-style static export: FY2025-26 note now reads "...Category
+names and depth follow the Dept of Finance Commonwealth function classification and will
+differ from other bases."; FY2024-25 reads "...ABS GFS/COFOG purpose classification...".
+Screenshots confirm the legend's actual category lists visually back up the claim (11 vs 17
+differently-named categories). 0 console errors.
+
+### Data/graph impact
+
+None — pure frontend presentation-text fix. No migration, no facts.db mutation, no backend
+change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-8.
+
+### Disclosed gap (not fixed here)
+
+`combined/page.tsx` and `DebtViewer.tsx` do not fetch per-year basis availability data at
+all and have no equivalent note. Extending this disclosure there would require fetching new
+data (a genuinely separate, larger change), left as a disclosed follow-up rather than
+scope-creeping into this fix.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
+persistent labeling, and FY2025-26 golden regression fixtures.

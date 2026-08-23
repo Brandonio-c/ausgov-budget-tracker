@@ -2381,6 +2381,18 @@ Committed `e928ed9`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `cae788e`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 9 — P1: basis note didn't say a basis change means a different taxonomy (fixed, not yet deployed)
+
+**Root cause**: the existing FY basis note disclosed the accounting basis (GFS/accrual) but left the reader to infer it also means a completely different category classification (ABS/COFOG purposes vs Dept of Finance Commonwealth functions). Confirmed live: GFS FY2024-25 shows 11 categories with materially different groupings from accrual FY2025-26's 17 (e.g. GFS "General public services" $159B vs accrual's same-named $29B bucket - the systems bundle differently, not just rename).
+
+**Fix**: new `CLASSIFICATION_BY_BASIS` mapping, appended as a clause to the existing `availabilityNote` in `HomeClient.tsx`.
+
+**Note on a false alarm during verification**: an early test wait condition (waiting for "Loading…" to disappear after a year change) produced a screenshot that looked like FY2024-25 was rendering FY2025-26's stale data - investigated as a possible serious bug. Root cause was the test's own wait condition, not the app: "Loading…" only shows when `tree` is null, and switching years leaves the previous tree non-null while the new fetch is in flight. Re-tested by polling for FY2024-25-specific content instead, confirmed the actual year-change data flow is correct.
+
+**Verified**: `tsc`/`next build` pass, `lint:ci` pre-existing drift confirmed. Live browser check: FY2025-26 and FY2024-25 notes now explicitly name their classification systems, backed visually by the legend's genuinely different category lists. 0 console errors. Full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 9). Disclosed gap: `combined/page.tsx`/`DebtViewer.tsx` don't fetch basis-availability data at all, left as a separate follow-up.
+
+Committed `485212a`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, stale selected-node metadata, and branch coverage disclosure are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, stale selected-node metadata, branch coverage disclosure, and taxonomy/basis disclosure are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy and second-level labeling, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
