@@ -401,19 +401,36 @@ def _fact_rows(
     if valuation_basis and valuation_basis not in ("all", "comparison"):
         sql += " AND COALESCE(f.valuation_basis, 'unspecified') = ?"
         params.append(valuation_basis)
-    if mode == "budget" and level == "federal" and _statement_6_covers_year(conn, year):
-        # Statement 6 only covers FY2024-25 onward. Earlier years (FY2022-23,
-        # FY2023-24) have no federal_budget_statement_6_a61/_components data
-        # at all - their only budget_expense source is federal_pbs_programs_
-        # all, which for those years is the correct, non-overlapping figure
-        # (confirmed: matches the existing, already-reviewed regression
-        # fixtures exactly). Restricting to the canonical Statement 6 pair
-        # must only apply where that pair actually has coverage; forcing it
-        # unconditionally would 404 every pre-2024-25 budget query instead of
-        # fixing anything.
-        placeholders = ", ".join("?" for _ in _BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
-        sql += f" AND d.source_key IN ({placeholders})"
-        params.extend(_BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
+    if mode == "budget" and level == "federal":
+        if _statement_6_covers_year(conn, year):
+            # Statement 6 only covers FY2024-25 onward - restrict to the
+            # two sources that reconcile correctly (see
+            # _BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS above).
+            placeholders = ", ".join("?" for _ in _BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
+            sql += f" AND d.source_key IN ({placeholders})"
+            params.extend(_BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
+        else:
+            # Earlier years (FY2022-23, FY2023-24) have no Statement 6 data
+            # at all; their only budget_expense source was, and remains,
+            # federal_pbs_programs_all alone (the existing, already-
+            # reviewed regression-fixture figure). federal_pbs_programs_
+            # s6_bridge/federal_dss_pbs_programs/federal_health_pbs_programs
+            # carry individual *program*-level facts that overlap with
+            # federal_pbs_programs_all's own *portfolio*-level totals for
+            # the same spending (the same double-counting class Loop 3
+            # fixed for FY2024-25+) - discovered when a federal_pbs_
+            # programs_s6_bridge label-quality/attribution fix newly
+            # published 37 previously-quarantined facts for FY2023-24,
+            # silently inflating this year's total by $32.16B on top of
+            # the already-established baseline. Excluding them here
+            # preserves that baseline exactly, rather than letting
+            # unrelated bridge-dataset maintenance silently move a
+            # canonical total for a year this fix was never meant to touch.
+            sql += " AND d.source_key != 'federal_pbs_programs_s6_bridge'"
+            sql += (
+                " AND d.source_key NOT IN "
+                "('federal_dss_pbs_programs', 'federal_health_pbs_programs')"
+            )
     sql += " ORDER BY d.jurisdiction, n.name"
     rows = []
     for r in conn.execute(sql, params).fetchall():

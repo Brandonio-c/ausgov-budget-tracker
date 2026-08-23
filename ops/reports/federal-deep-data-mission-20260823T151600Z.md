@@ -396,18 +396,149 @@ FY2029-30), 0 console errors.
   a DB-level cleanup. Tracked as separate follow-up work, not fixed here to avoid conflating
   two independent defect classes in one change.
 
+## Loop 6 — Arts/culture parent-attribution fix, and a canonical-total-safety regression it surfaced
+
+### Part A: fixing the `PORTFOLIO_TO_S6` arts/culture misattribution (disclosed at the end of Loop 5)
+
+Root cause (already identified in Loop 5): `pbs_programs_s6_bridge.py`'s portfolio→COFOG-
+function mapping crudely sends the entire "Infrastructure, Transport, Regional Development,
+Communications, Sport and the Arts" portfolio to a single function, "Transport and
+communication" — so genuinely arts/culture-funded entities (National Gallery of Australia,
+National Library of Australia, National Museum of Australia, National Portrait Gallery,
+Screen Australia, Creative Australia, National Film and Sound Archive, the Australian
+National Maritime Museum, SBS, and others) were attributed to the wrong COFOG function
+entirely. This is a parent-attribution defect (correct row content, wrong parent), distinct
+from Loop 5's label-quality defect.
+
+Fix: added `ARTS_CULTURE_SPORT_PROGRAM_OVERRIDE` (a curated regex over program/entity names)
+and `_function_override_from_program()`, checked *before* the existing portfolio-substring
+lookup in `_s6_function()`. Extended `_subfunction()` with a `"Recreation and culture"`
+branch that further splits into `"Sport and recreation"` / `"Broadcasting"` / `"Arts and
+cultural heritage"` by keyword. Fixed an argument-ordering bug caught while wiring this in:
+`remap_rows()` was computing `program_label` *after* calling `_s6_function(portfolio,
+program_label)`, which would have passed an undefined value — reordered so the label is
+computed first.
+
+Applying this required the full reload pipeline, not just a code change, and each step
+surfaced its own defect:
+
+1. Regenerated `pbs_programs_s6_bridge.csv` via the extractor (2,287 rows, now including 61
+   `Recreation and culture` rows).
+2. First reload attempt (`scripts/ingest/run.py`) revealed `federal_pbs_programs_s6_bridge
+   .yaml` lacked `replace_on_reload: true` (unlike its sibling `federal_pbs_programs_all
+   .yaml`) — reloading was purely additive, leaving the *old*, wrongly-attributed facts
+   (e.g. National Gallery of Australia under "Transport and communication", $81.789M) living
+   alongside the *new*, correctly-attributed ones as duplicates. Fixed by adding
+   `replace_on_reload: true` to the mapping; re-tested: `replaced_existing: 140` confirmed
+   the old facts were cleared before the fresh load.
+3. Re-ran `cleanup_pbs_s6_bridge_labels.py` (Loop 5's classifier-driven cleanup) against the
+   freshly-loaded rows, which also caught one more classifier precision gap: labels like
+   `"Adjusted opening balance (1,431)"` and `"Investments (91,081) (1,944)"` — trailing
+   numeric parenthetical value groups — were still passing as `program: True` because
+   `lowered_no_footnote` only stripped *alphabetic* 1–2 char footnote markers (`(a)`/`(b)`),
+   not numeric value groups. Added a second normalization, `lowered_no_trailing_values`
+   (strips one or more trailing `(-?numeric[,numeric])`-style groups), checked alongside the
+   existing normalizations before the vocabulary lookup. One new positive test added
+   (`test_trailing_parenthesized_numeric_values_stripped_before_vocabulary_lookup`),
+   `tests/ingest/test_pbs_label_classifier.py` now at 41 tests, all passing.
+4. Even after the corrected facts existed in `data/facts.db`, "Arts and cultural heritage"
+   had no children reachable via the live API's related-branch resolution
+   (`attach_related_to_tree`). Root cause: the `pbs_dss_bridge` edge set
+   (`scripts/ingest/breakdown_pack.py`'s `link_pbs_to_components`) is a *separate* build step
+   from fact-loading, not rebuilt automatically by `run.py`. The old edges (pointing at the
+   now-deleted "Transport and communication" nodes) had already been orphan-cleaned by step
+   3; new edges to the correct nodes were simply never created. Fixed by explicitly running
+   `scripts/ingest/edge_pack.py --rebuild --crosswalk-id pbs_dss_bridge --apply`.
+
+Disposable-copy-first discipline followed throughout (each step tested against a scratch
+copy of `data/facts.db` via `FACTS_DB_PATH` before being applied to the live file); idempotency
+confirmed at each step (second run of reload/cleanup/edge-rebuild produced 0 further change).
+Backed up live DB immediately before applying the full pipeline to it
+(`/home/vibe-server/backups/ausgov-budget-tracker/facts-20260823T192212Z.db`). Before→after on
+the live DB: `facts` 331279→331583 (+304), `nodes` 240694→240754 (+60), `breakdown_edges`
+13284→13332 (+48), `facts_pending_attribution` 37431→38141 (+710 — the stricter
+trailing-value classifier fix quarantines more junk even as it also newly publishes 37
+genuine arts/culture and other program rows), `source_documents` unchanged (147).
+`PRAGMA integrity_check`: ok.
+
+### Part B: a canonical-total-safety regression this surfaced, and its fix
+
+While the live DB mutation above only touches related-branch (PBS bridge) data, a routine
+`dashboard_depth_audit.py --check-fixture` re-verification (run proactively, not because
+anything was expected to fail) caught that `federal_budget_2023_24`'s canonical **additive**
+root total had silently shifted from $1,787,437,333,000 to $1,819,600,186,000 (+$32.16B) —
+a figure Loop 3's fix had explicitly, deliberately left untouched (Statement 6 doesn't cover
+FY2023-24, so that year was never brought under the canonical-source restriction).
+
+Root cause: the classifier-precision improvement in Part A (and Loop 5) newly *published* 37
+previously-quarantined `federal_pbs_programs_s6_bridge` facts for FY2023-24, totaling
+$32,162,853,000. These are genuinely well-formed program facts (real Defence programs, Other
+economic affairs programs, NDIS-related items — verified individually, not junk) — but for
+years without Statement 6 coverage, `_fact_rows()` had no restriction excluding the bridge
+source from the canonical budget-mode query, so these newly-legitimate facts flowed straight
+into the additive total *alongside* `federal_pbs_programs_all`, which already covers the same
+spending at portfolio level. This is the same double-counting class Loop 3 fixed for
+FY2024-25+; FY2023-24 just had no clean Statement-6-based alternative source to switch to, so
+Loop 3 deliberately preserved its pre-existing (imperfect but already-reviewed) baseline
+un touched. Letting the bridge's newly-published facts add on top of that baseline would have
+made an already-known-imperfect figure worse — a straightforward canonical-total-safety
+violation, not a legitimate correction (no source error is being fixed; the *old* figure was
+never wrong for what it represented, it was just already excluding this source deliberately).
+
+Fix, in `src/backend/routers/v2/dashboard.py`'s `_fact_rows()`: restructured the budget-mode
+federal source-filtering into an explicit if/else on `_statement_6_covers_year()`. Years
+Statement 6 covers keep the existing canonical-pair restriction
+(`_BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS`). Years without Statement 6 coverage now explicitly
+exclude `federal_pbs_programs_s6_bridge`, `federal_dss_pbs_programs`, and
+`federal_health_pbs_programs` from the canonical query, restoring `federal_pbs_programs_all`
+as the sole contributor — exactly the pre-session baseline for those years.
+
+Verified via a disposable local backend restart against the live DB, across all five
+previously-established reference years:
+
+| Year | Root total |
+|---|---|
+| FY2022-23 | $1,629,222,000 |
+| FY2023-24 | $1,787,437,333,000 (restored) |
+| FY2024-25 | $770,071,000,000 |
+| FY2025-26 | $812,063,000,000 |
+| FY2029-30 | $933,729,000,000 |
+
+All five match their established, previously-reviewed baselines exactly.
+
+### Tests
+
+Full backend suite (`pytest tests/ --ignore=tests/ingest --ignore=tests/api/test_citation.py`,
+325 tests): confirmed the two tests that had caught the Part B regression
+(`test_root_total_still_unaffected_after_edge_deployment[2023-24-...]` in
+`test_historical_pbs_s6_crosswalk.py`, `test_federal_budget_root_total_unaffected_by_
+historical_evidence[2023-24-...]` in `test_historical_related_evidence_isolation.py`) pass
+again with the Part B fix applied. `tests/ingest/test_pbs_label_classifier.py`: 41/41 passing
+after the Part A trailing-value fix.
+
+`dashboard_depth_audit` golden fixture regenerated to reflect Part A's related-branch changes
+(canonical/additive branch counts unchanged in every projection — proving Part A never
+touched a canonical total; only `related` branch counts, `edge_count` (13284→13332), and
+per-projection `source_families.budget` / citation leaf counts grew, reflecting the newly-
+reachable arts/culture and other previously-misattributed/quarantined facts). Reconfirmed
+idempotent across 2 consecutive `--check-fixture` runs. Full suite re-run with the fixture
+change included: 325/325 passing.
+
+### Remaining, disclosed
+
+- A small number of single-occurrence malformed label shapes remain unclassified per Loop 5's
+  original disclosure (unchanged by this loop, not pursued further — same accuracy-vs-effort
+  tradeoff already documented there).
+
 ## Next
 
-1. Fix the `PORTFOLIO_TO_S6` arts/culture misattribution found above (a scoped,
-   well-evidenced parent-attribution fix, distinct from this loop's label-quality work).
-2. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
+1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
    category, from NDIS Quarterly Reports or the NDIA's published data) to bring NDIS to
    parity with JobSeeker's depth-5 recipient breakdown — the mission's Priority 2, and now
    the clearest concrete next step for Priority 1/2 combined.
-3. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` and
-   `federal_budget_2025_26` to reflect the bridge cleanup (fewer, cleaner related/PBS
-   children under several functions — a *quality* improvement even where the raw depth
-   number doesn't change).
-4. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
-   applying the same audit-before-ingest discipline this loop established: check what's
-   already loaded and connected before acquiring anything new.
+2. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` and
+   `federal_budget_2025_26` to reflect this loop's bridge fixes (fewer, cleaner, correctly-
+   attributed related/PBS children under several functions).
+3. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
+   applying the same audit-before-ingest discipline established so far: check what's already
+   loaded and connected before acquiring anything new.
