@@ -540,3 +540,69 @@ chart labeling (including the FY2024-25 label-overlap defect just observed), sta
 selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch
 selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden
 regression fixtures.
+
+## Loop 6 — P1: chart labels illegible/overlapping, no persistent list (fixed, not yet deployed)
+
+Commit: `cf5ecba`
+
+### Observe
+
+ECharts sunburst/pie labels are drawn on-canvas with layout dependent on wedge angle.
+Confirmed live at FY2024-25 (fewer, unevenly-sized GFS categories than FY2025-26's 17): the
+rings view's "Health" and "General public services" labels visually overlapped and became
+illegible. Loop 4's own fix (stop folding the top-level ring) made the underlying problem
+worse by exposing more simultaneously-visible, variously-sized wedges all needing labels at
+once, with no built-in overlap avoidance for ECharts' sunburst series (unlike its pie
+series, which already sets `avoidLabelOverlap: true`).
+
+### Implementation
+
+New `components/ChartLegend.tsx`: a plain-DOM `<ul>` listing the current top-level
+category names, color swatches (via Loop 5's now name-stable `colorsFor()`), and formatted
+values — legible regardless of wedge size, entirely independent of ECharts' label layout.
+Each entry is a button that drills exactly like clicking its wedge (reuses the same
+`onNodeClick`/`handleNodeClick` handler). Wired into `HomeClient.tsx`, `combined/page.tsx`,
+`DebtViewer.tsx` using each file's existing `displayedChildren` (the same list already
+feeding pie/bar), so the legend is guaranteed to match what the current view actually draws
+— including going correctly empty when the current node is a canonical leaf (Loop 2), never
+showing a stale list.
+
+### Tests
+
+No new pure-logic unit test needed (the component has no computation beyond the
+already-tested `colorsFor`/`formatMeasureValue`); verified via live browser interaction
+instead. `tsc --noEmit`, `next build` both pass/succeed. `npm run test:unit` unaffected
+(no changes to tested modules). `lint:ci` 25/24 baseline drift confirmed pre-existing;
+`ChartLegend.tsx` itself lints with zero errors in isolation.
+
+### Browser verification
+
+Fresh local backend + production-style static export, FY2025-26 Federal Actuals: legend
+lists all 17 functions with correct names, swatches visually matching their pie wedges, and
+correctly formatted dollar values (screenshot confirmed). Clicking "Health" in the legend
+drilled exactly as clicking its wedge would; the legend then correctly rendered empty
+(returns `null` for zero nodes) since Health is a canonical leaf per Loop 2's fix — the
+legend's emptiness matches the chart's own emptiness, never contradicting it. 0 console
+errors.
+
+### Data/graph impact
+
+None — pure frontend code, new presentational component only.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-5.
+
+### Remaining labeling gap (not fixed here, disclosed)
+
+This fix addresses first-level (top-of-view) labeling only. The master directive also asks
+for second-level category labels and a full legend/table option; the on-canvas overlap for
+deeper rings (e.g. within a drilled multi-ring view) is unaddressed by this loop and remains
+open under the same P1 item.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
+persistent labeling, stale selected-node metadata on year/mode/branch changes,
+explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change
+disclosure, and FY2025-26 golden regression fixtures.

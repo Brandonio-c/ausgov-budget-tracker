@@ -2351,6 +2351,16 @@ Committed `0070d35`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `19cad2c`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 6 — P1: chart labels illegible/overlapping, no persistent list (fixed, not yet deployed)
+
+**Root cause**: ECharts sunburst labels are drawn on-canvas with layout dependent on wedge angle and have no built-in overlap avoidance (unlike its pie series, which sets `avoidLabelOverlap: true`). Confirmed live at FY2024-25: "Health" and "General public services" labels overlapped and became illegible; Loop 4's fix exposed more simultaneously-visible wedges needing labels at once, making this worse.
+
+**Fix**: new `components/ChartLegend.tsx` - a plain-DOM list of the current top-level names, color swatches (via Loop 5's stable colors), and formatted values, independent of ECharts' label layout; each entry drills on click via the existing node-click handler. Wired into `HomeClient.tsx`, `combined/page.tsx`, `DebtViewer.tsx` using each file's existing `displayedChildren`, so it always matches what the chart actually draws (correctly empty at a canonical leaf).
+
+**Verified**: `tsc`/`next build` pass, `lint:ci` pre-existing drift confirmed (ChartLegend.tsx itself lints clean). Live browser check (fresh local backend + production-style static export): legend lists all 17 functions with correct swatches/values, click-to-drill works, correctly empty at a leaf, 0 console errors. Full narrative and screenshot in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 6). Disclosed remaining gap: this covers first-level labeling only; second-level/deeper-ring labeling and a fuller legend/table option remain open under the same P1 item.
+
+Committed `cf5ecba`. Pure frontend addition, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4, top-level folding, and stable colors are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling (including the FY2024-25 label-overlap defect just observed), stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4, top-level folding, stable colors, and first-level persistent labeling are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
