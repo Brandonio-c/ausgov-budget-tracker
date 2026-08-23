@@ -9,6 +9,7 @@ import { useDarkMode } from "@/lib/useDarkMode";
 import SpendingChart, { ChartType } from "@/components/SpendingChart";
 import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
+import ChartLegend from "@/components/ChartLegend";
 import RingDepthControl from "@/components/RingDepthControl";
 import DebtNav from "@/components/DebtNav";
 import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
@@ -292,6 +293,8 @@ export default function DebtViewer() {
             : null}
         </p>
       )}
+
+      <ChartLegend nodes={displayedChildren} dark={dark} onSelect={handleNodeClick} />
 
       <ResizableSplitPane
         left={

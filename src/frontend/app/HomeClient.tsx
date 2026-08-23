@@ -14,6 +14,7 @@ import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
+import ChartLegend from "@/components/ChartLegend";
 import DebtViewer from "@/components/DebtViewer";
 import { maxVisibleDepth, additiveChildren, perFunctionDepth } from "@/lib/sunburstTree";
 
@@ -567,6 +568,13 @@ export default function HomeClient() {
           No deeper published breakdown in this measure family for this item.
         </p>
       )}
+
+      <ChartLegend
+        nodes={displayedChildren}
+        dark={dark}
+        onSelect={handleNodeClick}
+        highlightName={highlightName}
+      />
 
       <ResizableSplitPane
         left={

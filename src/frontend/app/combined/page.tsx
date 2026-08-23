@@ -17,6 +17,7 @@ import { useDarkMode } from "@/lib/useDarkMode";
 import SpendingChart, { ChartType } from "@/components/SpendingChart";
 import FactCitationViewer from "@/components/FactCitationViewer";
 import ResizableSplitPane from "@/components/ResizableSplitPane";
+import ChartLegend from "@/components/ChartLegend";
 import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
 import { maxVisibleDepth, additiveChildren } from "@/lib/sunburstTree";
@@ -430,6 +431,8 @@ function CombinedPageInner() {
           No deeper published breakdown in this measure family for this item.
         </p>
       )}
+
+      <ChartLegend nodes={displayedChildren} dark={dark} onSelect={handleNodeClick} />
 
       <ResizableSplitPane
         left={
