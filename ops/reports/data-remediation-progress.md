@@ -2331,6 +2331,16 @@ Committed `2bddc08`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `0bc6850`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 4 — P1: top-level folding hid real named functions behind "Other" (fixed, not yet deployed)
+
+**Root cause**: `foldToTopN()` applied uniformly at every ring, including the outermost ring of an undrilled view. For FY2025-26 Federal Actuals, both pie and rings modes showed only the top 7 of 17 real named functions plus an opaque "Other (10)" bucket, hiding 10 real named categories at the single most important level of the chart - a well-known, bounded taxonomy, not a genuinely unbounded tail.
+
+**Fix**: `buildSunburst()`/`buildLevel()` in `sunburstTree.ts` gained a `foldFirstRing` parameter (default `true`); folding is skipped only at `currentDepth === 1 && !foldFirstRing`. `SpendingChart.tsx` gained a matching prop. `HomeClient.tsx`, `combined/page.tsx`, `DebtViewer.tsx` skip `foldToTopN()` in `displayedChildren` when undrilled and pass `foldFirstRing={drillPath.length > 0}`.
+
+**Verified**: new unit case (9-function fixture, folded vs unfolded), `npm run test:unit`/`tsc`/`next build` pass, `lint:ci` 25/24 drift confirmed pre-existing via `git stash`. Live browser check (fresh local backend + production-style static export): pie and rings both show all 17 named functions with zero "Other" at the undrilled top level; drilling into a leaf (Social security and welfare) still works correctly; 0 console errors. Full narrative and screenshots in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 4).
+
+Committed `0070d35`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4 are now addressed. Continue into the P1 items in priority order: top-level folding (never fold the first ring for federal functions), "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling, stable semantic per-function colors, stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4 and the top-level-folding P1 item are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, persistent chart labeling, stable semantic per-function colors (note: top-level color assignment is still array-position-based, which will now shift per function whenever the unfolded 17-function set changes order by value), stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.

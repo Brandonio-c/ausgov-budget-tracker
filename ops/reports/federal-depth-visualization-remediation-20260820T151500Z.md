@@ -391,3 +391,77 @@ explicit/exclusive related-branch selection with coverage disclosure, taxonomy/b
 disclosure (FY2024-25 GFS/COFOG vs FY2025-26 accrual/Commonwealth function classification),
 and FY2025-26 golden regression fixtures — before moving to the data-depth ingestion
 mission and the high-value dead-end audit.
+
+## Loop 4 — P1: top-level folding hid real named functions behind "Other" (fixed, not yet deployed)
+
+Commit: `0070d35`
+
+### Observe
+
+`foldToTopN()` (`lib/colors.ts`) applies uniformly at every ring, including the outermost
+ring of an undrilled view. For FY2025-26 Federal Actuals (17 real COFOG/budget functions),
+both pie and rings modes showed only the top 7 by value plus one opaque "Other (10)"
+bucket — hiding 10 real named categories (Agriculture, Fuel and energy, General public
+services, Housing, Mining/manufacturing/construction, Natural disaster relief, Nominal
+superannuation interest, Other economic affairs, Public debt interest, Recreation and
+culture) at the single most important level of the chart, where every function is a
+well-known, bounded, always-meaningful category — not a genuinely long unbounded tail.
+
+### Diagnose
+
+Traced folding to two independent call sites that both needed the same fix: (1)
+`displayedChildren` in `HomeClient.tsx`/`combined/page.tsx`/`DebtViewer.tsx` (feeds pie/bar,
+calls `foldToTopN(additiveChildren(rawChildren))` unconditionally regardless of drill
+depth), and (2) `buildLevel()` in `sunburstTree.ts` (feeds rings, calls `foldToTopN()` at
+every recursion level including `currentDepth === 1`). Confirmed folding was already
+correctly presentation-only with respect to depth math — `maxVisibleDepth`/`nestableChildren`
+never called `foldToTopN` in the first place, so no semantic-depth corruption existed; only
+the visual hiding of named categories needed fixing.
+
+### Implementation
+
+`sunburstTree.ts`: `buildSunburst()` and `buildLevel()` gained a `foldFirstRing` parameter
+(default `true`, preserving existing behavior everywhere folding was already correct);
+folding is skipped only when `currentDepth === 1 && !foldFirstRing` — every deeper ring
+folds exactly as before. `SpendingChart.tsx` gained a matching `foldFirstRing` prop.
+`HomeClient.tsx`, `combined/page.tsx`, `DebtViewer.tsx`: `displayedChildren` skips
+`foldToTopN()` when `drillPath.length === 0`; all three pass `foldFirstRing={drillPath.length > 0}`
+to `<SpendingChart>`.
+
+### Tests
+
+New case in `test-chart-semantics.mjs`: 9 synthetic top-level functions — `foldFirstRing:
+false` (undrilled) keeps all 9 with zero "Other"; `foldFirstRing: true` (drilled/default)
+folds to 8 with one "Other" bucket, exactly matching prior behavior. `npm run test:unit`,
+`tsc --noEmit`, `next build` all pass/succeed. `lint:ci` 25/24 baseline drift confirmed
+pre-existing via `git stash` (identical problem list before/after across all 6 touched
+files).
+
+### Browser verification
+
+Same fresh local backend + production-style static export setup as Loops 1-3. FY2025-26,
+Federal Actuals, undrilled: both pie and rings screenshots confirm all 17 named functions
+render individually with zero "Other" bucket (previously 7 + "Other (10)"). Drilled into
+"Social security and welfare" (a genuine canonical leaf per Loop 2's fix): navigation,
+citation panel, and source-data table all continue to render correctly, confirming the
+fold change did not regress drill-down. 0 console errors throughout.
+
+### Data/graph impact
+
+None — pure frontend code fix. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-3.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy (a folded
+bucket must never be counted as if it were a real hierarchy level), persistent chart
+labeling, stable semantic per-function colors (fixed per canonical function, not
+array-position-based — note the current top-level color assignment is still
+array-position-based via `colorsFor`, which will now shift per-function colors whenever the
+now-unfolded set of 17 changes order by value across years/modes), stale selected-node
+metadata on year/mode/branch changes, explicit/exclusive related-branch selection with
+coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression
+fixtures.
