@@ -22,7 +22,6 @@ from ...abs_gfs_revenue_hierarchy import (
     is_abs_gfs_revenue_source,
 )
 from ...breakdown_graph import (
-    apply_edge_cascade_to_budget_tree,
     attach_related_to_tree,
     build_related_subtree,
     build_same_group_subtree,
@@ -85,6 +84,67 @@ _ECONOMY_MODES = frozenset(
         "ratios",
     }
 )
+
+# Federal "budget_expense" facts come from at least three incompatible,
+# mutually-overlapping classification axes that all happen to share the
+# same compatibility_group/accounting_basis/estimate_status tuple:
+#   - Budget Paper 1 Statement 6 (COFOG-style function classification —
+#     "Social security and welfare", "Health", ...), sourced from
+#     federal_budget_statement_6_a61 (level 1+2, FY2024-25..FY2029-30) and
+#     federal_budget_statement_6_components (level 3 program detail, same
+#     years).
+#   - federal_pbs_programs_all: PBS *portfolio/agency* rollups ("Finance",
+#     "Treasury", "Social Services", ...) — a different, overlapping axis
+#     of the same underlying spending, not a further breakdown of it.
+#   - federal_pbs_programs_s6_bridge: PBS programs remapped onto Statement
+#     6 paths, but with known extraction-quality problems (operating-
+#     statement/balance-sheet rows such as "Interest – – – – – Dividends"
+#     and duplicate mis-parsed "Total for Program" rows have been observed
+#     mixed into what should be pure program-expense rows).
+#   - federal_budget_statement_6_2026_27: a smaller (15 rows/year), newer
+#     vintage of the *same* Statement 6 level-1 totals for FY2025-26/
+#     FY2026-27, fully redundant with federal_budget_statement_6_a61's
+#     broader coverage of those same years.
+#
+# Before this fix, dashboard_tree() queried ALL of these together and
+# summed them as flat additive siblings under one "Commonwealth" node —
+# confirmed live: Federal Budget FY2029-30 reported "Total: $5,282,190,045,000"
+# in production-style output, roughly 6-7x the real ~$780-950B federal
+# budget for that year, because portfolio totals (Finance $1.0T, Treasury
+# $1.68T, Social Services $518B, ...) were being added on top of the COFOG
+# function totals covering the same spending, plus a duplicate Statement 6
+# vintage on top of that. federal_budget_statement_6_a61 alone reproduces
+# the published "Total expenses" figure exactly (verified: $812.06B against
+# FY2025-26's official $812,063,000,000 "Total expenses" row) once summed
+# across its ~14-17 level-1 function nodes.
+#
+# The other sources are not deleted or judged worthless — federal_pbs_
+# programs_all/s6_bridge/dss/health in particular are exactly the kind of
+# deep, real program-level detail the depth mission wants — but they are
+# not a valid ADDITIVE partition of the Statement 6 function total and must
+# not be flattened into it. Restricting the canonical federal budget_expense
+# tree to the coherent, reconciling Statement 6 pair is the minimal fix that
+# corrects the root total; wiring the excluded sources back in as an
+# explicit RELATED branch (mirroring attach_related_to_tree's treatment of
+# actuals-mode Statement 6) is tracked as separate, subsequent depth work.
+_BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS = (
+    "federal_budget_statement_6_a61",
+    "federal_budget_statement_6_components",
+)
+
+
+def _statement_6_covers_year(conn, year: str) -> bool:
+    row = conn.execute(
+        """
+        SELECT 1 FROM facts f
+        JOIN source_documents d ON d.id = f.source_document_id
+        WHERE d.source_key = 'federal_budget_statement_6_a61'
+          AND f.financial_year = ?
+        LIMIT 1
+        """,
+        (year,),
+    ).fetchone()
+    return row is not None
 
 
 def _facts_conn():
@@ -341,6 +401,19 @@ def _fact_rows(
     if valuation_basis and valuation_basis not in ("all", "comparison"):
         sql += " AND COALESCE(f.valuation_basis, 'unspecified') = ?"
         params.append(valuation_basis)
+    if mode == "budget" and level == "federal" and _statement_6_covers_year(conn, year):
+        # Statement 6 only covers FY2024-25 onward. Earlier years (FY2022-23,
+        # FY2023-24) have no federal_budget_statement_6_a61/_components data
+        # at all - their only budget_expense source is federal_pbs_programs_
+        # all, which for those years is the correct, non-overlapping figure
+        # (confirmed: matches the existing, already-reviewed regression
+        # fixtures exactly). Restricting to the canonical Statement 6 pair
+        # must only apply where that pair actually has coverage; forcing it
+        # unconditionally would 404 every pre-2024-25 budget query instead of
+        # fixing anything.
+        placeholders = ", ".join("?" for _ in _BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
+        sql += f" AND d.source_key IN ({placeholders})"
+        params.extend(_BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS)
     sql += " ORDER BY d.jurisdiction, n.name"
     rows = []
     for r in conn.execute(sql, params).fetchall():
@@ -486,6 +559,21 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
         nested = _path_parts(row["node_name"], row.get("source_key"), mode=mode)
         if nested is None:
             continue
+        if (
+            mode == "budget"
+            and row.get("source_key") == "federal_budget_statement_6_components"
+            and len(nested) == 1
+        ):
+            # federal_budget_statement_6_components is meant to add level-3
+            # program detail nested under _a61's level-1/2 paths, but also
+            # contains bare (no "/" delimiter) level-1 totals redundant with
+            # _a61's own authoritative figure for the same function (e.g. a
+            # bare "Defence" row at $52.854B identical to _a61's own
+            # "Defence" row) - accumulating both onto the same path silently
+            # doubles it before preserve_amount above even applies. Skip
+            # bare top-level rows from this source; genuine nested detail
+            # (len(nested) > 1) is unaffected.
+            continue
         parts = [row["jurisdiction"], *nested]
         cursor = root
         record_projection_values(cursor, row)
@@ -525,6 +613,20 @@ def _build_tree_dict(rows: list[dict[str, Any]], mode: Mode | None = None) -> di
         if mode in _ECONOMY_MODES and re.search(
             r"gdp \(current|gsp \(current|gdp \(chain", parts[-1], re.I
         ):
+            cursor["preserve_amount"] = True
+        if mode == "budget" and row.get("source_key") == "federal_budget_statement_6_a61":
+            # _to_tree_node() sums children into a parent's reported value
+            # unless preserve_amount is set. federal_budget_statement_6_
+            # components (level-3 detail nested under these level-1/2
+            # nodes) has been observed to list the same dollar amount under
+            # two different level-2 parent paths (e.g. "Health / Medical
+            # services and benefits / Medical benefits" and "Health /
+            # Pharmaceutical benefits and services / Medical benefits" both
+            # $35.144B) - summing that duplicated detail back up would
+            # silently inflate the parent past its own published, reconciling
+            # figure. _a61 is the authoritative Statement 6 total at levels
+            # 1 and 2; trust it directly rather than recomputing it from
+            # children that may double-count.
             cursor["preserve_amount"] = True
     _prune_totals(root)
     return root
@@ -769,8 +871,22 @@ def dashboard_tree(
         selected_basis = bases[0] if len(bases) == 1 else None
         if mode == "actuals":
             attach_related_to_tree(conn, tree_dict, year)
-        elif mode == "budget" and level == "federal":
-            apply_edge_cascade_to_budget_tree(conn, tree_dict, year)
+        # apply_edge_cascade_to_budget_tree() is deliberately NOT called for
+        # mode == "budget" (see _BUDGET_FEDERAL_CANONICAL_SOURCE_KEYS above):
+        # federal_budget_statement_6_a61 and _components already nest
+        # correctly via their own " / "-delimited node names (_path_parts),
+        # so the cascade adds no depth these two sources don't already
+        # provide on their own. What it DOES add is harmful: a
+        # "same_group" edge with crosswalk_id "a61_to_components" connects
+        # each _a61 function node to the corresponding _components node as
+        # if it were an ordinary additive child — but that edge is a
+        # RECONCILIATION cross-reference between two representations of the
+        # same total, not a further partition of it. Treating it as a
+        # same_group child let the cascade sum the _components subtree's
+        # amount on top of the already-complete _a61 total (confirmed live:
+        # "Social security and welfare" reported $324.86B via the cascade
+        # vs the correct, published $297.81B "Total expenses" reconciling
+        # figure without it).
     finally:
         conn.close()
     children = [
