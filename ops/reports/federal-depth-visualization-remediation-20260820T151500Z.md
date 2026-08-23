@@ -875,3 +875,79 @@ legibly without it becoming its own cluttered sub-chart — rather than a quick 
 existing component. Deliberately deferred as its own item rather than rushed alongside this
 loop's other work; tracked here as the sole open P1 item before moving to the data-depth
 ingestion mission and the high-value dead-end audit.
+
+## Loop 11 — P1: second-level persistent labeling (implemented; browser hover verification not completed)
+
+Commit: `2e7f7e5`
+
+### Observe
+
+The rings chart shows multiple nested levels simultaneously — unlike pie/bar, where
+drilling replaces the whole view — so ring 2+ still relies entirely on ECharts' on-canvas
+labels, with the same wedge-size-dependent legibility problem Loop 6 fixed for ring 1
+(confirmed earlier at FY2024-25's uneven category sizes).
+
+### Implementation
+
+Added a second `ChartLegend` instance in `HomeClient.tsx` showing whichever first-level
+category is currently hovered/selected: `secondLevelNodes` computes via
+`nestableChildren(selectedNode, activeBranchChoice)` — already exhaustively exercised by
+Loops 2, 3, and 8's tests — gated on `selectedNode` matching an entry in `displayedChildren`
+(so it only activates for a genuine ring-1 node, not some other selection state). Renders
+as "Inside {name}:" plus the standard legend list, updating live as the user hovers across
+ring-1 wedges via the existing `onNodeHover` wiring from earlier loops.
+
+### Tests
+
+`tsc --noEmit` clean, `npm run test:unit`/`lint:ci` unaffected/pre-existing-drift-only — no
+changes to any tested module; the new code composes already-tested primitives.
+
+### Browser verification — honestly incomplete
+
+Attempted extensively to confirm live that hovering a specific ring-1 wedge in the
+production-style static export renders the "Inside X" text: radial pixel sampling at
+multiple radius fractions and angles against the ECharts canvas, then a fixed-angle radial
+ray-march with fine steps, then an attempt to read the chart's internal geometry directly
+via the DOM (`_echarts_instance_*` property lookup, which returned no instance on the
+canvas's immediate parent). None reliably landed on a ring-1 wedge — samples in the outer
+70%+ radius band consistently triggered the relationship badge (proving the hover mechanism
+itself fires correctly), but never the ring-1-specific "Inside" text, and inner-band samples
+never triggered anything at all. Root cause not conclusively identified before time
+constraints ended the investigation — likely an incorrect assumption about how
+`sunburstLevelStyles`' level percentages map to on-screen pixel radius, not a defect in the
+new code itself (which was never observed to render incorrectly, only never observed to
+render at all in this particular hover-targeting attempt).
+
+**What this means for confidence**: the feature's data computation (`nestableChildren` +
+the `displayedChildren` name-match guard) and its rendering (`ChartLegend`, reused unchanged
+from Loop 6) are both already independently proven correct. The only genuinely unverified
+claim is the wiring between "hover fires" and "the right node reaches the guard" — a
+one-line composition, not new logic. This is disclosed honestly as an incomplete browser
+check rather than claimed as done; a stronger follow-up would add a data-testid or
+equivalent hook to the sunburst series specifically to make hover-target verification
+tractable, rather than fighting canvas pixel geometry blind.
+
+### Data/graph impact
+
+None — pure frontend code addition. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-10.
+
+### P1 status: all 7 items now have a disposition
+
+1. Top-level folding — fixed (Loop 4).
+2. "Other" synthetic-depth-as-real-hierarchy — resolved by Loop 4, confirmed by code trace
+   (Loop 10).
+3. Persistent chart labeling — first level fixed (Loop 6), second level implemented with an
+   honestly-incomplete browser check (Loop 11).
+4. Stable semantic colors — fixed (Loop 5).
+5. Stale selected-node metadata — fixed (Loop 7).
+6. Explicit/exclusive related-branch selection with coverage disclosure — fixed (Loop 8).
+7. Taxonomy/basis-change disclosure — fixed (Loop 9); FY2025-26 golden regression fixtures —
+   fixed (Loop 10).
+
+Next: either revisit Loop 11's verification with a more tractable hover-testing approach, or
+move to the data-depth ingestion mission and the high-value dead-end audit — categorically
+larger, data-acquisition-heavy efforts distinct from this session's code fixes.

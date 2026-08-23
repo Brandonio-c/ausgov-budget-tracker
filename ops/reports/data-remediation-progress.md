@@ -2401,6 +2401,18 @@ Committed `485212a`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `59721c2`. Full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 10).
 
+### Loop 11 — P1: second-level persistent labeling (implemented; browser hover verification not completed)
+
+**Fix**: added a second `ChartLegend` in `HomeClient.tsx` showing whichever ring-1 category is currently hovered/selected - `secondLevelNodes` via `nestableChildren(selectedNode, activeBranchChoice)` (already tested across Loops 2/3/8), gated to only activate for a genuine ring-1 node. Renders as "Inside {name}:" updating live on hover.
+
+**Verified**: `tsc`/`test:unit`/`lint:ci` clean/unaffected - the new code composes already-tested primitives. **Browser hover verification was attempted extensively but not completed**: multiple pixel-sampling strategies (radial/angular sweeps, a radial ray-march, a DOM-based attempt to read ECharts' internal geometry) all failed to reliably land a hover on a ring-1 wedge specifically - confirmed the hover mechanism itself fires correctly (badge appeared at several tested coordinates), but never conclusively confirmed the NEW "Inside X" text renders on a real ring-1 hover. Disclosed honestly rather than claimed as fully verified; full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 11), including a suggested follow-up (a dedicated test hook on the sunburst series) for whoever picks this up next.
+
+Committed `2e7f7e5`. Pure frontend addition, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
+### P1 items: all 7 now have a disposition (6 fully verified live, 1 partially verified)
+
+Top-level folding, "Other" synthetic-depth, stable colors, first-level labeling, stale selected-node metadata, branch coverage disclosure, and taxonomy/basis disclosure are all fixed and live-browser-verified. Second-level labeling is implemented but its browser verification is honestly incomplete (see Loop 11 above).
+
 ### Next item (this phase)
 
-P0 items 1-4 and 6 of 7 P1 items are now addressed. **Second-level persistent labeling** is the one remaining open P1 item - deliberately deferred as its own larger UI design decision (how to represent a nested second level legibly, or build the fuller legend/table the directive separately names) rather than a rushed patch. Next: either take on second-level labeling, or move to the data-depth ingestion mission and the high-value dead-end audit, which are categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes.
+Move to the data-depth ingestion mission and the high-value dead-end audit - categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes - or revisit Loop 11's verification with a more tractable approach first.
