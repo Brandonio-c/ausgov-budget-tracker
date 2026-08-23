@@ -2443,6 +2443,16 @@ A new master directive reopened the mission with a changed emphasis: maximize ge
 
 Committed `8ee0d36`, `509d509`. **Not yet deployed** - same standing redeploy decision (this fix needs a backend Docker image rebuild).
 
+**Loop 4** (Priority 1 audit, no code change): confirmed live that Job Seeker Income Support already reaches genuine 5-level depth (Statement 6 → PBS → Recipients by state/age, ~985K real people, via already-loaded, already-wired data). Confirmed NDIS currently stops at depth 3 - no equivalent participant dataset exists yet, a concrete category-D opportunity for a future loop.
+
+**Loop 5 - Phase 1: repaired `federal_pbs_programs_s6_bridge` label quality**. Direct audit of live published facts (not just re-running the existing test suite) found the prior label-quality classifier (Task 5/8) had two real gaps: `BARE_DASH_RUN` only recognized ASCII hyphen, missing an EN DASH (U+2013) variant used by one PBS PDF generation; and no vocabulary coverage for ~6 further defect classes (Surplus/(deficit) lines, ~40 balance-sheet/cash-flow terms, "Cash used X"/"Funded by X" prefixes, footnote-marker-suffixed terms, standalone "nfp" runs, bare "Operating"/"Operations"). Fixed all of them in `scripts/ingest/pbs_label_classifier.py` (commit `2a0847e`), added 12 new tests (40 total). Applied `cleanup_pbs_s6_bridge_labels.py` to a disposable copy first (idempotent), then the live DB (idempotent there too): 332 of 472 facts newly quarantined, 140 genuine program rows remain. All before/after counts reconcile exactly.
+
+**Verified**: full backend suite 325/325 passed against the modified live DB. Golden fixture regenerated, root totals for every projection unchanged (confirming this only removed non-canonical noise, never touched a canonical total). Live browser check: Actuals/Budget totals correct, 0 console errors.
+
+**Disclosed, not fixed**: ~5 residual malformed rows with harder-to-generalize shapes; and a separate, different-class defect - the bridge's portfolio-to-function mapping crudely attributes arts/culture institutions (National Gallery of Australia, Screen Australia, Creative Australia, ...) to "Transport and communication" instead of "Recreation and culture" (a parent-attribution defect, not label quality - needs an extractor-level fix, not a DB cleanup).
+
+Committed and pushed `2a0847e` (`HEAD == origin/main` confirmed). **Not yet deployed** - same standing redeploy decision.
+
 ### Next item (this phase)
 
-Continue Priority 1 (Social Security depth): investigate whether `federal_dss_pbs_programs`/`federal_health_pbs_programs` can be safely wired as an explicit related branch for even deeper navigation. Investigate `federal_pbs_programs_s6_bridge`'s extraction-quality problems (duplicate rows, operating-statement rows mixed into program rows) as a dedicated extractor task before any reuse. Then continue through NDIS, Aged Care/Health, Defence, Education per the mission's priority order.
+Fix the arts/culture portfolio-to-function misattribution found above. Then acquire and ingest an NDIS participant demographic dataset to bring NDIS to parity with JobSeeker's depth-5 recipient breakdown (Priority 2). Regenerate the Federal depth opportunity matrix to reflect the bridge cleanup. Then continue through Aged Care/Health, Defence, Education per the mission's priority order.

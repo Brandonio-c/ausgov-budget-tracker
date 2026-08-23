@@ -292,20 +292,122 @@ sub-programs remain at depth 3 pending genuinely new ingestion (participant/reci
 demographic data equivalent to what JobSeeker already has) — tracked as the concrete next
 target, not a vague "go deeper" instruction.
 
+## Loop 5 — Phase 1: repair federal_pbs_programs_s6_bridge label quality
+
+Commit: `2a0847e`
+
+### Observe
+
+Per the master directive's explicit ordering ("repair the hierarchy spine... before adding
+more depth"), audited the bridge dataset directly against live, currently-published facts
+rather than trusting the prior milestone's test suite alone. A prior milestone (Task 5/8)
+had already built `scripts/ingest/pbs_label_classifier.py` and run
+`scripts/ops/cleanup_pbs_s6_bridge_labels.py` once against this exact dataset (37,084 facts
+already quarantined via this mechanism, confirmed via `facts_pending_attribution`), but
+direct inspection of the still-published facts found real defects still present:
+`"Interest – – – – – Dividends – – – – – Taxes"` (three financial-statement line items
+concatenated) and `"Aged Care (Accommodation Payment Security) Act 2006 - - - - - Total for
+Program"` (a malformed concatenated row) were both being served live as if they were program
+names, one of them appearing twice under the same portfolio at different dollar amounts.
+
+### Diagnose
+
+Root-caused two independent classifier gaps: (1) `BARE_DASH_RUN`'s character class covered
+only ASCII `-` and U+00AD soft hyphen, not the broader Unicode dash-glyph set `YEAR_TOKEN`
+already handles elsewhere in the same file — the malformed row used EN DASH (U+2013)
+specifically; (2) no vocabulary coverage at all for several defect classes: "Surplus/
+(deficit) ..." operating-statement lines, ~40 balance-sheet/income-statement terms
+(Buildings, Trade and other receivables, Depreciation and amortisation, ...), Statement-of-
+Cash-Flows/appropriation-funding-source line prefixes ("Cash used X", "Funded by/internally
+from X", "Payments to corporate entities X"), a shorter 2-dash placeholder pair combined
+with an embedded value token, a standalone "nfp" (not-for-publication) placeholder run, bare
+"Operating"/"Operations"/"Workforce" with no supporting numbering, and PBS footnote markers
+like "(a)"/"(b)" defeating the curated-vocabulary exact match.
+
+Broadened the audit to the *entire* currently-published bridge dataset (not just the two
+examples that prompted the investigation): of 459 fact-bearing nodes, 301 were still
+classified as "publishable" before any fix — many genuinely fine, but manual review found
+well over 100 more real defects across the classes above.
+
+### Implementation
+
+`scripts/ingest/pbs_label_classifier.py`: fixed `BARE_DASH_RUN`'s dash-glyph set; added
+`SURPLUS_DEFICIT_LINE`, `CASH_FLOW_FUNDING_LINE`, `WEAK_DASH_PAIR`, `NFP_RUN` patterns and
+~40 new `FINANCIAL_STATEMENT_LINE_ITEMS` vocabulary entries; extended `NARRATIVE_LEAD` to
+recognize "Add" continuations; extended the bare-generic-term check to "operating"/
+"operations"/"workforce"; added footnote-marker stripping (`lowered_no_footnote`) before the
+curated-vocabulary lookup so "(a)"/"(b)"-suffixed variants of a known term are recognized.
+
+### Tests
+
+12 new tests (40 total, up from 29) in `tests/ingest/test_pbs_label_classifier.py`, each
+using a real, verbatim string found live in `data/facts.db`, each paired with a positive
+check proving a genuine program name is not false-positived by the same rule (e.g. "Add
+Provision for Impairment" rejected as a narrative lead, but "Additional Support Payments"
+still accepted). All 40 pass; `ruff check` clean.
+
+### Reload (disposable copy first, then live, with idempotency proven at both stages)
+
+Backed up `data/facts.db` (`scripts/ops/backup_facts_db.py`), copied to a disposable path,
+ran `cleanup_pbs_s6_bridge_labels.py` there first: 332 of 472 facts newly quarantined (up
+from the original run's 164), 325 now-orphaned nodes and 639 stale edges removed, 140
+genuine program/entity rows remain published. Re-ran on the same disposable copy: 0
+additional quarantined, 0 nodes/edges removed — idempotent. Applied to the live
+`data/facts.db` (git-ignored — the mutation is durably applied to disk, no DB commit
+needed): identical counts. Re-ran on the live DB: idempotent there too. Before/after counts
+reconcile exactly: `facts` 331611→331279 (−332), `nodes` 241019→240694 (−325),
+`breakdown_edges` 13923→13284 (−639), `source_documents` unchanged (147), `facts_pending_
+attribution` 37099→37431 (+332). `PRAGMA integrity_check`: ok.
+
+### Tests (full suite, against the modified live DB)
+
+325/325 backend tests passed. `dashboard_depth_audit` golden fixture regenerated and
+reconfirmed idempotent across 2 consecutive `--check-fixture` runs — **root totals for every
+projection unchanged** (Federal Actuals FY2025-26 $724,901,922,000; Federal Budget FY2025-26
+$812,063,000,000; all others byte-identical), confirming this cleanup only removed
+non-canonical related-branch noise and never touched anything contributing to a canonical
+total, exactly as required by the mission's "canonical total safety" gate.
+
+### Browser verification
+
+Fresh local backend + production-style static export: both Actuals and Budget mode totals
+render correctly for FY2025-26 ($724,901,922,000 / default-year $933,729,000,000 for
+FY2029-30), 0 console errors.
+
+### Remaining, disclosed (not fixed in this pass)
+
+- **~5 residual malformed rows** with harder-to-generalize embedded-number shapes (e.g.
+  `"Borrowing costs 63 110 - - 689 Net GST paid"`, where the embedded numbers have no
+  thousands separator and are separated from a 2-dash run by intervening text) — a small,
+  disclosed tail after removing 332 of 472 facts; not pursued further given the accuracy-vs-
+  effort tradeoff of hand-tuning for single-occurrence shapes.
+- **A separate, different-class defect**: `pbs_programs_s6_bridge.py`'s `PORTFOLIO_TO_S6`
+  mapping table crudely maps the entire "infrastructure" portfolio (real name:
+  "Infrastructure, Transport, Regional Development, Communications, Sport and the Arts") to
+  a single COFOG function, "Transport and communication" — so arts/culture institutions
+  genuinely funded through that portfolio (National Gallery of Australia, National Library
+  of Australia, National Museum of Australia, National Portrait Gallery of Australia, Screen
+  Australia, Creative Australia, National Film and Sound Archive) are attributed to the
+  wrong function; they should be "Recreation and culture". This is a **parent-attribution**
+  defect (correct row content, wrong parent), not the label-quality defect this loop
+  targeted — fixing it means adding `SUBFUNCTION_HINTS`-style keyword detection to
+  `pbs_programs_s6_bridge.py`'s function-mapping step (not the label classifier), and would
+  require regenerating `pbs_programs_s6_bridge.csv` from the raw PDFs via the extractor, not
+  a DB-level cleanup. Tracked as separate follow-up work, not fixed here to avoid conflating
+  two independent defect classes in one change.
+
 ## Next
 
-1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
+1. Fix the `PORTFOLIO_TO_S6` arts/culture misattribution found above (a scoped,
+   well-evidenced parent-attribution fix, distinct from this loop's label-quality work).
+2. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
    category, from NDIS Quarterly Reports or the NDIA's published data) to bring NDIS to
    parity with JobSeeker's depth-5 recipient breakdown — the mission's Priority 2, and now
    the clearest concrete next step for Priority 1/2 combined.
-2. Investigate `federal_pbs_programs_s6_bridge`'s extraction-quality problems (duplicate
-   "Total for Program" rows, operating-statement rows mixed into program rows) as a
-   dedicated extractor-quality task before considering it for any related-branch wiring —
-   per the mission's own standard ("do not build a permissive parser that happens to work on
-   one PDF... add negative tests"), this needs generation-specific extractor work, not reuse
-   as-is.
-3. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` to confirm
-   it's unaffected by the Budget-mode fix (expected — this loop only touched Budget mode).
+3. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` and
+   `federal_budget_2025_26` to reflect the bridge cleanup (fewer, cleaner related/PBS
+   children under several functions — a *quality* improvement even where the raw depth
+   number doesn't change).
 4. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
    applying the same audit-before-ingest discipline this loop established: check what's
    already loaded and connected before acquiring anything new.
