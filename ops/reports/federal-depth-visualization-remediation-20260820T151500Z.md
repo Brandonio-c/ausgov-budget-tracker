@@ -669,3 +669,69 @@ change.
 Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
 persistent labeling, explicit/exclusive related-branch selection with coverage disclosure,
 taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures.
+
+## Loop 8 — P1: related-branch selection required a blind click, no coverage disclosed first (fixed, not yet deployed)
+
+Commit: `cae788e`
+
+### Observe
+
+Branch selector buttons ("Contracts", "Grants", "PBS programs", "Budget Statement 6", ...)
+showed only a name — no indication of how much of the current view actually has data under
+that branch before clicking. Loop 3 already disclosed this *after* selecting a branch (the
+"Depth varies by function" list); the master directive specifically calls for coverage to be
+disclosed *before* clicking.
+
+### Diagnose / self-caught regression during implementation
+
+First implementation computed coverage directly (`additiveChildren(rawChildren)` +
+`nestableChildren(node, family)` per node), independent of Loop 3's `perFunctionDepth()`.
+Live verification caught a real disagreement: for FY2025-26 under Statement 6, this
+computed "10/17" while Loop 3's own depth-disclosure list showed exactly 8 non-leaf
+functions. Root cause: `perFunctionDepth`/`ringRootChildren` route top-level nodes through
+`prepareRingNodes` (`collapseSameNameChain`) before calling `nestableChildren`; the fresh
+reimplementation skipped that step, so for any top-level node with a same-name wrapper
+chain, it saw the wrong (unwrapped) children and disagreed with the already-shipped depth
+disclosure describing the identical view. Caught by cross-checking the two numbers in the
+live browser check rather than trusting the new code by inspection — the same discipline
+applied throughout this session.
+
+### Implementation
+
+`branchCoverage` in `HomeClient.tsx` and `combined/page.tsx` is now derived directly from
+`perFunctionDepth(rawChildren, family)` (`covered = depths.filter(d => d.depth > 1).length`),
+guaranteeing the coverage count and the depth-disclosure list can never disagree — they
+share one code path. Coverage renders as `" (covered/total)"` appended to each branch
+button's label, with a `title` tooltip spelling it out. `DebtViewer.tsx` has no branch
+selector (Government debt has no related branches) and needed no change.
+
+### Tests
+
+No new pure-logic unit test (this reuses the already-tested `perFunctionDepth`); verified
+via live browser cross-check instead. `tsc --noEmit`, `next build` pass/succeed. `npm run
+test:unit` unaffected. `lint:ci` 25/24 baseline drift confirmed pre-existing.
+
+### Browser verification
+
+Fresh local backend + production-style static export, FY2025-26 Federal Actuals: buttons
+read "Contracts (1/17)", "Grants (1/17)", "PBS programs (0/17)", "Recipients (0/17)",
+"Budget Statement 6 (8/17)" — PBS programs and Recipients genuinely cover nothing at the
+top level (their detail is nested deeper, only reachable after drilling into a specific
+sub-item), which a user could not have known before this fix without clicking blind.
+Cross-checked "Budget Statement 6 (8/17)" against the Depth-varies-by-function list's own
+non-leaf count for the identical view: exact match (screenshot confirmed). 0 console
+errors.
+
+### Data/graph impact
+
+None — pure frontend code fix. No migration, no facts.db mutation, no backend change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-7.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
+persistent labeling, taxonomy/basis-change disclosure, and FY2025-26 golden regression
+fixtures.

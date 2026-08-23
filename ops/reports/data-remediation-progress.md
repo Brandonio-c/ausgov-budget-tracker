@@ -2371,6 +2371,16 @@ Committed `cf5ecba`. Pure frontend addition, zero data/graph impact. **Not yet d
 
 Committed `e928ed9`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 8 — P1: related-branch selection required a blind click, no coverage disclosed first (fixed, not yet deployed)
+
+**Root cause**: branch selector buttons showed only a name, no coverage indication before clicking. **Self-caught regression during implementation**: the first version computed coverage independently of Loop 3's `perFunctionDepth()` and disagreed with it (10/17 vs 8/17 for the same view) because it skipped the `collapseSameNameChain()` step `perFunctionDepth`/`ringRootChildren` apply internally - caught by cross-checking the two numbers live rather than trusting the new code by inspection.
+
+**Fix**: `branchCoverage` now derives directly from `perFunctionDepth()`, guaranteeing the two features can never disagree (one shared code path). Renders as `" (covered/total)"` on each branch button in `HomeClient.tsx` and `combined/page.tsx`, with a tooltip. `DebtViewer.tsx` has no branch selector, no change needed.
+
+**Verified**: `tsc`/`next build` pass, `lint:ci` pre-existing drift confirmed. Live browser check (fresh local backend + production-style static export, FY2025-26): "PBS programs (0/17)", "Recipients (0/17)", "Budget Statement 6 (8/17)" - cross-checked the 8/17 against Loop 3's own non-leaf count for the identical view, exact match. 0 console errors. Full narrative and screenshot in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 8).
+
+Committed `cae788e`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, and stale selected-node metadata are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, stale selected-node metadata, and branch coverage disclosure are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
