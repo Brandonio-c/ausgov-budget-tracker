@@ -16,7 +16,12 @@ import DashboardNav from "@/components/DashboardNav";
 import RingDepthControl from "@/components/RingDepthControl";
 import ChartLegend from "@/components/ChartLegend";
 import DebtViewer from "@/components/DebtViewer";
-import { maxVisibleDepth, additiveChildren, perFunctionDepth } from "@/lib/sunburstTree";
+import {
+  maxVisibleDepth,
+  additiveChildren,
+  perFunctionDepth,
+  nestableChildren,
+} from "@/lib/sunburstTree";
 
 const BRANCH_LABELS: Record<string, string> = {
   canonical: "Canonical actual",
@@ -222,6 +227,19 @@ export default function HomeClient() {
     () => perFunctionDepth(rawChildren, activeBranchChoice),
     [rawChildren, activeBranchChoice],
   );
+  // The rings chart shows multiple nested levels at once (unlike pie/bar,
+  // where drilling replaces the view), so ECharts' on-canvas labels for the
+  // *second* ring have the same wedge-size-dependent legibility problem
+  // Loop 6 fixed for the first ring — confirmed live at FY2024-25's uneven
+  // category sizes. Persistently label whichever first-level category is
+  // currently hovered/selected by showing its own children as a second
+  // legend, updating live as the user moves across ring-1 wedges.
+  const secondLevelNodes = useMemo(() => {
+    if (chartType !== "rings" || !selectedNode) return [];
+    const isTopLevel = displayedChildren.some((n) => n.name === selectedNode.name);
+    if (!isTopLevel) return [];
+    return nestableChildren(selectedNode, activeBranchChoice);
+  }, [chartType, selectedNode, displayedChildren, activeBranchChoice]);
   const centerLabel =
     chartType === "rings"
       ? drillPath.length > 0
@@ -645,6 +663,15 @@ export default function HomeClient() {
         onSelect={handleNodeClick}
         highlightName={highlightName}
       />
+
+      {secondLevelNodes.length > 0 ? (
+        <div className="mb-3">
+          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Inside {selectedNode?.name}:
+          </p>
+          <ChartLegend nodes={secondLevelNodes} dark={dark} onSelect={handleNodeClick} />
+        </div>
+      ) : null}
 
       <ResizableSplitPane
         left={
