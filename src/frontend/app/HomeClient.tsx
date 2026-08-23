@@ -28,6 +28,17 @@ const BRANCH_LABELS: Record<string, string> = {
   recipients: "Recipients",
 };
 
+// A basis change is not just an accounting-convention footnote — GFS-basis
+// years classify spending under ABS/COFOG purpose categories, while
+// accrual-basis years use the Department of Finance's own Commonwealth
+// function classification. The two systems name and count categories
+// differently (confirmed live: FY2025-26 accrual shows 17 top-level
+// functions; FY2024-25 GFS shows a different, smaller set).
+const CLASSIFICATION_BY_BASIS: Record<string, string> = {
+  gfs: "ABS GFS/COFOG purpose classification",
+  accrual: "Dept of Finance Commonwealth function classification",
+};
+
 export default function HomeClient() {
   const dark = useDarkMode();
   const searchParams = useSearchParams();
@@ -220,19 +231,26 @@ export default function HomeClient() {
   const selectedAvailability = availability.find(
     (item) => item.financial_year === year,
   );
+  // The basis note must say explicitly that a basis change also means a
+  // different category classification — not leave the reader to infer it.
   const availabilityNote = useMemo(() => {
     if (!selectedAvailability?.selected_basis) return null;
-    const selected = selectedAvailability.selected_basis.toUpperCase();
+    const basisKey = selectedAvailability.selected_basis;
+    const selected = basisKey.toUpperCase();
+    const classification = CLASSIFICATION_BY_BASIS[basisKey];
+    const taxonomyClause = classification
+      ? ` Category names and depth follow the ${classification} and will differ from other bases.`
+      : "";
     const alternatives = selectedAvailability.available_bases.filter(
-      (basis) => basis !== selectedAvailability.selected_basis,
+      (basis) => basis !== basisKey,
     );
     if (alternatives.length) {
-      return `FY ${year} uses ${selected} (preferred); also available: ${alternatives.join(", ")}.`;
+      return `FY ${year} uses ${selected} (preferred); also available: ${alternatives.join(", ")}.${taxonomyClause}`;
     }
-    if (mode === "actuals" && selectedAvailability.selected_basis !== "gfs") {
-      return `FY ${year} uses ${selected}; GFS figures are not available for this year.`;
+    if (mode === "actuals" && basisKey !== "gfs") {
+      return `FY ${year} uses ${selected}; GFS figures are not available for this year.${taxonomyClause}`;
     }
-    return `FY ${year} uses ${selected}.`;
+    return `FY ${year} uses ${selected}.${taxonomyClause}`;
   }, [mode, selectedAvailability, year]);
 
   useEffect(() => {
