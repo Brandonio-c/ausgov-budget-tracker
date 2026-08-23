@@ -326,25 +326,47 @@ export default function HomeClient() {
     return `${sourceLabel} shown for ${bd.fact_financial_year}; no ${requested} table was published for “${selectedNode?.name}”.`;
   }, [selectedNode, year]);
 
+  // A previously selected node's relationship/citation metadata (the
+  // "Additive/Related, Data/Navigation, Selected FY · Source FY, BASIS"
+  // badge row and the citation panel) must never survive a change that can
+  // invalidate it — a different mode, level, year, or branch can each mean
+  // the selected node no longer exists, or exists with different metadata,
+  // in the newly-fetched tree. Confirmed live before this fix: switching
+  // mode/level/year/branch left the badge showing the *previous* node's
+  // relationship fields (e.g. a stale "Source FY 2024-25" after switching to
+  // FY2025-26) until the user made a fresh selection.
+  function resetSelection() {
+    setSelectedNode(null);
+    setSelectedItemId(null);
+    setSourcePrompt("Hover a leaf item to preview its source citation");
+  }
+
   function handleModeChange(next: DashboardMode) {
     setMode(next);
-    setSourcePrompt("Hover a leaf item to preview its source citation");
+    resetSelection();
   }
 
   function handleLevelChange(nextLevel: string) {
     setDrillPath([]);
-    setSelectedItemId(null);
     setHighlightName(null);
-    setSourcePrompt("Hover a leaf item to preview its source citation");
+    resetSelection();
     setLevel(nextLevel);
   }
 
   function handleYearChange(nextYear: string) {
     setDrillPath([]);
-    setSelectedItemId(null);
     setHighlightName(null);
-    setSourcePrompt("Hover a leaf item to preview its source citation");
+    resetSelection();
     setYear(nextYear);
+  }
+
+  function handleBranchChoiceChange(next: string) {
+    // Drill position is orthogonal to branch choice (the same node exists
+    // regardless of which branch is being viewed) — only the selected-node
+    // metadata badge and citation panel, which describe the *branch-specific*
+    // relationship of the selection, need to reset here.
+    resetSelection();
+    setBranchChoice(next);
   }
 
   const highlightedChartNodes = useMemo(() => {
@@ -474,7 +496,7 @@ export default function HomeClient() {
               <button
                 key={choice}
                 type="button"
-                onClick={() => setBranchChoice(choice)}
+                onClick={() => handleBranchChoiceChange(choice)}
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   activeBranchChoice === choice
                     ? "border-blue-600 bg-blue-600 text-white"

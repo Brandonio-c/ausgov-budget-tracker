@@ -293,6 +293,7 @@ function CombinedPageInner() {
               type="button"
               onClick={() => {
                 setMode(m);
+                setSelectedItemId(null);
                 setSourcePrompt("Hover a leaf item to preview its source citation");
               }}
               className={`px-4 py-2 text-sm font-medium ${
@@ -378,7 +379,14 @@ function CombinedPageInner() {
               <button
                 key={choice}
                 type="button"
-                onClick={() => setBranchChoice(choice)}
+                onClick={() => {
+                  // The citation panel describes the branch-specific
+                  // relationship of the selection — it must not survive a
+                  // branch change referring to metadata from the old branch.
+                  setSelectedItemId(null);
+                  setSourcePrompt("Hover a leaf item to preview its source citation");
+                  setBranchChoice(choice);
+                }}
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   activeBranchChoice === choice
                     ? "border-blue-600 bg-blue-600 text-white"
