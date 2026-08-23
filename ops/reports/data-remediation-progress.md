@@ -2361,6 +2361,16 @@ Committed `19cad2c`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `cf5ecba`. Pure frontend addition, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 7 — P1: selected-node metadata badge/citation survived mode/level/year/branch changes (fixed, not yet deployed)
+
+**Root cause**: none of `HomeClient.tsx`'s mode/level/year change handlers, nor the branch buttons' inline `setBranchChoice`, ever reset `selectedNode` - only `selectedItemId` was cleared in some, and mode change cleared neither. Selecting a node then changing mode/level/year/branch left the relationship badge showing the previous selection's stale metadata.
+
+**Fix**: shared `resetSelection()` called from all four change paths in `HomeClient.tsx`, plus a new `handleBranchChoiceChange` (branch buttons had no handler function before). Drill position deliberately untouched on branch change (same node, different branch lens). `combined/page.tsx` had the identical gap for mode/branch switches (citation panel only) - fixed the same way; its level/year handlers were already correct. `DebtViewer.tsx` needed no change (no relationship badge, already-correct resets).
+
+**Verified**: `tsc`/`next build` pass, `lint:ci` pre-existing drift confirmed. Live browser check: selected a node under "Budget Statement 6" (badge showed real content), switched to "Canonical actual", confirmed the badge disappeared entirely rather than showing stale metadata, citation panel correctly reverted to empty-state; 0 console errors. Full narrative and screenshots in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 7).
+
+Committed `e928ed9`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
+
 ### Next item (this phase)
 
-P0 items 1-4, top-level folding, stable colors, and first-level persistent labeling are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, stale selected-node metadata on year/mode/branch changes, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, and stale selected-node metadata are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level labeling, explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.

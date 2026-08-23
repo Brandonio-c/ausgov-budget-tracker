@@ -606,3 +606,66 @@ Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy,
 persistent labeling, stale selected-node metadata on year/mode/branch changes,
 explicit/exclusive related-branch selection with coverage disclosure, taxonomy/basis-change
 disclosure, and FY2025-26 golden regression fixtures.
+
+## Loop 7 — P1: selected-node metadata badge/citation survived mode/level/year/branch changes (fixed, not yet deployed)
+
+Commit: `e928ed9`
+
+### Observe
+
+Selecting a node populates a relationship badge ("Additive/Related, Data/Navigation,
+Selected FY · Source FY, BASIS · estimate_status") and a citation panel. Confirmed live:
+none of `HomeClient.tsx`'s `handleModeChange`/`handleLevelChange`/`handleYearChange`, nor
+the "Ring branch" buttons' inline `onClick={() => setBranchChoice(choice)}`, ever reset
+`selectedNode` — only `selectedItemId` was cleared in some of them, and `handleModeChange`
+cleared neither. Switching mode/level/year/branch after selecting a node left the badge
+showing the *previous* selection's relationship metadata, which may no longer describe
+anything real in the newly-fetched tree.
+
+### Implementation
+
+`HomeClient.tsx`: added a shared `resetSelection()` (clears `selectedNode`,
+`selectedItemId`, resets `sourcePrompt`) called from all four change paths; added a new
+`handleBranchChoiceChange` (the branch buttons previously had no handler function, just an
+inline `setBranchChoice`). Drill position (`drillPath`) is deliberately left untouched on
+branch change — the same node exists regardless of which branch is being viewed, so only
+the branch-specific relationship metadata needs to reset, not navigation position.
+
+`combined/page.tsx` had the identical gap for its mode-switch and branch-switch buttons
+(`selectedItemId` never reset on either, feeding a stale citation panel) — fixed the same
+way. Its level (`toggleLevel`) and year-change handlers already reset `selectedItemId`
+correctly and needed no change. `DebtViewer.tsx` has no relationship badge and its
+level/year handlers already reset `selectedItemId` correctly — confirmed no change needed
+there.
+
+### Tests
+
+No new pure-logic unit test (this is state-reset wiring, not a computable function);
+verified via live browser interaction. `tsc --noEmit`, `next build` pass/succeed. `npm run
+test:unit` unaffected. `lint:ci` 25/24 baseline drift confirmed pre-existing.
+
+### Browser verification
+
+Fresh local backend + production-style static export, FY2025-26: selected "Social security
+and welfare" via the Loop 6 legend under the "Budget Statement 6" branch, confirmed the
+relationship badge showed real content ("Additive, Data, Selected FY 2025-26 · Source FY
+2025-26, ACCRUAL · actual") and the citation panel showed the real Statement 6 source table.
+Switched back to "Canonical actual": confirmed the badge disappeared entirely (0 matching
+elements) rather than showing stale Statement 6 metadata, and the citation panel correctly
+reverted to its empty-state prompt, matching the chart's own correct leaf/empty state
+(Loop 2). 0 console errors.
+
+### Data/graph impact
+
+None — pure frontend state-management fix. No migration, no facts.db mutation, no backend
+change.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-6.
+
+### Next
+
+Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
+persistent labeling, explicit/exclusive related-branch selection with coverage disclosure,
+taxonomy/basis-change disclosure, and FY2025-26 golden regression fixtures.
