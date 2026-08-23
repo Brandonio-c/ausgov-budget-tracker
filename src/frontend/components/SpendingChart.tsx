@@ -385,6 +385,18 @@ export default function SpendingChart({
     chartRef.current?.getEchartsInstance().resize();
   }, [chartHeight]);
 
+  // Read-only E2E test hook: exposes the live ECharts instance on the chart
+  // container so a test can look up a data item's real rendered layout
+  // (exact pixel angle/radius) and simulate a genuine mouse hover there,
+  // instead of guessing sunburst ring geometry from CSS percentages blind —
+  // the latter proved unreliable to reverse-engineer from outside the chart.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    (container as unknown as { __echartsInstance?: unknown }).__echartsInstance =
+      chartRef.current?.getEchartsInstance();
+  });
+
   function clampHeight(h: number) {
     return Math.min(MAX_CHART_HEIGHT, Math.max(MIN_CHART_HEIGHT, Math.round(h)));
   }
