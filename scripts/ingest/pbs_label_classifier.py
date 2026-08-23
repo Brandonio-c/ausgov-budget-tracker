@@ -57,15 +57,63 @@ UNIT_TOKEN = re.compile(r"\$'?\s?000\b|\$m\b|\$b\b|\('000\)|\(\$'000\)|^000$", r
 # in an unbroken run.
 BARE_NUMERIC_RUN = re.compile(r"(?<![\d.])-?\d{1,4}(?:\s+-?\d{1,4}){2,}(?![\d.])")
 
-# Three or more consecutive bare "-"/soft-hyphen placeholder tokens - PBS
-# tables use a lone dash for a $0 (or not-applicable) year column, so a run
-# of three or more is the same "flattened row" signal as BARE_NUMERIC_RUN,
-# just for all-zero columns (e.g. "- expense adjustment (e) - - - - -
-# Special appropriations" - confirmed against real quarantined rows from
+# Three or more consecutive bare dash-glyph placeholder tokens - PBS tables
+# use a lone dash for a $0 (or not-applicable) year column, so a run of
+# three or more is the same "flattened row" signal as BARE_NUMERIC_RUN, just
+# for all-zero columns (e.g. "- expense adjustment (e) - - - - - Special
+# appropriations" - confirmed against real quarantined rows from
 # federal_pbs_2025_26_health_disability_and_ageing p.130-ish Section 3
 # tables). A single leading "-" (a stray PDF bullet glyph) does not match,
 # since that requires only one token, not a run of three.
-BARE_DASH_RUN = re.compile(r"(?:^|\s)[\-­](?:\s+[\-­]){2,}(?:\s|$)")
+#
+# Uses the same broader dash-glyph set as YEAR_TOKEN above (hyphen, en dash,
+# em dash, and other Unicode dash variants), not just ASCII hyphen/soft
+# hyphen - confirmed missing against a real federal_pbs_programs_s6_bridge
+# row using EN DASH (U+2013) specifically: "Interest – – – – – Dividends –
+# – – – – Taxes" (three concatenated financial-statement line items from a
+# Section 3 table, joined by $0-column en-dash placeholders) previously
+# classified as a valid "program" name because this pattern only recognized
+# ASCII "-"/U+00AD, silently accepting the malformed row.
+BARE_DASH_RUN = re.compile(r"(?:^|\s)[\-‐‑‒–—­](?:\s+[\-‐‑‒–—­]){2,}(?:\s|$)")
+
+# A shorter run of 2 dash-placeholder tokens (as opposed to BARE_DASH_RUN's
+# 3+) is not decisive alone - a genuine title could contain a stray
+# double-hyphen - but combined with at least one embedded VALUE_TOKEN it is:
+# a real program/component title never contains both a dollar figure and a
+# multi-column $0-placeholder run. Confirmed against real
+# federal_pbs_programs_s6_bridge rows like "First Nations Languages in
+# Schools 2,540 9,833 150 - - Grants and Awards" (a Table 2.1 label glued to
+# the following row's leading $0 columns) and "Structural Adjustment Fund -
+# - 50,000 - - Suburban University Study Hubs" (two separate rows glued
+# together across a shared placeholder run).
+WEAK_DASH_PAIR = re.compile(r"(?:^|\s)[\-‐‑‒–—­](?:\s+[\-‐‑‒–—­])+(?:\s|$)")
+
+# "nfp" ("not for publication") is a standard Commonwealth budget-paper
+# placeholder for a suppressed figure - a run of 2+ is the same "flattened
+# row of placeholder columns" signal as BARE_DASH_RUN, just for a
+# not-for-publication column instead of a genuine $0. Confirmed against
+# "Cellular Broadcast Technologies(b) nfp nfp nfp - - Community
+# Broadcasting Program" and "Funding Consumer Engagement for
+# Telecommunications Regulation(b) nfp nfp nfp nfp - International
+# Organisation Contributi[on...]" (also truncated mid-word by the same
+# table-column-flattening defect).
+NFP_RUN = re.compile(r"(?:^|\s)nfp(?:\s+nfp){1,}(?:\s|$)", re.I)
+
+# PBS Table 2.1/Section 3 cash-flow-statement and appropriation-funding-
+# source rows that share this prefix vocabulary - never a program name in
+# any PBS generation. Confirmed recurring across many portfolios'
+# Statement of Cash Flows / funding-source breakdown tables (e.g. "Cash
+# used Employees", "Cash used Grant", "Funded internally from departmental
+# resources", "Payments to corporate entities(a) Australian Maritime
+# Safety Authority" - the entity name appended does not make this a
+# program, it is still a funding-source line for that entity's own
+# separate appropriation).
+CASH_FLOW_FUNDING_LINE = re.compile(
+    r"^(?:Cash (?:used|to )|Cash (?:from|received)\b|"
+    r"Funded (?:by|internally)|"
+    r"Payments?\s+(?:to|from)\s+(?:corporate|related)\b)",
+    re.I,
+)
 
 # Whole-table-section headings only - "Employee benefits", "Suppliers" etc.
 # are real line items *within* an EXPENSES section, not headings themselves,
@@ -95,6 +143,7 @@ FINANCIAL_STATEMENT_LINE_ITEMS = {
     "computer software", "intangibles", "payables", "provisions",
     "employee provisions", "interest bearing liabilities", "contributed "
     "equity", "reserves", "retained earnings", "accumulated deficit",
+    "retained surplus", "retained surplus (accumulated deficit)",
     "trade creditors", "other payables", "prepayments", "inventories",
     "grants and subsidies", "goods and services", "accrued expenses",
     # Standard GFS/AASB revenue and PP&E-asset sub-categories, confirmed
@@ -102,7 +151,55 @@ FINANCIAL_STATEMENT_LINE_ITEMS = {
     # Section 3 tables (Home Affairs, Industry, PM&C, Infrastructure,
     # Education, Health) - not a program name in any of them.
     "taxes", "fees", "fines", "loans", "leases", "land",
+    "rental income", "other income", "other unearned income",
+    "asset revaluation reserve", "sublease income",
+    "sublease interest income", "rehabilitation provision",
+    "provision for impairment",
+    # Balance-sheet asset/liability line items confirmed recurring across
+    # multiple unrelated portfolios' federal_pbs_programs_s6_bridge rows
+    # with byte-identical labels (a real program name does not repeat
+    # verbatim across Education, Defence, and Transport alike).
+    "buildings", "land and buildings", "plant and equipment",
+    "leasehold improvements", "library collection",
+    "intangibles - computer software", "intangibles – computer software",
+    "trade and other receivables", "trade and other receivables(a)",
+    "taxation receivables", "deposits", "equities", "investment property",
+    "non-financial investments", "other investments", "work in progress",
+    "investment in shares", "purchase of financial instruments",
+    "purchase of works of art", "purchase artworks",
+    "cash and cash equivalents at beginning of reporting period",
+    "cash and cash equivalents at end of reporting period",
+    "cash and cash equivalents at the beginning of the reporting period",
+    "cash and cash equivalents at the end of the reporting period",
+    "adjusted opening balance",
+    # Income/expense-statement line items, same provenance.
+    "borrowing costs", "concessional loan discount", "finance cost",
+    "other finance costs", "fair value losses", "fair value losses (a)",
+    "gains other", "gains other gains", "impairment loss of financial "
+    "instruments", "interest from loans and advances",
+    "interest payments on lease liability", "interest receipts",
+    "net adjustments to investment carrying values", "net gst paid",
+    "net gst received", "other items", "other taxes", "other(a)",
+    "other(b)", "provisions employee provisions", "other provisions",
+    "provisions other provisions", "provisions personal benefit "
+    "provisions", "receipts from government", "rendering of services",
+    "revenues from industry sources", "revenues from industry sources "
+    "regulatory fees", "revenues from other independent sources",
+    "royalties", "royalties and licence fees", "subsidies paid",
+    "subsidies paid personal benefits", "supplier prepayments",
+    "advances and loans", "advances and loans made", "audit fees",
+    "grants provisions", "contributions", "contributions from states "
+    "and territories", "departmental appropriation",
+    "payment from related entities",
 }
+
+# "Surplus/(deficit) ..." is a real AAS/GFS operating-statement line item
+# with several qualifier variants across PBS generations ("after income
+# tax", "attributable to the Australian Government", or no qualifier at
+# all) - matched as a prefix rather than added to
+# FINANCIAL_STATEMENT_LINE_ITEMS' exact-match set, since the exact trailing
+# words are not the identifying signal here.
+SURPLUS_DEFICIT_LINE = re.compile(r"^Surplus\s*/\s*\(deficit\)", re.I)
 
 TOTAL_SUBTOTAL = re.compile(
     r"^(?:Total|Sub-?total|Departmental Total|Administered Total|Net cash|"
@@ -111,7 +208,7 @@ TOTAL_SUBTOTAL = re.compile(
     re.I,
 )
 
-NARRATIVE_LEAD = re.compile(r"^(?:plus|less|note|prepared on)\s*:?\s", re.I)
+NARRATIVE_LEAD = re.compile(r"^(?:plus|less|add|note|prepared on)\s*:?\s", re.I)
 
 BARE_ACT_CITATION = re.compile(
     r"^[A-Z][A-Za-z0-9 '()\-,.]+\bAct\s+\d{4}(?:,\s*s\.?\s*\d+[A-Za-z()0-9]*)?\s*$"
@@ -205,6 +302,19 @@ def classify_label(raw_label: str) -> Classification:
         return Classification(
             "malformed_concatenated_row", False, "two_embedded_value_tokens_with_heading", signals
         )
+    # At least one embedded value token *and* a placeholder-column run (a
+    # shorter 2-dash pair, or a "not for publication" run) together is the
+    # same "flattened multi-column row" signal as the checks above, just for
+    # a row where only one real value survived alongside $0/nfp placeholder
+    # columns rather than three-or-more real values.
+    if value_tokens and WEAK_DASH_PAIR.search(label):
+        return Classification(
+            "malformed_concatenated_row", False, "value_token_with_placeholder_run", signals
+        )
+    if NFP_RUN.search(label):
+        return Classification(
+            "malformed_concatenated_row", False, "embedded_nfp_run", signals
+        )
     if BARE_NUMERIC_RUN.search(label):
         return Classification(
             "malformed_concatenated_row", False, "embedded_bare_numeric_run", signals
@@ -266,13 +376,29 @@ def classify_label(raw_label: str) -> Classification:
     #    "less:" continuation is strong, unambiguous evidence regardless of
     #    which accounting words happen to follow it.
     lowered = remainder.lower().strip(" -–—:")
+    # PBS tables footnote line items with a trailing "(a)"/"(b)"/"(aa)"
+    # marker (e.g. "Depreciation and amortisation (a)", "Fair Value Losses
+    # (a)") - strip it before the curated-vocabulary lookup below so every
+    # footnote-lettered variant of a known financial-statement line item is
+    # recognized, not just the unfootnoted form.
+    lowered_no_footnote = re.sub(r"\s*\([a-z]{1,2}\)\s*$", "", lowered).strip()
     if NARRATIVE_LEAD.match(label):
         return Classification("narrative_fragment", False, "narrative_continuation_lead", signals)
     if label[:1].islower():
         return Classification("narrative_fragment", False, "starts_lowercase", signals)
     if BARE_ACT_CITATION.match(label) and len(label) < 60:
         return Classification("narrative_fragment", False, "bare_legislative_citation", signals)
-    bare_generic = lowered in {"other", "gains", "other gains", "losses", "n.e.c.", "nec"}
+    # "operating"/"operations"/"workforce" bare (no "Key cost category /"
+    # prefix) match the same generic-word-from-an-unrelated-table pattern
+    # documented at KEY_COST_CATEGORY above (Task 2's database-hygiene
+    # milestone found every real fact under these bare words came from a
+    # workforce headcount table, a facilities/property table, a Statement
+    # of Cash Flows, or a Program 1.1 resourcing table - never a genuine
+    # program/category name).
+    bare_generic = lowered in {
+        "other", "gains", "other gains", "losses", "n.e.c.", "nec",
+        "operating", "operations", "workforce",
+    }
     if bare_generic:
         # "- Other" is reviewed separately per the mission - do not reject
         # every "Other" row automatically, but a BARE "Other" with no
@@ -298,8 +424,12 @@ def classify_label(raw_label: str) -> Classification:
 
     # 7. Known financial-statement line items (curated AAS/GFS vocabulary) -
     #    real accounting rows, never a program/outcome/component name.
-    if lowered in FINANCIAL_STATEMENT_LINE_ITEMS:
+    if lowered in FINANCIAL_STATEMENT_LINE_ITEMS or lowered_no_footnote in FINANCIAL_STATEMENT_LINE_ITEMS:
         return Classification("financial_statement_line", False, "known_line_item_vocabulary", signals)
+    if SURPLUS_DEFICIT_LINE.match(label):
+        return Classification("financial_statement_line", False, "surplus_deficit_line", signals)
+    if CASH_FLOW_FUNDING_LINE.match(label):
+        return Classification("financial_statement_line", False, "cash_flow_or_funding_source_line", signals)
 
     # 8. No defect signal fired and no explicit numbering either. Most
     #    genuine PBS program titles reach this point with no numbering

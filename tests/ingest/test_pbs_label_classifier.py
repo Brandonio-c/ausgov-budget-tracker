@@ -291,3 +291,181 @@ def test_single_leading_dash_bullet_is_not_a_dash_run():
     - only a genuine run of three or more zero-column placeholders should."""
     r = classify_label("- Special Accounts")
     assert r.rejection_reason != "embedded_bare_dash_run"
+
+
+# --- Federal deep-data mission: federal_pbs_programs_s6_bridge repair -----
+# Every label below is a real, verbatim node name found still published (not
+# quarantined) in data/facts.db for federal_pbs_programs_s6_bridge during
+# the mission's Phase 1 bridge audit - a second dataset the Task 5 classifier
+# already covers via cleanup_pbs_s6_bridge_labels.py, but two precision gaps
+# let real defects through uncaught until this pass.
+
+
+def test_bare_dash_run_recognizes_en_dash_glyph_not_just_ascii_hyphen():
+    """BARE_DASH_RUN's character class only covered ASCII "-" and the U+00AD
+    soft hyphen; a federal_pbs_programs_s6_bridge row from a PDF generation
+    using EN DASH (U+2013) placeholders for $0 columns slipped through as a
+    "valid program name" - three financial-statement line items
+    (Interest/Dividends/Taxes) concatenated by en-dash placeholders,
+    confirmed live in data/facts.db under 'Public order and safety /
+    Other public order and safety / ...'."""
+    label = "Interest – – – – – Dividends – – – – – Taxes"
+    r = classify_label(label)
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "embedded_bare_dash_run"
+    assert not r.publishable
+
+
+def test_surplus_deficit_operating_statement_line_rejected():
+    """"Surplus/(deficit) ..." is a standard AAS/GFS operating-statement
+    line with several real qualifier variants across PBS generations - all
+    confirmed live in federal_pbs_programs_s6_bridge, previously accepted
+    as a bare well-shaped "program" title."""
+    for label in (
+        "Surplus/(deficit) after income tax",
+        "Surplus/(deficit) before income tax",
+        "Surplus/(deficit) attributable to the Australian Government",
+    ):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert r.rejection_reason == "surplus_deficit_line", label
+        assert not r.publishable
+
+
+def test_surplus_deficit_regex_matches_with_no_trailing_word():
+    """Regression guard: an earlier version of this pattern ended in a `\\b`
+    word boundary immediately after the closing paren, which never matches
+    when followed by a space (no boundary between two non-word characters),
+    so the rule silently never fired at all."""
+    r = classify_label("Surplus/(deficit)")
+    assert r.rejection_reason == "surplus_deficit_line"
+
+
+def test_additional_balance_sheet_and_income_terms_rejected():
+    """More AAS/GFS vocabulary confirmed live in federal_pbs_programs_s6_bridge
+    across multiple unrelated portfolios with byte-identical labels (a real
+    program name would not repeat verbatim across Other economic affairs,
+    Public order and safety, and Transport and communication alike)."""
+    for label in (
+        "Retained surplus (accumulated deficit)",
+        "Retained surplus",
+        "Rental income",
+        "Other income",
+        "Other Unearned Income",
+        "Asset revaluation reserve",
+        "Sublease income",
+        "Sublease interest income",
+        "Rehabilitation provision",
+        "Provision for Impairment",
+    ):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert not r.publishable, label
+
+
+def test_add_narrative_lead_rejected_without_matching_additional_words():
+    """"Add Provision for Impairment" is a narrative continuation ("Add:" /
+    "Add" prefixing a financial-statement adjustment line), the same shape
+    as the existing "plus"/"less" leads - but "add" as a narrative-lead
+    token must not false-positive on a real word starting with "add", e.g.
+    "Additional Support Payments"."""
+    r = classify_label("Add Provision for Impairment")
+    assert r.classification == "narrative_fragment"
+    assert r.rejection_reason == "narrative_continuation_lead"
+    assert not r.publishable
+
+    r2 = classify_label("Additional Support Payments")
+    assert r2.rejection_reason != "narrative_continuation_lead"
+    assert r2.classification == "program"
+    assert r2.publishable
+
+
+def test_cash_flow_and_funding_source_lines_rejected():
+    """"Cash used X"/"Funded by/internally X"/"Payments to corporate
+    entities X" are Statement of Cash Flows / appropriation-funding-source
+    rows, confirmed recurring across many federal_pbs_programs_s6_bridge
+    portfolios - an entity or category name appended after the prefix
+    (e.g. "Payments to corporate entities(b) Australian Sports
+    Commission") does not make it a program, it is still that entity's own
+    separate funding-source line, not a program of the reporting agency."""
+    for label in (
+        "Cash used Employees",
+        "Cash used Grant",
+        "Cash used Suppliers",
+        "Cash to Official Public Account for: - Transfers to other entities (Finance - whole of government)",
+        "Funded by capital appropriation – DCB (b)",
+        "Funded internally from departmental resources",
+        "Payments to corporate entities(b) Australian Sports Commission",
+    ):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert r.rejection_reason == "cash_flow_or_funding_source_line", label
+        assert not r.publishable, label
+
+
+def test_value_token_with_short_dash_pair_rejected():
+    """A run of only 2 dash-placeholder tokens (as opposed to the 3+ that
+    BARE_DASH_RUN alone requires) is not decisive by itself, but combined
+    with an embedded VALUE_TOKEN it is the same flattened-multi-column-row
+    signal - confirmed against a real federal_pbs_programs_s6_bridge row
+    where a Table 2.1 label got glued to the following row's leading $0
+    placeholder columns."""
+    label = "First Nations Languages in Schools 2,540 9,833 150 - - Grants and Awards"
+    r = classify_label(label)
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "value_token_with_placeholder_run"
+    assert not r.publishable
+
+
+def test_embedded_nfp_run_rejected_standalone():
+    """"nfp" (not for publication) is a standard Commonwealth budget-paper
+    placeholder for a suppressed figure - a run of 2+ is the same
+    flattened-row-of-placeholder-columns signal as a bare dash run, and
+    (unlike the dash-pair case above) is decisive on its own since "nfp"
+    repeated is never legitimate title text."""
+    r = classify_label(
+        "Cellular Broadcast Technologies(b) nfp nfp nfp - - Community Broadcasting Program"
+    )
+    assert r.classification == "malformed_concatenated_row"
+    assert r.rejection_reason == "embedded_nfp_run"
+    assert not r.publishable
+
+
+def test_financial_statement_vocabulary_matches_with_trailing_footnote_marker():
+    """A trailing "(a)"/"(b)" PBS footnote marker must not defeat the
+    curated-vocabulary lookup - "Depreciation and amortisation (a)" is the
+    same real accounting line as the unfootnoted form, confirmed live in
+    federal_pbs_programs_s6_bridge with and without the marker attached
+    (with a space, and glued directly with none)."""
+    for label in (
+        "Depreciation and amortisation (a)",
+        "Depreciation and amortisation(a)",
+        "Fair Value Losses (a)",
+    ):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert r.rejection_reason == "known_line_item_vocabulary", label
+        assert not r.publishable, label
+
+
+def test_other_provisions_rejected():
+    """"Other provisions" (as opposed to "Provisions Other provisions",
+    already covered) is its own standalone balance-sheet line, confirmed
+    live in federal_pbs_programs_s6_bridge."""
+    r = classify_label("Other provisions")
+    assert r.classification == "financial_statement_line"
+    assert not r.publishable
+
+
+def test_bare_operating_and_operations_rejected_without_key_cost_category_prefix():
+    """Task 2's database-hygiene milestone found every real fact under the
+    bare words "Operating"/"Operations"/"Workforce" came from an unrelated
+    table (a workforce headcount table, a facilities/property table, a
+    Statement of Cash Flows, a Program 1.1 resourcing table) when prefixed
+    with "Key cost category /" - the same is true with no prefix at all,
+    confirmed against real federal_pbs_programs_s6_bridge rows."""
+    for label in ("Operating", "OPERATING", "Operations", "Workforce"):
+        r = classify_label(label)
+        assert r.classification == "narrative_fragment", label
+        assert r.rejection_reason == "bare_generic_term_no_supporting_context", label
+        assert not r.publishable, label
