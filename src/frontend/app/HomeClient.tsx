@@ -178,6 +178,28 @@ export default function HomeClient() {
     walk(rawChildren);
     return ["canonical", ...Array.from(found).sort()];
   }, [rawChildren]);
+  // How many of the current top-level nodes actually have data under each
+  // related branch — disclosed on the button itself, before the user picks
+  // one, so "Budget Statement 6" never reads as if it applies uniformly to
+  // every function when in reality most may have nothing under it (Loop 3
+  // showed 10 of 17 federal functions are leaves even under Statement 6).
+  const branchCoverage = useMemo(() => {
+    const coverage: Record<string, { covered: number; total: number }> = {};
+    for (const family of branchChoices) {
+      if (family === "canonical") continue;
+      // Derived from perFunctionDepth (Loop 3) rather than reimplementing
+      // node preparation here — an earlier version used a plain
+      // additiveChildren() call that skipped collapseSameNameChain(), which
+      // silently produced a different (wrong) count than the depth
+      // disclosure below computes from the same underlying data.
+      const depths = perFunctionDepth(rawChildren, family);
+      coverage[family] = {
+        covered: depths.filter((f) => f.depth > 1).length,
+        total: depths.length,
+      };
+    }
+    return coverage;
+  }, [rawChildren, branchChoices]);
   const activeBranchChoice = branchChoices.includes(branchChoice)
     ? branchChoice
     : "canonical";
@@ -497,6 +519,11 @@ export default function HomeClient() {
                 key={choice}
                 type="button"
                 onClick={() => handleBranchChoiceChange(choice)}
+                title={
+                  branchCoverage[choice]
+                    ? `${branchCoverage[choice].covered} of ${branchCoverage[choice].total} functions have data under this branch`
+                    : undefined
+                }
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   activeBranchChoice === choice
                     ? "border-blue-600 bg-blue-600 text-white"
@@ -504,6 +531,9 @@ export default function HomeClient() {
                 }`}
               >
                 {BRANCH_LABELS[choice] ?? choice.replaceAll("_", " ")}
+                {branchCoverage[choice]
+                  ? ` (${branchCoverage[choice].covered}/${branchCoverage[choice].total})`
+                  : ""}
               </button>
             ))}
           </div>
