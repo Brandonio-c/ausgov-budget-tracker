@@ -165,10 +165,13 @@ function CombinedPageInner() {
   const currentNode =
     drillPath.length > 0 ? drillPath[drillPath.length - 1] : combinedTree;
   const rawChildren = currentNode?.children ?? null;
-  const displayedChildren = useMemo(
-    () => (rawChildren?.length ? foldToTopN(additiveChildren(rawChildren)) : []),
-    [rawChildren],
-  );
+  // The undrilled top level is the well-known, bounded function/level list —
+  // never fold it into "Other"; folding is only appropriate once drilled deeper.
+  const displayedChildren = useMemo(() => {
+    if (!rawChildren?.length) return [];
+    const additive = additiveChildren(rawChildren);
+    return drillPath.length === 0 ? additive : foldToTopN(additive);
+  }, [rawChildren, drillPath.length]);
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
   const branchChoices = useMemo(() => {
     const found = new Set<string>();
@@ -452,6 +455,7 @@ function CombinedPageInner() {
                 ringDepth={ringDepth}
                 branchChoice={activeBranchChoice}
                 centerLabel={centerLabel}
+                foldFirstRing={drillPath.length > 0}
               />
             ) : (
               <p className="py-20 text-center text-sm text-zinc-500">

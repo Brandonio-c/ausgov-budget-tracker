@@ -154,10 +154,13 @@ export default function HomeClient() {
   const rawChildren = currentNode?.children ?? null;
   // Exclude Statement 6 / FBO navigation folders from pie/bar — they preserve the
   // parent amount and would double the chart total (e.g. Social protection $286B + FBO $286B).
-  const displayedChildren = useMemo(
-    () => (rawChildren?.length ? foldToTopN(additiveChildren(rawChildren)) : []),
-    [rawChildren],
-  );
+  // The undrilled top level is the well-known, bounded federal/state function list —
+  // never fold it into "Other"; folding is only appropriate once drilled deeper.
+  const displayedChildren = useMemo(() => {
+    if (!rawChildren?.length) return [];
+    const additive = additiveChildren(rawChildren);
+    return drillPath.length === 0 ? additive : foldToTopN(additive);
+  }, [rawChildren, drillPath.length]);
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
   const safeRingDepth = Math.max(1, tree?.projection?.max_visible_depth ?? 2);
   const branchChoices = useMemo(() => {
@@ -582,6 +585,7 @@ export default function HomeClient() {
                 ringDepth={ringDepth}
                 branchChoice={activeBranchChoice}
                 centerLabel={centerLabel}
+                foldFirstRing={drillPath.length > 0}
               />
             ) : (
               <p className="py-20 text-center text-sm text-zinc-500">Loading…</p>

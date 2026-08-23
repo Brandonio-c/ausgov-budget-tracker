@@ -301,11 +301,21 @@ function buildLevel(
   currentDepth: number,
   reportedParentValue: number | null,
   branchChoice: BranchChoice,
+  foldFirstRing: boolean,
 ): SunburstDatum[] {
   if (depthRemaining <= 0 || nodes.length === 0) return [];
 
   // `nodes` are already ring-prepared (additive or Statement 6 cascade).
-  const folded = foldToTopN(nodes.filter((n) => n.value > 0));
+  // The outermost ring of an undrilled view is the well-known, bounded
+  // federal/state top-level function list — folding it into "Other" hides
+  // real named categories behind an opaque bucket at the single most
+  // important level of the chart. Folding remains appropriate once drilled
+  // deeper, where tails can be long and genuinely unbounded (e.g. hundreds
+  // of contract line items).
+  const positive = nodes.filter((n) => n.value > 0);
+  const folded = currentDepth === 1 && !foldFirstRing
+    ? positive.sort((a, b) => b.value - a.value)
+    : foldToTopN(positive);
   const topColors = parentColor
     ? folded.map((n) =>
         n.name.startsWith("Other") ? MUTED : lightenHex(parentColor, Math.min(0.55, 0.15 + currentDepth * 0.08)),
@@ -334,6 +344,7 @@ function buildLevel(
             currentDepth + 1,
             prepared.value,
             branchChoice,
+            foldFirstRing,
           )
         : undefined;
 
@@ -382,12 +393,16 @@ function buildLevel(
 /**
  * Build a sunburst tree from the current drill node's children.
  * `ringDepth` 1 = one ring (like pie); 2–3 expand nested breakdowns outward.
+ * `foldFirstRing` controls whether the outermost ring may fold into "Other" —
+ * pass `false` for an undrilled top-level view (federal/state function list)
+ * so every named function stays visible; leave `true` once drilled deeper.
  */
 export function buildSunburst(
   children: TreeNode[],
   ringDepth: number,
   dark: boolean,
   branchChoice: BranchChoice = "canonical",
+  foldFirstRing = true,
 ): SunburstBuild {
   const available = Math.max(1, maxVisibleDepth(children, branchChoice));
   const depth = clampDepth(ringDepth, available);
@@ -411,6 +426,7 @@ export function buildSunburst(
     1,
     rootReportedTotal,
     branchChoice,
+    foldFirstRing,
   );
   const total = data.reduce((s, n) => s + n.value, 0);
   return { data, lookup, total };

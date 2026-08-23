@@ -91,10 +91,14 @@ export default function DebtViewer() {
     level === "federal" && tree?.children?.length === 1 ? tree.children[0] : tree;
   const currentNode = drillPath.length > 0 ? drillPath[drillPath.length - 1] : rootNode;
   const rawChildren = currentNode?.children ?? null;
-  const displayedChildren = useMemo(
-    () => (rawChildren?.length ? foldToTopN(additiveChildren(rawChildren)) : []),
-    [rawChildren],
-  );
+  // The undrilled top level is the well-known, bounded liability-category
+  // list — never fold it into "Other"; folding is only appropriate once
+  // drilled deeper.
+  const displayedChildren = useMemo(() => {
+    if (!rawChildren?.length) return [];
+    const additive = additiveChildren(rawChildren);
+    return drillPath.length === 0 ? additive : foldToTopN(additive);
+  }, [rawChildren, drillPath.length]);
   const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
   const maxRingDepth = useMemo(
     () => Math.max(1, maxVisibleDepth(rawChildren)),
@@ -304,6 +308,7 @@ export default function DebtViewer() {
                 onNodeHover={handleNodeHover}
                 ringDepth={ringDepth}
                 centerLabel={centerLabel}
+                foldFirstRing={drillPath.length > 0}
               />
             ) : (
               <p className="py-20 text-center text-sm text-zinc-500">Loading…</p>

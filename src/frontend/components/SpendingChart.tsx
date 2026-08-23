@@ -38,6 +38,8 @@ interface Props {
   /** When false, do not imply an additive national total. */
   isAdditive?: boolean;
   branchChoice?: string;
+  /** When false, the outermost ring never folds into "Other" (undrilled top-level view). */
+  foldFirstRing?: boolean;
 }
 
 const MIN_CHART_HEIGHT = 360;
@@ -62,6 +64,7 @@ export default function SpendingChart({
   valueUnit = null,
   isAdditive = true,
   branchChoice = "canonical",
+  foldFirstRing = true,
 }: Props) {
   const { chartMaximized } = useSplitPaneLayout();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -123,8 +126,8 @@ export default function SpendingChart({
 
   const sunburst = useMemo(() => {
     if (chartType !== "rings") return null;
-    return buildSunburst(nodes, ringDepth, dark, branchChoice);
-  }, [nodes, chartType, ringDepth, dark, branchChoice]);
+    return buildSunburst(nodes, ringDepth, dark, branchChoice, foldFirstRing);
+  }, [nodes, chartType, ringDepth, dark, branchChoice, foldFirstRing]);
 
   const lookupRef = useRef(sunburst?.lookup);
   lookupRef.current = sunburst?.lookup;

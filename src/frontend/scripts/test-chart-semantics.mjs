@@ -168,6 +168,23 @@ try {
     { name: "Health", depth: 3 },
   ]);
 
+  // Regression: a P1 defect where the outermost ring of an undrilled
+  // top-level view (the well-known, bounded federal/state function list)
+  // folded into "Other" past 7 siblings just like any deeper, genuinely
+  // unbounded tail — hiding real named categories at the single most
+  // important level of the chart. foldFirstRing=false (undrilled) must keep
+  // every top-level function visible; foldFirstRing=true (drilled, the
+  // default) must fold exactly as before.
+  const nineFunctions = Array.from({ length: 9 }, (_, i) =>
+    node(`Function ${i}`, 100 - i, relationship()),
+  );
+  const undrilled = buildSunburst(nineFunctions, 1, false, "canonical", false);
+  assert.equal(undrilled.data.length, 9, "undrilled top level must never fold into Other");
+  assert.ok(undrilled.data.every((n) => !n.name.startsWith("Other")));
+  const drilled = buildSunburst(nineFunctions, 1, false, "canonical", true);
+  assert.equal(drilled.data.length, 8, "drilled/default view still folds past 7 siblings");
+  assert.ok(drilled.data.some((n) => n.name.startsWith("Other")));
+
   const relatedTooltip = reportedTooltip(
     "Recipients",
     {
