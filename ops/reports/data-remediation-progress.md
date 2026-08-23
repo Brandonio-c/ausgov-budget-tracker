@@ -2393,6 +2393,14 @@ Committed `cae788e`. Pure frontend fix, zero data/graph impact. **Not yet deploy
 
 Committed `485212a`. Pure frontend fix, zero data/graph impact. **Not yet deployed** - same standing redeploy decision reserved for the user.
 
+### Loop 10 — P1: FY2025-26 golden regression fixtures + "Other" synthetic-depth disposition
+
+**FY2025-26 golden fixtures (fixed)**: `PROJECTIONS` in `scripts/ops/dashboard_depth_audit.py` had entries through FY2024-25 only - the exact year this session's fixes targeted was unprotected by any regression check. Added `federal_actuals_2025_26`/`federal_budget_2025_26`, regenerated the fixture against the real `data/facts.db` (read-only). Verified: `--check-fixture` idempotent across 2 runs, `tests/ops/test_dashboard_depth_audit.py` 4/4 including the `full_data`-marked golden-fixture comparison test; new fixture's root_total ($724,901,922,000) matches every live screenshot from Loops 1-9 exactly. Broader `pytest tests/` run hit pre-existing `duckdb`/`pandas` import errors in unrelated ingest modules, confirmed unrelated to this change.
+
+**"Other" synthetic-depth-as-real-hierarchy - disposition**: traced every depth-computation path (`maxVisibleDepth`, `nestableChildren`, `ringRootChildren`, `perFunctionDepth`) and confirmed none ever call `foldToTopN()` - folding was always render-only, never depth-metric-affecting. The concern's real-world manifestation (a fake "Other" hierarchy level at the top of the chart) was already eliminated by Loop 4. **No further code change required** - this P1 item is satisfied.
+
+Committed `59721c2`. Full narrative in `federal-depth-visualization-remediation-20260820T151500Z.md` (Loop 10).
+
 ### Next item (this phase)
 
-P0 items 1-4, top-level folding, stable colors, first-level persistent labeling, stale selected-node metadata, branch coverage disclosure, and taxonomy/basis disclosure are now addressed. Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy and second-level labeling, and FY2025-26 golden regression fixtures - before moving to the data-depth ingestion mission and the high-value dead-end audit.
+P0 items 1-4 and 6 of 7 P1 items are now addressed. **Second-level persistent labeling** is the one remaining open P1 item - deliberately deferred as its own larger UI design decision (how to represent a nested second level legibly, or build the fuller legend/table the directive separately names) rather than a rushed patch. Next: either take on second-level labeling, or move to the data-depth ingestion mission and the high-value dead-end audit, which are categorically larger, data-acquisition-heavy efforts distinct from this session's code fixes.

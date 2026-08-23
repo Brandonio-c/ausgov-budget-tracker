@@ -809,3 +809,69 @@ scope-creeping into this fix.
 
 Continue into the remaining P1 items: "Other" synthetic-depth-as-real-hierarchy, second-level
 persistent labeling, and FY2025-26 golden regression fixtures.
+
+## Loop 10 — P1: FY2025-26 golden regression fixtures + "Other" synthetic-depth disposition
+
+### FY2025-26 golden regression fixtures (fixed, not yet deployed)
+
+Commit: `59721c2`
+
+**Observe**: `PROJECTIONS` in `scripts/ops/dashboard_depth_audit.py` had entries for federal
+actuals/budget through FY2024-25, but none for FY2025-26 — the exact year Loops 1-9 of this
+session's fixes targeted. Without a FY2025-26 fixture, none of this session's
+live-verified behavior was protected by an automated regression check.
+
+**Implementation**: added `federal_actuals_2025_26` and `federal_budget_2025_26` to
+`PROJECTIONS` (confirmed via direct API calls against the real production backend that both
+years have genuine, non-empty data first). Regenerated the golden fixture via
+`--write-fixture` against the real `data/facts.db` (read-only per the script's own
+contract).
+
+**Verified**: `--check-fixture` passes cleanly and idempotently across 2 consecutive runs.
+`tests/ops/test_dashboard_depth_audit.py` passes 4/4, including the `full_data`-marked
+`test_current_projection_matches_reviewed_golden_fixture`, which generically re-validates
+every `PROJECTIONS` entry and now covers the 2 new ones automatically. Cross-check: the new
+`federal_actuals_2025_26` fixture's `root_total` ($724,901,922,000) matches every live
+browser screenshot captured across Loops 1-9 of this session exactly — the fixture reflects
+the same real data already manually verified throughout this loop.
+
+Ran the broader `pytest tests/` suite for a wider regression check; 22 unrelated `tests/ingest/*`
+modules and `tests/api/test_citation.py` fail to even *import* in this shell due to missing
+`duckdb`/`pandas` packages — confirmed pre-existing environment gaps (this session's change
+touches neither module), not caused by this fix.
+
+### "Other" synthetic-depth-as-real-hierarchy — disposition: already resolved by Loop 4, verified by code trace
+
+Traced every depth-computation code path (`maxVisibleDepth`, `nestableChildren`,
+`ringRootChildren`, `perFunctionDepth` in `sunburstTree.ts`) and confirmed none of them ever
+call `foldToTopN()` — folding is applied *only* inside the render path (`buildLevel()`'s
+`folded` computation and each view's `displayedChildren` memo for pie/bar), never inside any
+function that computes or reports a depth number. This means the "Other" bucket has never
+been able to inflate a reported depth metric; the concern this P1 item names was really the
+*visual* one — a synthetic grouping wedge appearing at the single most important level of
+the chart, implying a fake intermediate hierarchy level between the root and its real
+children. Loop 4 already eliminated that specific manifestation by disabling folding
+entirely at the undrilled top level. At deeper (already-drilled) levels, an "Other (N)"
+bucket remains a legitimate, clearly-labeled UX aggregation of a genuinely long tail —
+drilling into it always reveals its real constituent items directly (never fabricated
+data), and the depth metrics driving "Safe levels"/the per-function disclosure are
+unaffected by its presence either way.
+
+**Disposition: no further code change required.** This P1 item is satisfied by Loop 4 plus
+this trace confirmation, not a separate fix.
+
+### Deployment status
+
+**Not yet deployed.** Same standing constraint as Loops 1-9. The fixture addition is a test
+asset, not a live-serving code change, but is grouped into this report for completeness.
+
+### Remaining P1 item
+
+**Second-level persistent labeling** is the one remaining P1 item not yet addressed. Loop 6
+solved first-level (undrilled top-level) labeling via `ChartLegend`; extending it to a
+second nested level (or building the fuller "legend/table" the directive separately names)
+is a larger, genuinely distinct UI design decision — how to represent a second level
+legibly without it becoming its own cluttered sub-chart — rather than a quick patch of the
+existing component. Deliberately deferred as its own item rather than rushed alongside this
+loop's other work; tracked here as the sole open P1 item before moving to the data-depth
+ingestion mission and the high-value dead-end audit.
