@@ -29,7 +29,7 @@ try {
     { stdio: "inherit" },
   );
 
-  const { foldToTopN, formatMeasureValue } = require(path.join(buildDir, "colors.js"));
+  const { foldToTopN, formatMeasureValue, colorsFor } = require(path.join(buildDir, "colors.js"));
   const { buildSunburst, perFunctionDepth } = require(path.join(buildDir, "sunburstTree.js"));
   const { formatApiAvailability } = require(path.join(buildDir, "availability.js"));
   const { additiveSiblingTotal, commonUnit, reportedAriaSummary, reportedTooltip } = require(
@@ -230,6 +230,35 @@ try {
   assert.equal(commonUnit([audNode, percentNode], null), "mixed_units");
   assert.equal(additiveSiblingTotal([audNode, percentNode], audNode), 100);
   assert.equal(additiveSiblingTotal([audNode, percentNode], percentNode), 12.5);
+
+  // Regression: a P1 defect where colorsFor() assigned color by array
+  // position (i % palette.length), so the same function's color silently
+  // reassigned whenever value-based sort order changed across years/modes,
+  // and — once Loop 4 stopped folding the top-level ring — 17 real federal
+  // functions against a 7-hue palette produced outright collisions at
+  // positions 0/7/14, 1/8/15, 2/9/16 sharing identical hex values. Color
+  // must be a function of the node's own name only.
+  const health = node("Health", 1, relationship());
+  const defence = node("Defence", 1, relationship());
+  const socialSecurity = node("Social security and welfare", 1, relationship());
+  const sortedByValueAsc = [
+    node("Health", 10, relationship()),
+    node("Defence", 20, relationship()),
+    node("Social security and welfare", 30, relationship()),
+  ];
+  const sortedByValueDesc = [...sortedByValueAsc].reverse();
+  const colorsAsc = colorsFor(sortedByValueAsc, false);
+  const colorsDesc = colorsFor(sortedByValueDesc, false);
+  const byNameAsc = Object.fromEntries(sortedByValueAsc.map((n, i) => [n.name, colorsAsc[i]]));
+  const byNameDesc = Object.fromEntries(sortedByValueDesc.map((n, i) => [n.name, colorsDesc[i]]));
+  assert.deepEqual(
+    byNameAsc,
+    byNameDesc,
+    "the same function's color must not change when sort order changes",
+  );
+  assert.equal(colorsFor([health], false)[0], byNameAsc["Health"]);
+  assert.equal(colorsFor([defence], false)[0], byNameAsc["Defence"]);
+  assert.equal(colorsFor([socialSecurity], false)[0], byNameAsc["Social security and welfare"]);
 
   const folded = foldToTopN(
     [

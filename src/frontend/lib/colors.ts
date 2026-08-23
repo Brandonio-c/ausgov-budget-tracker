@@ -118,9 +118,27 @@ export function foldToTopN(children: TreeNode[], n = TOP_N): TreeNode[] {
   return [...head, ...others].sort((a, b) => b.value - a.value);
 }
 
+/**
+ * Deterministic palette index from a name — stable across renders, sort
+ * orders, and files, unlike an array-position index (`i % length`), which
+ * silently reassigns every function's color whenever value-based sort order
+ * changes (a different year, mode, or branch) and collides outright once
+ * more categories are visible than palette hues (e.g. 17 federal functions
+ * against a 7-color palette: positions 0/7/14 previously shared one hue).
+ */
+function stableColorIndex(name: string, paletteLength: number): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % paletteLength;
+}
+
 export function colorsFor(nodes: TreeNode[], dark: boolean): string[] {
   const palette = dark ? CATEGORICAL_DARK : CATEGORICAL_LIGHT;
-  return nodes.map((node, i) => (node.name.startsWith("Other") ? MUTED : palette[i % palette.length]));
+  return nodes.map((node) =>
+    node.name.startsWith("Other") ? MUTED : palette[stableColorIndex(node.name, palette.length)],
+  );
 }
 
 export function formatAud(value: number): string {
