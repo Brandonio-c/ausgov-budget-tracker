@@ -457,6 +457,23 @@ def test_other_provisions_rejected():
     assert not r.publishable
 
 
+def test_trailing_parenthesized_numeric_values_stripped_before_vocabulary_lookup():
+    """A PBS reconciliation-table row can glue one or more parenthesized
+    negative-value columns onto an otherwise-recognizable line item - each
+    occurrence has a *different* trailing figure for a different agency, so
+    an exact-match lookup alone never fires. Confirmed live across many
+    federal_pbs_programs_s6_bridge rows under the same parent with
+    different numbers each time."""
+    for label in (
+        "Adjusted opening balance (1,431)",
+        "Adjusted opening balance (105,497)",
+        "Investments (91,081) (1,944)",
+    ):
+        r = classify_label(label)
+        assert r.classification == "financial_statement_line", label
+        assert not r.publishable, label
+
+
 def test_bare_operating_and_operations_rejected_without_key_cost_category_prefix():
     """Task 2's database-hygiene milestone found every real fact under the
     bare words "Operating"/"Operations"/"Workforce" came from an unrelated

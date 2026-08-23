@@ -76,7 +76,48 @@ PREFER_PROGRAM = re.compile(
 )
 
 
-def _s6_function(portfolio: str) -> str | None:
+# PORTFOLIO_TO_S6 maps an entire portfolio to one COFOG function - a
+# reasonable simplification for most portfolios, but wrong for
+# "Infrastructure Transport Regional Development Communications Sport and
+# the Arts" specifically: its own name spans four distinct COFOG functions
+# (Transport, Communication, Recreation and culture via Sport, Recreation
+# and culture via the Arts), and PORTFOLIO_TO_S6 crudely mapped the whole
+# portfolio to "Transport and communication" alone. Confirmed live in
+# data/facts.db: national cultural institutions genuinely funded through
+# this portfolio (National Gallery of Australia, National Library of
+# Australia, National Museum of Australia, National Portrait Gallery of
+# Australia, Screen Australia, Creative Australia, the National Film and
+# Sound Archive, the Australian National Maritime Museum, the National
+# Sports Tribunal) were all attributed to "Transport and communication"
+# instead of "Recreation and culture" - a parent-attribution defect
+# distinct from (and found alongside) the label-quality defects
+# pbs_label_classifier.py addresses; this table only decides *which
+# function a row belongs to*, never whether the row's own label is a real
+# program name.
+ARTS_CULTURE_SPORT_PROGRAM_OVERRIDE = re.compile(
+    r"National Gallery|National Library|National Museum|"
+    r"National Portrait Gallery|National Film and Sound Archive|"
+    r"Screen Australia|Creative Australia|Australian National Maritime "
+    r"Museum|Old Parliament House|National Sports Tribunal|"
+    r"Special Broadcasting Service|Regional Arts|Arts Training|"
+    r"Indigenous Arts, Languages and Repatriation|Heritage and Cultural|"
+    r"Film and Television|On-screen Investments|"
+    r"Indigenous Repatriation Special Account|"
+    r"Portrait of Australia|National Institutes",
+    re.I,
+)
+
+
+def _function_override_from_program(program_label: str) -> str | None:
+    if ARTS_CULTURE_SPORT_PROGRAM_OVERRIDE.search(program_label or ""):
+        return "Recreation and culture"
+    return None
+
+
+def _s6_function(portfolio: str, program_label: str = "") -> str | None:
+    override = _function_override_from_program(program_label)
+    if override:
+        return override
     p = (portfolio or "").lower()
     for key, fn in PORTFOLIO_TO_S6:
         if key in p:
@@ -107,6 +148,14 @@ def _subfunction(function: str, program_label: str) -> str:
                 return "Agriculture"
             if function == "General public services":
                 return "General public services nec"
+            if function == "Recreation and culture":
+                return sub
+    if function == "Recreation and culture":
+        if re.search(r"sport", program_label or "", re.I):
+            return "Sport and recreation"
+        if re.search(r"broadcast", program_label or "", re.I):
+            return "Broadcasting"
+        return "Arts and cultural heritage"
     defaults = {
         "Defence": "Defence programs",
         "Education": "General administration",
@@ -155,12 +204,12 @@ def remap_rows(rows: list[dict]) -> list[dict]:
         portfolio = r.get("portfolio") or ""
         if not portfolio and " / " in (r.get("category") or ""):
             portfolio = r["category"].split(" / ", 1)[0]
-        function = _s6_function(portfolio)
-        if not function:
-            continue
         program_label = r.get("program_label") or (
             r.get("category", "").split(" / ", 1)[-1] if r.get("category") else ""
         )
+        function = _s6_function(portfolio, program_label)
+        if not function:
+            continue
         if _is_noise(program_label):
             continue
         port_l = portfolio.lower()

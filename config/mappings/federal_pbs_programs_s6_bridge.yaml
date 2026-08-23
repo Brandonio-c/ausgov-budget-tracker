@@ -24,3 +24,13 @@ attribution:
   original_resource_url_column: resource_url
   cached_copy_path: data/staging/breakdowns/pbs_programs_all.csv
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
+# fact_key embeds derived label text (node_name = "Function / Subfunction /
+# Program"), which changes whenever pbs_programs_s6_bridge.py's portfolio-
+# to-function mapping is corrected (e.g. the arts/culture misattribution
+# fix in the federal deep-data mission's Phase 1) - without
+# replace_on_reload, a fact from an earlier, wrongly-attributed run would
+# never get overwritten (different fact_key) and would sit alongside the
+# corrected row forever, double-counting the same institution under two
+# functions. Matches federal_pbs_programs_all.yaml's own reasoning for the
+# identical replace_on_reload need.
+replace_on_reload: true

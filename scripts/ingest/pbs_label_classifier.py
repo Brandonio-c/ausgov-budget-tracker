@@ -382,6 +382,19 @@ def classify_label(raw_label: str) -> Classification:
     # footnote-lettered variant of a known financial-statement line item is
     # recognized, not just the unfootnoted form.
     lowered_no_footnote = re.sub(r"\s*\([a-z]{1,2}\)\s*$", "", lowered).strip()
+    # A PBS reconciliation-table row can glue one or more parenthesized
+    # negative-value columns onto an otherwise-recognizable line item (e.g.
+    # "Adjusted opening balance (1,431)", "Investments (91,081) (1,944)") -
+    # confirmed live across many federal_pbs_programs_s6_bridge rows, each
+    # with a *different* trailing figure for a different agency, so an
+    # exact-match lookup alone never fires. Strip trailing numeric-only
+    # parenthesized groups the same way the alphabetic-footnote case above
+    # does, before the vocabulary lookup - this only ever narrows an
+    # already-known-safe vocabulary term, it cannot turn a real program name
+    # into a false rejection.
+    lowered_no_trailing_values = re.sub(
+        r"(?:\s*\(-?[\d,]+(?:\.\d+)?\))+\s*$", "", lowered
+    ).strip()
     if NARRATIVE_LEAD.match(label):
         return Classification("narrative_fragment", False, "narrative_continuation_lead", signals)
     if label[:1].islower():
@@ -424,7 +437,11 @@ def classify_label(raw_label: str) -> Classification:
 
     # 7. Known financial-statement line items (curated AAS/GFS vocabulary) -
     #    real accounting rows, never a program/outcome/component name.
-    if lowered in FINANCIAL_STATEMENT_LINE_ITEMS or lowered_no_footnote in FINANCIAL_STATEMENT_LINE_ITEMS:
+    if (
+        lowered in FINANCIAL_STATEMENT_LINE_ITEMS
+        or lowered_no_footnote in FINANCIAL_STATEMENT_LINE_ITEMS
+        or lowered_no_trailing_values in FINANCIAL_STATEMENT_LINE_ITEMS
+    ):
         return Classification("financial_statement_line", False, "known_line_item_vocabulary", signals)
     if SURPLUS_DEFICIT_LINE.match(label):
         return Classification("financial_statement_line", False, "surplus_deficit_line", signals)
