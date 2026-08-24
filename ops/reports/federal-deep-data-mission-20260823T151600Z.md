@@ -879,19 +879,78 @@ without repeating the discovery work. Raw file cached locally (not yet formally 
 in `procurement_sources.yaml` or moved into `data/raw/` - a deliberate half-step, since
 formal registration is normally done alongside, not ahead of, the ingestion it supports).
 
+## Loop 10 — NDIS payments depth built (Loop 9's forensics executed)
+
+Built the extractor Loop 9 deliberately deferred, using the verified forensics already
+banked: `scripts/ingest/extractors/ndis_payments.py` extracts only the verified-safe
+`SuppClass → SuppCatNm` slice (20 rows: 4 support-class totals + 16 categories), 7 tests in
+`tests/ingest/test_ndis_payments.py` (all passing, including one that pins the exact
+$2,000-on-$9.4B reconciliation tolerance and one that asserts the implied grand total does
+*not* exactly match the canonical $53.778B figure - guarding the reason this attaches as
+`related_breakdown`, not `same_group`, at the canonical boundary).
+
+New measure `ndis_payment_amount` (`scripts/ingest/migrations/029_ndis_payment_amount_
+measure.sql`, `additive_across_nodes=0`, `root_total_allowed=0` - same defensive pattern as
+migrations 019/028), source registered in `procurement_sources.yaml`
+(`ndis_payments_data`), raw file cached at `data/raw/federal/ndis_payments/snapshots/
+20260824T044821Z/` with `hashes.json`/`discovery.json`. Graph: extended the existing
+`link_ndis_participant_statistics()` crosswalk (now covering three NDIS statistics families)
+with a third `related_breakdown` edge from the canonical NDIS node to a new `"NDIA Payments"`
+root; internal `SuppClass → SuppCatNm` nesting is `same_group` (verified genuine partition,
+single source) via a new `ndis_payments_source_native` edge set.
+
+**A genuine difference from Loop 8, verified live and worth noting**: the `"NDIA Payments"`
+root node has no fact of its own (no grand-total row was extracted, since none exists
+natively in the source), so `_to_tree_node()`'s default "sum children" behavior applies -
+and *unlike* the participant dataset's folder-aggregate trap, this is exactly correct here:
+the 4 support classes are genuinely mutually exclusive and exhaustive of the whole dataset,
+so their sum ($51,451,547,000) is the same real figure already independently verified during
+Loop 9's forensics, not a fabricated recomputation.
+
+**Disposable-copy-first verified** (facts/nodes/edges each +20/+21/+21, 0 quarantined,
+idempotent on both edge-set rebuilds and the mapping reload, integrity ok), applied
+identically to the live DB. **Live drill-down confirmed**: canonical NDIS ($53.778B,
+unchanged) → related crossing → NDIA Payments ($51.45B) → Capacity Building ($9.4B) →
+CB Daily Activity ($5.96B) - depth 9 from the Federal root, a second, independent genuine
+deep branch alongside Loop 8's participant/geography chain. Every leaf's `relationship.unit`
+correctly reads `"AUD"` (a genuine dollar figure this time, unlike Loop 8's `participants`/
+`AUD_per_participant`) and `compatibility_group` reads `"ndis_payment_statistics"` (never
+`budget_expense`/`actual_expense`, so it can never be swept into a canonical total by a
+future query that filters on compatibility_group).
+
+**Canonical total safety**: all 5 reference-year Budget-mode totals confirmed byte-identical
+before and after. Golden fixture diff: exactly one line (`edge_count` 13590→13611, +21,
+matching precisely). **Full backend suite**: 882 passing (0 unexpected failures). **Frontend**:
+clean build, 0 console errors, live browser check (real backend, CORS-configured) confirmed
+the payments branch is reachable from the browser's own fetch context with the correct
+value. Same disclosed, pre-existing limitation as Loop 8: no frontend UI component yet calls
+`/item/{id}/children` interactively, so this data is proven correct and complete but not yet
+clickable in the live chart.
+
+### Depth/success metrics after Loops 8–10 combined (NDIS)
+
+- NDIS now has **two independent, genuine deep branches** (participant/geography chain,
+  depth 9; payments/support-category chain, depth 9) plus the average-budget branch -
+  multiple legitimate dimensions, not one fabricated linear chain, per the mission's
+  explicit "multi-dimension depth is better than fake linear depth" principle.
+- Three new, deliberately separate non-additive measures total; zero change to any
+  canonical/additive total anywhere in the system across all three.
+- Explicitly disclosed remaining NDIS opportunity (not pursued, correctly scoped out):
+  support-item-level payment detail (only published jointly with geography) and
+  disability/age cross-tabulated payment views (non-uniform dimension availability) - both
+  real, bounded, well-understood follow-on work, not silently abandoned.
+
 ## Next
 
-1. Build the NDIS payments extractor (Loop 9's forensics above), attaching `SuppClass →
-   SuppCatNm` as a genuinely additive same_group family under a new `related_breakdown`
-   crossing (mirroring Loop 8's canonical-safety pattern exactly), with geography/disability
-   /age and the state-joint item-level detail as further related dimensions.
-2. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
-   applying the same audit-before-ingest discipline established so far.
+1. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
+   applying the same audit-before-ingest discipline established so far - NDIS Priority 2 is
+   now substantively addressed (participant demographics, average plan budgets, and payment
+   amounts by support class/category all loaded and verified).
 2. Follow-on (not urgent, disclosed above): harden `/item/{id}/children`'s
    `build_related_subtree()` call to pass an explicit `edge_set_ids` filter per policy,
-   matching `attach_related_to_tree()`'s own safer pattern (would remove the need for the
-   distinct-root-name workaround used here); investigate whether budget-mode related
-   overlays can be safely enabled via `attach_related_to_tree()` given budget mode's
-   different canonical-depth architecture; wire a real frontend UI component to `/item/{id}
-   /children` so this and prior loops' related data (NDIS, historical PBS crosswalks) become
-   genuinely clickable, not just API-reachable.
+   matching `attach_related_to_tree()`'s own safer pattern; investigate whether budget-mode
+   related overlays can be safely enabled via `attach_related_to_tree()`; wire a real
+   frontend UI component to `/item/{id}/children` so all of this session's related data
+   (NDIS, historical PBS crosswalks) becomes genuinely clickable, not just API-reachable;
+   extend NDIS payments depth to support-item-level detail and cross-tabulated views if a
+   future loop has the runway for the more complex, non-uniform forensics that needs.

@@ -2487,6 +2487,12 @@ Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 8).
 
 Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 9).
 
+**Loop 10 - NDIS payments depth built.** Executed Loop 9's deferred build using the banked forensics: `SuppClass -> SuppCatNm` only (20 rows), new `ndis_payment_amount` measure (`root_total_allowed=0`), attached via a third `related_breakdown` edge on the existing NDIS crosswalk function. Verified live: canonical NDIS ($53.778B) unchanged; "NDIA Payments" root correctly shows $51,451,547,000 (a genuine sum-of-children here, unlike Loop 8's folder trap, since the 4 support classes ARE mutually exclusive and exhaustive); depth-9 drill-down to individual support categories (e.g. "CB Daily Activity" $5.96B) with correct AUD units throughout. Disposable-copy-first verified (facts/nodes/edges +20/+21/+21, idempotent, integrity ok), applied live. Full suite: 882 passing, fixture diff exactly one line (edge_count). Frontend: clean build, 0 console errors.
+
+NDIS now has two independent genuine deep branches (participant/geography, payments/support-category) plus the average-budget branch. Support-item-level payment detail and disability/age cross-tabulated views remain a disclosed, bounded follow-on (non-uniform dimension availability needs its own dedicated forensics pass).
+
+Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 10).
+
 ### Next item (this phase)
 
-Build the NDIS payments extractor (Loop 9's forensics above). Then continue through Aged Care/Health, Defence, Education per the mission's priority order.
+NDIS Priority 2 is now substantively addressed. Continue through Aged Care/Health, Defence, Education per the mission's priority order.
