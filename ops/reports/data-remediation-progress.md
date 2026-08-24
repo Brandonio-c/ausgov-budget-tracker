@@ -2465,6 +2465,14 @@ Fixed in `src/backend/routers/v2/dashboard.py`'s `_fact_rows()`: years without S
 
 Full narrative for both parts in `federal-deep-data-mission-20260823T151600Z.md` (Loop 6).
 
+**Loop 7 - investigated the matrix's budget-mode related-depth blind spot.** Found and fixed a real bug: `/item/{id}/children` (`build_same_group_subtree` in `breakdown_graph.py`) never set `preserve_amount`, so a node with its own nested `same_group` children (e.g. "Arts and cultural heritage" and its 13 non-exhaustive `pbs_dss_bridge` program facts) silently reported sum(children) ($1.1996B) instead of its real published fact ($2.329B) - the same bug class Loop 3 already fixed for the main `/tree` endpoint, just unaddressed in this second, independent tree-builder. Fixed, with a new regression test proving the bug on revert. Committed `52ea833`.
+
+Also attempted a deeper fix: reclassifying several cross-source crosswalks (`pbs_dss_bridge`, `a61_to_components`, `austender_under_s6`, `grantconnect_under_pbs`, `dss_demo_under_pbs`) from `same_group` to `related_breakdown` at the source, to make budget-mode related overlays genuinely reachable via `/item/{id}/children`. This broke actuals mode's own already-working depth cascade (Defence's AusTender contract-level detail disappeared) - `attach_related_to_tree()` deliberately keeps that whole chain `same_group` for uninterrupted single-pass traversal, applying non-additive labeling via a separate function (`_mark_related_descendants()`) instead. Fully reverted (code, config, and DB edges on both a disposable copy and live, before/after counts matched exactly, full suite reconfirmed 861/861 clean).
+
+Also found (disclosed, not fixed): `build_related_subtree()` can silently drop one related family's data when two crossings share a child name (no `edge_set_ids` filter, unlike `attach_related_to_tree()`'s own safer per-policy calls); and `federal_dss_payment_demographics` carries `measure_type='recipient_count'` with its `unit` column wrongly labeled `'AUD'`.
+
+The depth-opportunity matrix now reports `related_depth_measurable: false` / `max_related_depth: null` for budget-mode rows (was a misleading `0`) - `canonical_additive_depth` is unaffected and remains trustworthy for both modes. Committed and pushed `2e0a0b1` (`HEAD == origin/main` confirmed). Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 7).
+
 ### Next item (this phase)
 
-Acquire and ingest an NDIS participant demographic dataset to bring NDIS to parity with JobSeeker's depth-5 recipient breakdown (Priority 2). Regenerate the Federal depth opportunity matrix to reflect Loop 6's bridge fixes. Then continue through Aged Care/Health, Defence, Education per the mission's priority order.
+Acquire and ingest an NDIS participant demographic dataset (NDIA's official "Participant Numbers and Plan Budgets", already located and downloaded) to bring NDIS to parity with JobSeeker's depth-5 recipient breakdown (Priority 2), attached as `related` evidence only per the mission's explicit semantic rule. Then continue through Aged Care/Health, Defence, Education per the mission's priority order.

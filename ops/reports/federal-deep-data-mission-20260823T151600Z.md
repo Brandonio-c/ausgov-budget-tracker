@@ -559,15 +559,122 @@ read a `0` in this column for a budget-mode function and wrongly conclude no rel
 exists there — check via the live API (`/item/{fact_id}/children`) before treating a
 budget-mode function as a dead end on this basis alone.
 
+## Loop 7 — investigating the budget-mode related-depth blind spot: one real fix landed, one attempted fix reverted
+
+A follow-up mission prompt asked to fix the matrix's `max_related_depth=0`-for-budget-mode
+blind spot (disclosed at the end of Loop 6) before relying on budget metrics for
+prioritization, explicitly framing it as reachable "only through the lazy per-node
+related-detail endpoint" (`/v2/dashboard/item/{id}/children`). Investigating that endpoint
+directly surfaced three separable findings.
+
+### Finding 1 (real, fixed): a second, independent "sum children instead of trusting the
+published fact" bug
+
+Calling `/item/{id}/children` on `"Recreation and culture"` (budget mode, FY2025-26) returned
+its child `"Arts and cultural heritage"` at **$1,199,606,000** — not its real
+`federal_budget_statement_6_a61` figure of **$2,329,000,000**. Root cause: `dashboard_tree()`'s
+own tree builder (`_build_tree_dict()`) marks `_a61`-sourced nodes `preserve_amount=True`
+since Loop 3, so a parent's published amount is never silently overridden by summing its
+children — but `build_same_group_subtree()` (`breakdown_graph.py`), the *separate* tree
+builder that powers `/item/{id}/children`, never got this same marking. Any node reached
+through it that also has its own nested `same_group` children (here: 13 `pbs_dss_bridge`
+program facts, which sum to only $1.1996B — 48% short, a known-partial, non-exhaustive
+subset, not a genuine partition) silently reported the wrong, recomputed total instead of its
+real fact.
+
+**Fixed**: `build_same_group_subtree()` now sets `preserve_amount=True` on every node it
+constructs, mirroring `_build_tree_dict()`'s Loop 3 fix exactly (`src/backend/breakdown_graph.py`).
+New regression test `tests/api/test_item_children_preserve_amount.py` proves the bug on revert
+(`1199606000.0` obtained vs `2329000000.0` expected) and passes with the fix. Full backend
+suite: 861/861 passing. Canonical `/tree` totals for all 5 reference years confirmed
+unchanged (this code path is never read by `dashboard_tree()`). Committed `52ea833`.
+
+### Finding 2 (real, disclosed, not fixed): `build_related_subtree()` can silently drop a
+related family when two crossings share a child name
+
+While tracing why `/item/{id}/children` on the canonical GFS "Defence" node returned only one
+related child (via `fbo_2024_25_under_abs`) while the live `/tree` response for the same node
+exposes a much richer one (via `statement_6_under_abs`, prioritized by `attach_related_to_tree`'s
+own explicit per-policy grouping), found that `dashboard_item_children()` calls
+`build_related_subtree()` **without** an `edge_set_ids` filter — so if two different
+related_breakdown crossings from the same node happen to produce a child with the same name,
+`build_related_subtree`'s internal `children: dict[str, Any] = {}` (keyed by name) lets
+whichever edge is processed last silently overwrite the other's data. `attach_related_to_tree()`
+avoids this by calling `build_related_subtree()` once *per policy*, explicitly. Not fixed
+here — confined to the still-unused `/item/{id}/children` endpoint; disclosed for whoever
+next builds a real consumer on top of it.
+
+### Finding 3 (attempted fix, reverted): reclassifying cross-source crosswalks broke actuals
+mode's own, already-working depth cascade
+
+Deeper investigation of `/item/{id}/children`'s `same_group` vs `related_breakdown`
+classification found that `link_pbs_to_components()`, `link_a61_to_components()`, and
+`link_path_children_under_cascade()` (`breakdown_pack.py`) all hardcode `edge_kind='same_group'`
+for crosswalks that connect genuinely *different* measurement axes (PBS/DSS/Health-PBS
+programs, GrantConnect awards, AusTender contracts, DSS recipient-demographic **counts** —
+the last confirmed via direct query to carry `measure_type='recipient_count'` while its `unit`
+column is separately, wrongly labeled `'AUD'`, a distinct disclosed data-quality defect) under
+Statement 6 nodes. `edge_sets.yaml`'s declared `edge_kind` field for these crosswalks turned
+out to be purely descriptive — `_insert_same_group()` writes the literal DB value regardless
+of what the YAML says, so the config had silently drifted from reality.
+
+Attempted fix: added `_insert_related_breakdown()` and switched all six affected call sites to
+it, updated `edge_sets.yaml` to match, rebuilt the edge sets on a disposable copy first
+(idempotent, verified via live API — the exact bug from Finding 1 was fixed *and* correctly
+relabeled `branch_kind: related`). **But** the full backend suite then failed three tests, all
+in `mode=="actuals"`: `Defence`'s related cascade lost its AusTender contract-level detail
+entirely, and `max_visible_depth` dropped from 4 to 2. Root cause: `attach_related_to_tree()`
+(the mechanism actuals mode already successfully uses) deliberately keeps this *entire* chain
+(a61 → components → PBS → contracts/grants) as one continuous `same_group` traversal for
+`build_same_group_subtree()`'s own internal recursion to walk in a single pass — applying
+non-additive labeling correctly via a **separate, dedicated function**, `_mark_related_descendants()`
+("Force every descendant beneath a related_breakdown attach point to carry its own explicit
+non-additive tag... regardless of depth"), rather than by making every individual crossing its
+own `related_breakdown` edge. Reclassifying the edges at the source fragmented that chain into
+disconnected islands `build_same_group_subtree`'s single call could no longer bridge, since
+`walk()`'s own recursion never re-visits past the *first* `related_breakdown` crossing.
+
+**Reverted in full**: `scripts/ingest/breakdown_pack.py` and `config/breakdowns/edge_sets.yaml`
+restored via `git checkout`; the six edge sets rebuilt back to `same_group` on both the
+disposable copy and the live DB (`edge_pack.py --delete`/`--rebuild`, matched before/after
+counts exactly: 53/187/7/3/478/15, `PRAGMA integrity_check: ok`). Full suite reconfirmed
+861/861 passing with the revert applied. The `preserve_amount` fix from Finding 1 (which does
+*not* depend on edge_kind and doesn't affect traversal) was kept.
+
+**Why not pursued further this loop**: safely enabling budget-mode related overlays for real
+(the underlying, genuine gap) means either (a) extending `attach_related_to_tree()`/`dashboard_tree()`
+to call the same mechanism for `mode == "budget"` too — architecturally different from actuals
+mode since budget mode's canonical structure is *already* deep (Statement 6 A61/components),
+unlike actuals mode's shallow GFS purposes, so the interaction needs its own careful,
+dedicated verification, not a same-day change — or (b) hardening `/item/{id}/children` itself
+(fixing Finding 2, adding its own non-additive marking) before trusting it as a real API
+surface. Both are real, valuable, correctly-scoped follow-on work, not done here.
+
+### Matrix outcome
+
+Rather than build the matrix's "fix" on the now-proven-fragile `/item/{id}/children` endpoint,
+`federal_depth_opportunity_matrix.mjs` now explicitly reports `related_depth_measurable: false`
+and `max_related_depth: null` (CSV: `not_measurable_budget_mode`) for every budget-mode row,
+replacing the previous misleading `0`. `canonical_additive_depth` is untouched and remains
+trustworthy for both modes. Regenerated matrix:
+`federal-depth-opportunity-matrix-20260824T033607Z.{csv,json}`. Committed and pushed `2e0a0b1`
+(`HEAD == origin/main` confirmed).
+
 ## Next
 
 1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
-   category, from NDIS Quarterly Reports or the NDIA's published data) to bring NDIS to
-   parity with JobSeeker's depth-5 recipient breakdown — the mission's Priority 2, and now
-   the clearest concrete next step for Priority 1/2 combined.
-2. Regenerate the Federal depth opportunity matrix for `federal_actuals_2025_26` and
-   `federal_budget_2025_26` to reflect this loop's bridge fixes (fewer, cleaner, correctly-
-   attributed related/PBS children under several functions).
-3. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
+   category, from NDIA's official "Participant Numbers and Plan Budgets" dataset, already
+   located and downloaded from `dataresearch.ndis.gov.au`) to bring NDIS to parity with
+   JobSeeker's depth-5 recipient breakdown — the mission's Priority 2. Per the mission's
+   explicit semantic rule, this data (participant counts and *average* committed budget per
+   participant) must attach as `related` evidence only, never additively partition the
+   canonical NDIS expenditure figure.
+2. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
    applying the same audit-before-ingest discipline established so far: check what's already
    loaded and connected before acquiring anything new.
+3. Follow-on (not urgent, disclosed above): fix `federal_dss_payment_demographics`'s `unit`
+   mislabeling (`'AUD'` for `recipient_count` data); harden `/item/{id}/children`'s
+   `build_related_subtree()` call to pass an explicit `edge_set_ids` filter per policy,
+   matching `attach_related_to_tree()`'s own safer pattern; investigate whether budget-mode
+   related overlays can be safely enabled via `attach_related_to_tree()` given budget mode's
+   different canonical-depth architecture.
