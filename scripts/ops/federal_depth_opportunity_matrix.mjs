@@ -87,19 +87,52 @@ async function main() {
       }
     })(rawChildren);
 
+    // dashboard_tree() only calls attach_related_to_tree() - the mechanism
+    // that inlines related overlays into this single /tree response - for
+    // mode === "actuals" (src/backend/routers/v2/dashboard.py, gated since
+    // commit 64c0f6d8, predates this matrix). For mode === "budget", no
+    // related overlay is ever inlined here, so branchFamilies is always
+    // empty and any max_related_depth computed from rawChildren alone would
+    // silently read 0 - not because no related depth exists, but because
+    // this single-call payload never contains it. Investigated using
+    // /item/{id}/children as an alternative measurement path and found it
+    // is NOT currently a safe substitute: (1) it is unused by any live
+    // frontend consumer (api.ts's apiDashboard.itemChildren has no
+    // component caller); (2) build_related_subtree(), when called without
+    // an edge_set_ids filter as dashboard_item_children() does, can silently
+    // drop one related family's data when two crossings produce a child
+    // with the same name (a real, distinct, disclosed defect, not fixed
+    // here); (3) an earlier attempt to make budget-mode related overlays
+    // reachable by reclassifying several crosswalks' physical edge_kind
+    // from same_group to related_breakdown broke actuals mode's existing,
+    // tested depth cascade (Defence's AusTender contract-level detail
+    // disappeared) - attach_related_to_tree's own build_related_subtree/
+    // build_same_group_subtree combo deliberately keeps that whole chain
+    // same_group for uninterrupted traversal, applying non-additive marking
+    // once via _mark_related_descendants() rather than at every crossing;
+    // reverted (see federal-deep-data-mission-*.md, Loop 7 for the full
+    // narrative). Honestly reporting "not measurable via the current API
+    // surface" for budget mode is safer than either a misleading 0 or
+    // building on that fragile, unused endpoint.
+    const relatedDepthMeasurable = spec.mode === "actuals";
+
     for (const fn of additive) {
       const canonicalNest = nestableChildren(fn, "canonical");
       const canonicalDepth = canonicalNest.length
         ? 1 + maxDepthOf(canonicalNest, "canonical", nestableChildren)
         : 1;
 
-      const perFamilyDepth = {};
-      let maxRelatedDepth = 0;
-      for (const family of branchFamilies) {
-        const nest = nestableChildren(fn, family);
-        const depth = nest.length ? 1 + maxDepthOf(nest, family, nestableChildren) : 1;
-        perFamilyDepth[family] = depth;
-        if (depth > maxRelatedDepth) maxRelatedDepth = depth;
+      let perFamilyDepth = null;
+      let maxRelatedDepth = null;
+      if (relatedDepthMeasurable) {
+        perFamilyDepth = {};
+        maxRelatedDepth = 0;
+        for (const family of branchFamilies) {
+          const nest = nestableChildren(fn, family);
+          const depth = nest.length ? 1 + maxDepthOf(nest, family, nestableChildren) : 1;
+          perFamilyDepth[family] = depth;
+          if (depth > maxRelatedDepth) maxRelatedDepth = depth;
+        }
       }
 
       const leaves = collectCanonicalLeaves(fn, additiveChildren);
@@ -117,8 +150,11 @@ async function main() {
         value: fn.value,
         share_of_federal: grandTotal > 0 ? fn.value / grandTotal : null,
         canonical_additive_depth: canonicalDepth,
+        related_depth_measurable: relatedDepthMeasurable,
         max_related_depth: maxRelatedDepth,
-        max_total_semantic_depth: Math.max(canonicalDepth, maxRelatedDepth),
+        max_total_semantic_depth: relatedDepthMeasurable
+          ? Math.max(canonicalDepth, maxRelatedDepth)
+          : null,
         immediate_child_count: canonicalNest.length,
         canonical_terminal_leaf_count: leaves.length,
         largest_canonical_terminal_leaf: largestLeaf,
@@ -127,7 +163,9 @@ async function main() {
         leaves_over_10b: leaves.filter((l) => l.value >= 10e9).length,
         leaves_over_25b: leaves.filter((l) => l.value >= 25e9).length,
         leaves_over_50b: leaves.filter((l) => l.value >= 50e9).length,
-        branch_families_with_depth: JSON.stringify(perFamilyDepth),
+        branch_families_with_depth: relatedDepthMeasurable
+          ? JSON.stringify(perFamilyDepth)
+          : "not_measurable_budget_mode",
         source_families: [...sourceFamilies].join("|"),
       });
     }
