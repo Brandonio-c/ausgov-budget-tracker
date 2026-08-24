@@ -1,0 +1,43 @@
+projection,function,value,share_of_federal,canonical_additive_depth,related_depth_measurable,max_related_depth,max_total_semantic_depth,immediate_child_count,canonical_terminal_leaf_count,largest_canonical_terminal_leaf,leaves_over_1b,leaves_over_5b,leaves_over_10b,leaves_over_25b,leaves_over_50b,branch_families_with_depth,source_families
+federal_actuals_2024_25,Health,118155000000,0.15859092922432655,2,true,2,2,5,5,41266000000,5,5,4,2,0,"{"statement_6":2,"pbs":2,"fbo":2,"contracts":2,"grants":2}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Defence,50175000000,0.06734628135779767,1,true,2,2,0,1,50175000000,1,1,1,1,1,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|contracts|final_budget_outcome
+federal_actuals_2024_25,Economic affairs,33339000000,0.044748533616095994,1,true,2,2,0,1,33339000000,1,1,1,1,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Environmental protection,7109000000,0.009541897641705703,1,true,2,2,0,1,7109000000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Housing and community amenities,5116000000,0.006866837577010322,1,true,2,2,0,1,5116000000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Education,55729000000,0.07480101472423929,2,true,2,2,3,3,32000000000,3,3,2,1,0,"{"statement_6":2,"pbs":2,"fbo":2,"contracts":2,"grants":2}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,General public services,159277000000,0.21378602203938096,2,true,2,2,2,2,116929000000,2,2,2,2,1,"{"statement_6":2,"pbs":2,"fbo":2,"contracts":2,"grants":2}",abs_gfs|budget|grant_awards|final_budget_outcome
+federal_actuals_2024_25,Public order and safety,8810000000,0.011825027180113553,1,true,2,2,0,1,8810000000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,"Recreation, culture and religion",5007000000,0.006720534743567373,1,true,2,2,0,1,5007000000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Social protection,286605000000,0.38468920714602095,1,true,2,2,0,1,286605000000,1,1,1,1,1,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2024_25,Transport,15708000000,0.02108371474974162,1,true,2,2,0,1,15708000000,1,1,1,0,0,"{"statement_6":2,"pbs":1,"fbo":2,"contracts":1,"grants":1}",abs_gfs|budget|final_budget_outcome
+federal_actuals_2025_26,"Agriculture, forestry and fishing",3291037000,0.00453997554720237,1,true,1,1,0,1,3291037000,1,0,0,0,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Defence,46040125000,0.06351221262177864,1,true,2,2,0,1,46040125000,1,1,1,1,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget|grant_awards|contracts
+federal_actuals_2025_26,Education,61206607000,0.08443432848285372,1,true,2,2,0,1,61206607000,1,1,1,1,1,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_actuals_2025_26,Fuel and energy,18348249000,0.025311353775111112,1,true,1,1,0,1,18348249000,1,1,1,0,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,General public services,29330594000,0.040461465351170636,1,true,2,2,0,1,29330594000,1,1,1,1,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget|grant_awards
+federal_actuals_2025_26,General purpose inter-government transactions,96289177000,0.13283062725828998,1,true,1,1,0,1,96289177000,1,1,1,1,1,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Health,115278439000,0.15902625652025792,1,true,3,3,0,1,115278439000,1,1,1,1,1,"{"statement_6":3,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget|grant_awards
+federal_actuals_2025_26,Housing and community amenities,6025413000,0.008312038935385799,1,true,2,2,0,1,6025413000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_actuals_2025_26,"Mining, manufacturing and construction",4595453000,0.0063394134579215534,1,true,1,1,0,1,4595453000,1,0,0,0,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Natural disaster relief,359936000,0.000496530618937992,1,true,1,1,0,1,359936000,0,0,0,0,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Nominal superannuation interest,13552447000,0.018695559480114057,1,true,1,1,0,1,13552447000,1,1,1,0,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Other economic affairs,12649881000,0.017450472424047455,1,true,2,2,0,1,12649881000,1,1,1,0,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_actuals_2025_26,Public debt interest,25310225000,0.03491537852482063,1,true,1,1,0,1,25310225000,1,1,1,1,0,"{"statement_6":1,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals
+federal_actuals_2025_26,Public order and safety,8502954000,0.011729799221031725,1,true,2,2,0,1,8502954000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_actuals_2025_26,Recreation and culture,5293181000,0.007301927115044951,1,true,2,2,0,1,5293181000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_actuals_2025_26,Social security and welfare,269504729000,0.37178095521727694,1,true,3,3,0,1,269504729000,1,1,1,1,1,"{"statement_6":3,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget|grant_awards|recipient_statistics
+federal_actuals_2025_26,Transport and communication,9323475000,0.012861705448754486,1,true,2,2,0,1,9323475000,1,1,0,0,0,"{"statement_6":2,"pbs":1,"grants":1,"contracts":1,"recipients":1}",federal_actuals|budget
+federal_budget_2025_26,"Agriculture, forestry and fishing",4715000000,0.005806199765289146,2,false,,,9,9,1550000000,2,0,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Defence,52854000000,0.06508608322260712,1,false,,,0,1,52854000000,1,1,1,1,1,not_measurable_budget_mode,budget
+federal_budget_2025_26,Education,64974000000,0.08001103362670138,2,false,,,8,8,66018000000,7,6,5,3,1,not_measurable_budget_mode,budget
+federal_budget_2025_26,Fuel and energy,19160000000,0.023594228526604463,1,false,,,0,1,19160000000,1,1,1,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,General public services,34959000000,0.0430496156086412,1,false,,,0,1,34959000000,1,1,1,1,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Health,127015000000,0.156410278512874,3,false,,,7,13,35144000000,8,6,4,2,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Housing and community amenities,8831000000,0.01087477203123403,2,false,,,3,3,4374000000,3,0,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,"Mining, manufacturing and construction",5358000000,0.006598010252899098,1,false,,,0,1,5358000000,1,1,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Other economic affairs,14669000000,0.018063869428849733,2,false,,,6,6,4536000000,5,0,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Other purposes,149210000000,0.1837419017982595,2,false,,,4,4,107887000000,4,3,3,2,1,not_measurable_budget_mode,budget
+federal_budget_2025_26,Public order and safety,9601000000,0.011822974325883582,2,false,,,2,2,7444000000,2,1,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Recreation and culture,5984000000,0.007368886404133669,2,false,,,4,4,2329000000,2,0,0,0,0,not_measurable_budget_mode,budget
+federal_budget_2025_26,Social security and welfare,297805000000,0.36672647319235085,3,false,,,8,25,65315000000,16,11,9,4,2,not_measurable_budget_mode,budget
+federal_budget_2025_26,Transport and communication,16928000000,0.020845673303672253,2,false,,,6,6,9138000000,3,2,0,0,0,not_measurable_budget_mode,budget

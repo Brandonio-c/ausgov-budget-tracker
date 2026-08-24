@@ -2493,6 +2493,12 @@ NDIS now has two independent genuine deep branches (participant/geography, payme
 
 Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 10).
 
+**Loop 11 - Aged Care/Health survey.** Found and fixed a real bug: "Medical services and benefits" ($44.768B) and "Pharmaceutical benefits and services" ($23.318B) both displayed the identical 8-item child set (a stale cross-contamination from a prior extractor bug, never purged since `federal_budget_statement_6_components` lacked `replace_on_reload`). Fixed, disposable-copy-first verified, applied live (facts -40, nodes -8, edges -21, idempotent). Both parents now reconcile exactly with their own corrected children. Committed `3d2341d`.
+
+Confirmed Aged Care data ($35.7B: Residential Care Subsidies, Specialist Aged Care Programs, Support at Home) is already loaded and API-reachable under "Health services" via the existing `pbs_dss_bridge` crosswalk - no new acquisition needed. Confirmed "Assistance to the states for public hospitals" ($33.9B) and "Medical benefits"/Medicare ($35.1B) are genuine terminals in currently-loaded data (exact 1:1 PBS re-statements, no further breakdown). Disclosed, not pursued: official MBS/PBS statistics datasets for deeper Medicare/PBS depth (access friction encountered, documented as a concrete next target); smaller Health leaves (General administration, ATSI health, Hospital services) with no existing crosswalk data.
+
+Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 11).
+
 ### Next item (this phase)
 
-NDIS Priority 2 is now substantively addressed. Continue through Aged Care/Health, Defence, Education per the mission's priority order.
+Continue to Defence per the mission's priority order.

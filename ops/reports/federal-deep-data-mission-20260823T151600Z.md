@@ -940,17 +940,88 @@ clickable in the live chart.
   disability/age cross-tabulated payment views (non-uniform dimension availability) - both
   real, bounded, well-understood follow-on work, not silently abandoned.
 
+## Loop 11 — Aged Care / Health survey: one real bug fixed, existing depth confirmed reachable, external MBS/PBS depth disclosed
+
+Health is one of the largest Federal functions (~16% of Federal share, $118-127B across
+projections) - the mission's next priority after NDIS. Began with a full inventory of
+already-loaded data (per the mission's own "resolve A/B/C/E/F before new acquisition D"
+ordering) rather than assuming a source needed acquiring.
+
+### A real bug found and fixed immediately
+
+Drilling into Health's structure surfaced "Medical services and benefits" ($44.768B) and
+"Pharmaceutical benefits and services" ($23.318B) both displaying the **identical** 8-item,
+$68.086B child set - neither parent's own total. Traced to a `federal_budget_statement_6_
+components` mapping missing `replace_on_reload` (the same bug class found and fixed for
+Health's own PBS bridge in an earlier session, and for NDIS's DSS demographics unit
+labeling this session) - the staging CSV confirmed the 8 cross-contaminated paths don't
+exist in the current extraction at all; a prior extractor version's Table 6.8.1/6.8.2
+scoping bug left them as stale orphans that a plain reload never purged. Fixed, disposable-
+copy-first verified (facts -40, nodes -8, edges -21, idempotent, integrity ok), applied
+live. Both parents now reconcile **exactly** with their own (corrected) children. Canonical
+totals unaffected (protected by `preserve_amount` throughout - the bug was real but never
+inflated a displayed total). Golden fixture's additive leaf count for the affected
+projection dropped by exactly 8 (108→100). Full suite: 882 passing. Committed `3d2341d`.
+
+### Existing depth confirmed reachable (Class B, no acquisition needed)
+
+- **Aged Care under "Health / Health services"** ($16.796B canonical parent): `federal_pbs_
+  programs_s6_bridge` already provides "Aged Care Act 2024 - Residential Care Subsidies"
+  ($26.02B), "- Specialist Aged Care Programs" ($737M), "- Support at Home" ($8.96B), and
+  "Related receipts Department of Health and Aged Care" ($2.8M) - combined $35.7B, larger
+  than the GFS parent itself (confirming, as expected from prior loops, this is a genuinely
+  different classification axis - portfolio/program view vs COFOG subfunction - not an
+  exhaustive partition; correctly non-additive by the same reasoning established for every
+  other PBS-bridge crossing this mission has built). **Verified live via `/item/{id}
+  /children`: already reachable** (`kind: same_group`, `edge_set_id: pbs_dss_bridge`).
+- **"Assistance to the states for public hospitals"** ($33.925B, the second-largest single
+  Health line): `federal_health_pbs_programs` provides an exact 1:1 re-statement
+  ("Assistance to the States for Healthcare Services", $33,925,000,000 - an exact match, not
+  a partition) with no further children of its own in any currently-loaded source. This
+  reads as a genuine **G-class terminal** at the Federal level: the National Health Reform
+  Agreement is a single COAG-negotiated hospital funding pool; more granular by-hospital
+  detail is a state-government reporting matter, out of this tracker's Federal scope.
+- **"Medical benefits"/Medicare** ($35.144B, the single largest Health component):
+  `federal_health_pbs_programs` similarly provides an exact 1:1 re-statement with no further
+  children currently loaded.
+
+### Disclosed, not acquired this loop (Class D/E)
+
+- **Medicare Benefits Schedule (MBS) statistics** and **Pharmaceutical Benefits Scheme (PBS)
+  dispensing statistics** - both official, AIHW/Services Australia/health.gov.au-published
+  datasets with genuine service-category and, in some views, individual-item-level detail -
+  are the clearest remaining high-value depth opportunity for Health's two largest
+  components ($35.1B Medicare, $22.1B PBS). The specific data.gov.au "MBS Group Statistics"
+  listing found is stale (last resource dated July 2016, likely superseded); health.gov.au's
+  current "Medicare statistics collection" page did not respond during this loop's access
+  attempt. Not pursued further this loop given the friction and the mission's broader scope
+  - recorded here as a concrete, well-justified next acquisition target rather than silently
+  dropped.
+- **"General administration"** ($5.691B), **"Aboriginal and Torres Strait Islander health"**
+  ($1.297B), **"Hospital services(a)"** ($1.220B): no PBS/program-level data currently loaded
+  or found via keyword search of the existing PBS bridge corpus. "General administration" is
+  plausibly a genuine terminal (departmental running costs, not typically further
+  decomposed); the other two are smaller, disclosed, lower-priority Class D/E opportunities
+  given their size relative to the leaves above.
+- **Frontend reachability** (Class F, disclosed repeatedly since Loop 7): Aged Care data
+  above joins NDIS's three branches as genuinely-loaded, non-double-counting, API-verified
+  related data with no live UI path to click through to it yet. Given this gap now affects
+  four+ independent data families, consolidating a fix (a real frontend UI component wired
+  to `/item/{id}/children`, per this mission's own explicit "use an explicit hierarchical
+  explorer/side panel" guidance) is increasingly the single highest-leverage remaining
+  action - tracked as a dedicated follow-on rather than repeated piecemeal per data family.
+
+Regenerated the Federal depth opportunity matrix reflecting the Health stale-fact cleanup:
+`federal-depth-opportunity-matrix-20260824T151356Z.{csv,json}`.
+
 ## Next
 
-1. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
-   applying the same audit-before-ingest discipline established so far - NDIS Priority 2 is
-   now substantively addressed (participant demographics, average plan budgets, and payment
-   amounts by support class/category all loaded and verified).
-2. Follow-on (not urgent, disclosed above): harden `/item/{id}/children`'s
-   `build_related_subtree()` call to pass an explicit `edge_set_ids` filter per policy,
-   matching `attach_related_to_tree()`'s own safer pattern; investigate whether budget-mode
-   related overlays can be safely enabled via `attach_related_to_tree()`; wire a real
-   frontend UI component to `/item/{id}/children` so all of this session's related data
-   (NDIS, historical PBS crosswalks) becomes genuinely clickable, not just API-reachable;
-   extend NDIS payments depth to support-item-level detail and cross-tabulated views if a
-   future loop has the runway for the more complex, non-uniform forensics that needs.
+1. Continue to Defence per the mission's priority order, applying the same audit-before-
+   acquisition discipline: inventory existing PBS/procurement data before acquiring anything
+   new.
+2. Follow-on (disclosed above, not urgent): acquire MBS/PBS statistics for Medicare/
+   Pharmaceutical Benefits Scheme depth if a reliable access path is found; investigate
+   General administration/ATSI health/Hospital services further if time permits; harden
+   `/item/{id}/children`'s `build_related_subtree()` edge_set_ids filtering; build a real
+   frontend UI component for related-branch drill-down (now justified by four+ independent
+   data families needing it).
