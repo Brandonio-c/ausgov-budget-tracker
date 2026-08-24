@@ -660,21 +660,186 @@ trustworthy for both modes. Regenerated matrix:
 `federal-depth-opportunity-matrix-20260824T033607Z.{csv,json}`. Committed and pushed `2e0a0b1`
 (`HEAD == origin/main` confirmed).
 
+## Loop 8 — NDIS participant/plan-budget depth (Priority 2), and a systemic unit-mislabeling fix found along the way
+
+### Part A: a genuinely systemic bug found preparing the NDIS work
+
+Reviewing `federal_dss_payment_demographics.yaml` (the closest existing template - recipient
+counts attached as related evidence) as a model for the new NDIS mapping found it already
+correctly declares `native_unit: recipients` - but the live database showed `unit: 'AUD'`
+for every one of its 52 facts anyway. Root cause: `load_facts.py`'s `upsert_fact()` and
+`quarantine_fact()` hardcoded the literal `'AUD'` in their `INSERT` statements, completely
+ignoring `mapping.get("native_unit")` - a field only `source_documents` actually stored,
+never `facts` itself. Every count-based source in the whole pipeline has silently had its
+`unit` column mislabeled since inception; only 1 of 133 existing mappings happens to declare
+`native_unit` at all (dss_payment_demographics), so the practical blast radius was exactly
+that one source - every other mapping's correct default ('AUD' for genuinely dollar
+figures) was unaffected.
+
+**Fixed** (`scripts/ingest/load_facts.py`): both INSERTs now bind `mapping.get("native_unit")
+or "AUD"` instead of the hardcoded literal, and both `ON CONFLICT` clauses now also update
+`unit`, so a plain reload (no `replace_on_reload` needed) fixes existing rows in place.
+Verified via disposable-copy-first reload of `federal_dss_payment_demographics` (52/52
+facts, `unit` AUD → recipients, idempotent), then applied identically to the live DB. Golden
+fixture regenerated with a precisely-explained diff (43 recipient-count facts moved from the
+`AUD` unit bucket to a new `recipients` bucket, matching the source's exact fact count).
+Full backend suite: 861/861 passing. Committed `fadb801`.
+
+### Part B: NDIS "Participant Numbers and Plan Budgets" - full ingestion
+
+**Source forensics** (official NDIA data dictionary, read in full - `data/raw/federal/
+ndis_participant_numbers_and_plan_budgets/snapshots/20260824T035116Z/files/
+participant-plan-budgets-data-rules.docx`): a confidentialized statistical cube,
+`RprtDt`/`StateCd`/`SrvcDstrctNm`/`DsbltyGrpNm`/`AgeBnd`/`SuppClass` × `ActvPrtcpnt`
+(participant count) × `AvgAnlsdCmtdSuppBdgt` (average annualised committed support budget
+per participant - Total Annualised Budget / Participant Count, NOT an aggregate). 100,395
+rows, single edition (30 June 2026 = end of FY2025-26; each quarter is a separate
+downloadable file, no time series loaded here).
+
+Empirically confirmed (not assumed) beyond what the data dictionary states:
+- Counts <11 are suppressed to `"<11"` with budget withheld (36,167 rows) - matches the
+  documented rule exactly (`< 11`, not `<= 11`, confirmed via 1,038 rows with exactly 11
+  participants that correctly retain both fields).
+- A **separate, undocumented** `"<N"` pattern also occurs for N far above 11 (up to 49,918)
+  - these retain their budget figure, unlike the true suppression case. Represented
+  faithfully as an upper bound either way, via a `count_is_upper_bound` flag - never treated
+  as an exact count, and never assumed to mean the same thing as the documented threshold.
+- Every service district maps to exactly one state except the shared "Other" catch-all
+  bucket (scoped per-state in node names to avoid conflation) - geography genuinely
+  supports a two-level State → District nesting.
+- Disability group, age band, and state each sum to exactly the grand total (782,013,
+  cross-checked against a live NDIA web search finding 774,456 participants as at 31 March
+  2026 - a plausible growth trend) - genuinely mutually-exclusive, exhaustive
+  classifications. **Support class does not** (sums to 1,611,496 - participants hold
+  multiple support classes simultaneously) and **district does not either** (sums to only
+  762,917 - suppression drops some districts' exact contribution). This directly shaped the
+  extractor design (see below).
+
+**Design decision, per the mission's explicit "do not fabricate a cross-product hierarchy"
+rule**: only marginal single-dimension slices are emitted (all other dimensions held at
+`"ALL"`), never joint cross-tabulation cells, even though the source does publish full
+5-way joint data (28,130 of 100,395 rows have all five dimensions specific) - exposing that
+would mean imposing an arbitrary nesting order (state → district → disability → age →
+support) the source itself does not structurally support, since disability/age/support are
+orthogonal classifications, not children of geography. Structure: `NDIA Participant
+Statistics` (root) → `Participants by geography` (State → District, genuine 2-level
+nesting) / `Participants by disability group` / `Participants by age band` / `Participants
+by support class` (each flat, one level).
+
+Given the empirical non-reconciliation found above, **intermediate folder nodes never carry
+a recomputed sum of their children** (would silently double the true total for "by support
+class", or understate it for "by geography" districts) - every folder instead carries the
+same grand-total value the root already reports, since it is purely a navigation label, not
+an independent figure.
+
+**Semantic model** (`scripts/ingest/migrations/028_ndis_participant_plan_budgets_measures.sql`):
+two new, deliberately separate measures, both `additive_across_nodes=0`,
+`root_total_allowed=0` (matching the established defensive pattern from migration 019's
+NDIA PBS-overlap measure): `ndis_participant_count` (unit `participants`) and
+`ndis_average_committed_plan_budget` (unit `AUD_per_participant`) - never merged, never
+multiplied together to reconstruct a total the source does not itself publish.
+
+**Extractor** (`scripts/ingest/extractors/ndis_participant_plan_budgets.py`, 15 tests in
+`tests/ingest/test_ndis_participant_plan_budgets.py`, all passing): writes two staging CSVs
+(`ndis_participant_count.csv`, 135 rows; `ndis_average_committed_plan_budget.csv`, 132 rows
+- 3 fewer, the true-suppression rows with no budget) loaded by two mapping YAMLs
+(`config/mappings/federal_ndis_participant_count.yaml`,
+`federal_ndis_average_committed_plan_budget.yaml`).
+
+**Source registration**: added `ndis_participant_numbers_and_plan_budgets` to
+`config/procurement_sources.yaml` (validated against the full JSON schema, `direct_file`
+access method matching the exact download URL used), with full disclosed caveats
+(single-quarter snapshot, suppression, the December 2024 age-band redefinition). Raw files
+placed at `data/raw/federal/ndis_participant_numbers_and_plan_budgets/snapshots/
+20260824T035116Z/` with `hashes.json` (SHA256) and a `discovery.json` honestly documenting
+manual `curl` retrieval (not the automated crawler) against the exact URL found on the NDIA
+Data Research portal.
+
+**Graph attachment** (`scripts/ingest/breakdown_pack.py`'s `link_ndis_participant_statistics()`,
+registered in `edge_pack.py` and `config/breakdowns/edge_sets.yaml`): one `related_breakdown`
+edge per measure from the canonical node (`"Social security and welfare / Assistance to
+people with disabilities / National Disability Insurance Scheme"`, `federal_budget_
+statement_6_components`, node 214873, $53.778B for FY2025-26 - located via explicit program
+identity, not label matching) to each measure's own source-native root. Uses
+`related_breakdown`, not `same_group`, for this cross-source boundary - unlike the
+`pbs_dss_bridge`/`a61_to_components` case Loop 7 found and reverted, there is no existing
+consumer relying on `same_group` chain continuity through this brand-new attach point, so
+the safer classification carries no traversal risk here.
+
+**A second same-name collision bug found and worked around**: the first attempt gave both
+measures' root nodes the identical name `"NDIA Participant Statistics"` - live verification
+showed only the budget edge's data survived in `/item/{id}/children`'s combined view (the
+count edge's $782,013 was silently overwritten), exactly the `build_related_subtree()`
+same-name-collision defect Loop 7 disclosed but did not fix. Rather than touch that fragile
+shared function again, worked around it: the two roots now have deliberately distinct names
+(`"NDIA Participant Statistics"` / `"NDIA Average Committed Plan Budget"`), verified live to
+coexist correctly.
+
+**Disposable-copy-first verification** (both before AND after the collision fix): before/after
+on the live DB: `facts` 331583→331850 (+267 = 135+132), `nodes` 240754→241021 (+267),
+`breakdown_edges` 13323→13590 (+267 = 134+131+2), `source_documents` 147→149,
+`facts_pending_attribution` unchanged (0 quarantined). `PRAGMA integrity_check`: ok.
+Idempotent on all four edge-set rebuilds (source-native ×2, crosswalk ×2) and both mapping
+reloads.
+
+**Live API verification**, full drill-down confirmed working end to end: Federal → Commonwealth
+→ Social security and welfare → Assistance to people with disabilities → National Disability
+Insurance Scheme ($53.778B, unchanged) → *related crossing* → NDIA Participant Statistics
+(782,013) → Participants by geography (782,013, navigation) → New South Wales (230,427) →
+Central Coast (13,272) - **genuine depth 9 from the Federal root**, matching real,
+source-native structure at every level (no fabricated hierarchy). The average-budget branch
+verified in parallel (root $85,000 → by geography → ACT $76,000). Every leaf's
+`relationship.unit` correctly reads `"participants"` or `"AUD_per_participant"` (never bare
+`"AUD"`), confirming Part A's fix is working as intended for genuinely new data too.
+
+**Canonical total safety**: all 5 reference-year Budget-mode root totals confirmed
+byte-identical before and after (`dashboard_tree()` never reads `breakdown_edges` for its
+canonical query). Golden fixture diff after this loop's changes: exactly one line
+(`edge_count` 13323→13590, +267, matching precisely) - no canonical or additive branch count
+moved at all, confirming this data is invisible to (does not corrupt) the canonical
+projection, exactly as the semantic model requires.
+
+**Full backend suite**: 875 passed, 0 unexpected failures (only the expected, since-fixed
+fixture staleness). **Frontend**: production-style build + `next build` clean, TypeScript
+clean; live browser check (real backend, CORS-configured) confirmed 0 console errors in both
+Actuals and Budget mode, and confirmed the NDIS `item/children` endpoint is reachable from
+the browser's own fetch context with the new data correctly nested. **Honest limitation
+disclosed, not hidden**: as established in Loop 7, no frontend UI component currently calls
+`/item/{id}/children` interactively (`apiDashboard.itemChildren` has zero component
+callers) - so while this data is now genuinely loaded, correctly modeled, non-double-
+counting, and API-reachable exactly like the rest of the graph, a user cannot yet click
+through to see it in the live sunburst chart. This is a pre-existing platform limitation
+(not created by NDIS), already disclosed as follow-on work.
+
+Committed `52ea833` (Part A unit fix, already covered above), plus this loop's NDIS commits
+(migration, extractor, mappings, source registration, graph attachment, tests, fixture,
+matrix regen) - see commit log for exact hashes. Pushed; `HEAD == origin/main` confirmed.
+
+### Depth/success metrics for this loop
+
+- NDIS max total semantic depth (Federal root to deepest genuine leaf): **9** (previously 3
+  - Loop 4's audit found NDIS "stops at depth 3, no equivalent participant dataset exists").
+- New branch families: 2 (`ndis_participants`, `ndis_average_budget`), each with genuine
+  multi-dimension structure (geography 2-level, disability/age/support 1-level) - multiple
+  legitimate shallow-to-medium branches, not one fabricated deep chain, per the mission's
+  explicit "multi-dimension depth is better than fake linear depth" principle.
+- New facts: 267. New nodes: 267. New edges: 267. Zero change to any canonical/additive
+  total anywhere in the system.
+- Disclosed, not silently worked around: the frontend-reachability gap (pre-existing,
+  documented in Loop 7) means this depth is proven correct and complete in the data/graph
+  layer, but not yet visible to a real user without a future, separate UI feature.
+
 ## Next
 
-1. Acquire and ingest an NDIS participant demographic dataset (by state/age/support
-   category, from NDIA's official "Participant Numbers and Plan Budgets" dataset, already
-   located and downloaded from `dataresearch.ndis.gov.au`) to bring NDIS to parity with
-   JobSeeker's depth-5 recipient breakdown — the mission's Priority 2. Per the mission's
-   explicit semantic rule, this data (participant counts and *average* committed budget per
-   participant) must attach as `related` evidence only, never additively partition the
-   canonical NDIS expenditure figure.
-2. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
-   applying the same audit-before-ingest discipline established so far: check what's already
-   loaded and connected before acquiring anything new.
-3. Follow-on (not urgent, disclosed above): fix `federal_dss_payment_demographics`'s `unit`
-   mislabeling (`'AUD'` for `recipient_count` data); harden `/item/{id}/children`'s
+1. Continue through Aged Care/Health, Defence, Education per the mission's priority order
+   (NDIS payment/provider/service depth, Priority 2's second half, remains open - search for
+   NDIA payment/provider datasets before Aged Care/Health), applying the same audit-before-
+   ingest discipline established so far.
+2. Follow-on (not urgent, disclosed above): harden `/item/{id}/children`'s
    `build_related_subtree()` call to pass an explicit `edge_set_ids` filter per policy,
-   matching `attach_related_to_tree()`'s own safer pattern; investigate whether budget-mode
-   related overlays can be safely enabled via `attach_related_to_tree()` given budget mode's
-   different canonical-depth architecture.
+   matching `attach_related_to_tree()`'s own safer pattern (would remove the need for the
+   distinct-root-name workaround used here); investigate whether budget-mode related
+   overlays can be safely enabled via `attach_related_to_tree()` given budget mode's
+   different canonical-depth architecture; wire a real frontend UI component to `/item/{id}
+   /children` so this and prior loops' related data (NDIS, historical PBS crosswalks) become
+   genuinely clickable, not just API-reachable.
