@@ -320,7 +320,7 @@
       "node_count_by_depth": {
         "1": 18,
         "2": 46,
-        "3": 159,
+        "3": 151,
         "4": 191,
         "5": 255,
         "6": 205
@@ -330,28 +330,28 @@
       "max_related_depth": 6,
       "max_visible_depth": 6,
       "nodes_hidden_by_folding": 277,
-      "nodes_rejected_by_partition": 6,
+      "nodes_rejected_by_partition": 5,
       "branch_counts": {
         "additive": 18,
-        "related": 856
+        "related": 848
       },
       "projection_origin_counts": {
         "path_only": 18,
-        "edge_only": 856,
+        "edge_only": 848,
         "path_plus_edge": 0
       },
       "canonical_nodes_with_related_children": 10,
-      "exact_year_fact_nodes": 237,
+      "exact_year_fact_nodes": 229,
       "fallback_fact_nodes": 637,
       "source_families": {
-        "budget": 243,
+        "budget": 235,
         "contracts": 48,
         "federal_actuals": 18,
         "grant_awards": 522,
         "recipient_statistics": 43
       },
       "units": {
-        "AUD": 831,
+        "AUD": 823,
         "recipients": 43
       },
       "first_level_names": [
@@ -437,8 +437,8 @@
         "Social security and welfare / Assistance to people with disabilities / Financial support for carers / Financial Support for Carers / Recipients by state / Australian Capital Territory"
       ],
       "citation": {
-        "fact_leaves": 738,
-        "complete": 738,
+        "fact_leaves": 730,
+        "complete": 730,
         "missing": 0
       },
       "hard_failure_count": 0
@@ -687,30 +687,30 @@
       "node_count_by_depth": {
         "1": 14,
         "2": 58,
-        "3": 36
+        "3": 28
       },
       "max_tree_depth": 3,
       "max_additive_depth": 3,
       "max_related_depth": 0,
       "max_visible_depth": 3,
       "nodes_hidden_by_folding": 9,
-      "nodes_rejected_by_partition": 1,
+      "nodes_rejected_by_partition": 0,
       "branch_counts": {
-        "additive": 108
+        "additive": 100
       },
       "projection_origin_counts": {
-        "path_only": 108,
+        "path_only": 100,
         "edge_only": 0,
         "path_plus_edge": 0
       },
       "canonical_nodes_with_related_children": 0,
-      "exact_year_fact_nodes": 108,
+      "exact_year_fact_nodes": 100,
       "fallback_fact_nodes": 0,
       "source_families": {
-        "budget": 108
+        "budget": 100
       },
       "units": {
-        "AUD": 108
+        "AUD": 100
       },
       "first_level_names": [
         "Agriculture, forestry and fishing",
@@ -742,16 +742,16 @@
       "deepest_path_samples": [
         "Health / Medical services and benefits / Dental services",
         "Health / Medical services and benefits / General medical consultations and services",
-        "Health / Medical services and benefits / Immunisation",
         "Health / Medical services and benefits / Medical benefits",
         "Health / Medical services and benefits / Other",
-        "Health / Medical services and benefits / Pharmaceutical benefits, services and supply",
         "Health / Medical services and benefits / Private health insurance",
-        "Health / Medical services and benefits / Veterans' pharmaceutical benefits"
+        "Health / Pharmaceutical benefits and services / Immunisation",
+        "Health / Pharmaceutical benefits and services / Pharmaceutical benefits, services and supply",
+        "Health / Pharmaceutical benefits and services / Veterans' pharmaceutical benefits"
       ],
       "citation": {
-        "fact_leaves": 93,
-        "complete": 93,
+        "fact_leaves": 85,
+        "complete": 85,
         "missing": 0
       },
       "hard_failure_count": 0
@@ -769,30 +769,30 @@
       "node_count_by_depth": {
         "1": 14,
         "2": 58,
-        "3": 36
+        "3": 28
       },
       "max_tree_depth": 3,
       "max_additive_depth": 3,
       "max_related_depth": 0,
       "max_visible_depth": 3,
       "nodes_hidden_by_folding": 9,
-      "nodes_rejected_by_partition": 1,
+      "nodes_rejected_by_partition": 0,
       "branch_counts": {
-        "additive": 108
+        "additive": 100
       },
       "projection_origin_counts": {
-        "path_only": 108,
+        "path_only": 100,
         "edge_only": 0,
         "path_plus_edge": 0
       },
       "canonical_nodes_with_related_children": 0,
-      "exact_year_fact_nodes": 108,
+      "exact_year_fact_nodes": 100,
       "fallback_fact_nodes": 0,
       "source_families": {
-        "budget": 108
+        "budget": 100
       },
       "units": {
-        "AUD": 108
+        "AUD": 100
       },
       "first_level_names": [
         "Agriculture, forestry and fishing",
@@ -824,16 +824,16 @@
       "deepest_path_samples": [
         "Health / Medical services and benefits / Dental services",
         "Health / Medical services and benefits / General medical consultations and services",
-        "Health / Medical services and benefits / Immunisation",
         "Health / Medical services and benefits / Medical benefits",
         "Health / Medical services and benefits / Other",
-        "Health / Medical services and benefits / Pharmaceutical benefits, services and supply",
         "Health / Medical services and benefits / Private health insurance",
-        "Health / Medical services and benefits / Veterans' pharmaceutical benefits"
+        "Health / Pharmaceutical benefits and services / Immunisation",
+        "Health / Pharmaceutical benefits and services / Pharmaceutical benefits, services and supply",
+        "Health / Pharmaceutical benefits and services / Veterans' pharmaceutical benefits"
       ],
       "citation": {
-        "fact_leaves": 93,
-        "complete": 93,
+        "fact_leaves": 85,
+        "complete": 85,
         "missing": 0
       },
       "hard_failure_count": 0
@@ -1100,7 +1100,7 @@
     }
   ],
   "graph": {
-    "edge_count": 13611,
+    "edge_count": 13590,
     "duplicate_semantic_edges": 0,
     "cycles": 0
   }
