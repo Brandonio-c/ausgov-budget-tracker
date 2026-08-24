@@ -1,0 +1,27 @@
+source_id: federal_ndis_participant_count
+title: NDIS active participant counts by geography/disability/age/support class (Jun 2026)
+publisher: National Disability Insurance Agency
+jurisdiction: Commonwealth
+government_level: federal
+source_family: ndis_participant_statistics
+measure_type: ndis_participant_count
+accounting_basis: count
+estimate_status: actual
+period_granularity: financial_year
+native_unit: participants
+input:
+  path: data/staging/breakdowns/ndis_participant_count.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: participant_count
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/ndis_participant_numbers_and_plan_budgets/snapshots/20260824T035116Z/files/participant-plan-budgets-june-2026.csv
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

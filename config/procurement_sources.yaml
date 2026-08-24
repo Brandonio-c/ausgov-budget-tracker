@@ -13070,3 +13070,44 @@ sources:
   parser_strategy: Use to normalize classifications, calculate per-capita/real measures
     and join entities. Preserve version/effective dates.
   caveats: []
+
+- id: ndis_participant_numbers_and_plan_budgets
+  priority: P2
+  publisher: National Disability Insurance Agency
+  jurisdiction: Commonwealth
+  government_level: federal
+  source_family: ndis_participant_statistics
+  title: NDIS Participant Numbers and Plan Budgets
+  landing_url: https://dataresearch.ndis.gov.au/datasets/participant-datasets
+  resource_url: https://dataresearch.ndis.gov.au/media/4573/download
+  access_method: direct_file
+  automation: manual
+  formats:
+  - csv
+  enabled: true
+  access:
+    type: direct_file
+    allowed_domains:
+    - dataresearch.ndis.gov.au
+  handoff_action_bucket: INGEST_FIRST_ALREADY_ON_DISK
+  handoff_data_domain: related_evidence
+  handoff_fills_gap: ndis_participant_demographic_depth
+  handoff_already_on_disk: true
+  handoff_repo_source_key: federal_ndis_participant_plan_budgets
+  handoff_verification_status: ALREADY_ON_DISK
+  parser_strategy: Publish as related, non-additive participant/demographic
+    evidence attached to the existing canonical NDIS expenditure node. Never
+    sum participant counts or average committed plan budgets into the
+    canonical NDIS dollar total - these are a confidentialized, small-cell-
+    suppressed statistical cube (NDIA data rules), not a further partition
+    of published expenditure. ActvPrtcpnt values prefixed "<" are upper
+    bounds (both true small-cell suppression and non-additive cascade
+    cases per NDIA's own data rules document), never exact counts.
+  caveats:
+  - Single-quarter snapshot (30 June 2026) - the source publishes each quarter
+    as a separate downloadable file; no time series is loaded here.
+  - Low participant counts (<11) are suppressed; the associated average
+    committed plan budget is also withheld for those rows.
+  - Age band definitions changed from December 2024 (0 to 8 / 9 to 14
+    replacing 0 to 6 / 7 to 14) - not relevant to this single-quarter load,
+    but relevant if a future loop adds further editions.

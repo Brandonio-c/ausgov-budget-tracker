@@ -596,6 +596,100 @@ def link_dss_under_pbs(conn: sqlite3.Connection) -> int:
     )
 
 
+def _insert_related_breakdown(
+    conn: sqlite3.Connection,
+    parent_id: int,
+    child_id: int,
+    crosswalk_id: str,
+    priority: int,
+    notes: str,
+) -> int:
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO breakdown_edges (
+            parent_node_id, child_node_id, edge_kind, crosswalk_id,
+            financial_year, priority, source_document_id, notes
+        ) VALUES (?, ?, 'related_breakdown', ?, NULL, ?, NULL, ?)
+        """,
+        (parent_id, child_id, crosswalk_id, priority, notes),
+    )
+    return int(conn.execute("SELECT changes()").fetchone()[0])
+
+
+NDIS_CANONICAL_PARENT_NAME = (
+    "Social security and welfare / Assistance to people with disabilities / "
+    "National Disability Insurance Scheme"
+)
+NDIS_CANONICAL_PARENT_SOURCE = "federal_budget_statement_6_components"
+
+# (source_key, root node name, crosswalk_id). Root names are deliberately
+# distinct per measure (not just distinct source_keys) - build_related_
+# subtree() (breakdown_graph.py), when called without an edge_set_ids
+# filter as dashboard_item_children() does, keys its result dict by child
+# node NAME, so two measures sharing one root name would silently
+# overwrite each other in that combined view (found live; see the
+# extractor's ROOT_NODE comment and federal-deep-data-mission-*.md, Loop 8).
+NDIS_STATS_ROOTS = (
+    (
+        "federal_ndis_participant_count",
+        "NDIA Participant Statistics",
+        "ndis_participants_under_statement6",
+    ),
+    (
+        "federal_ndis_average_committed_plan_budget",
+        "NDIA Average Committed Plan Budget",
+        "ndis_average_budget_under_statement6",
+    ),
+)
+
+
+def link_ndis_participant_statistics(conn: sqlite3.Connection) -> int:
+    """One related_breakdown edge per NDIS statistics measure, from the
+    canonical Statement 6 NDIS expenditure node to each measure's own
+    source-native root node. Deliberately two separate edges/branch
+    families (never merged): participant counts and average committed
+    plan budget are distinct measures the source itself never sums into
+    one another - see migrations/028_ndis_participant_plan_budgets_
+    measures.sql. Uses related_breakdown (not same_group) since there is
+    no existing consumer relying on same_group chain continuity through
+    this brand-new attach point (unlike the pbs_dss_bridge/a61_to_
+    components case investigated and reverted in Loop 7 of the Federal
+    deep-data mission)."""
+    parent = conn.execute(
+        """
+        SELECT n.id FROM nodes n
+        JOIN source_documents d ON d.id = n.source_document_id
+        WHERE d.source_key = ? AND n.name = ?
+        """,
+        (NDIS_CANONICAL_PARENT_SOURCE, NDIS_CANONICAL_PARENT_NAME),
+    ).fetchone()
+    if not parent:
+        return 0
+    parent_id = int(parent[0])
+
+    inserted = 0
+    for source_key, root_name, crosswalk_id in NDIS_STATS_ROOTS:
+        root = conn.execute(
+            """
+            SELECT n.id FROM nodes n
+            JOIN source_documents d ON d.id = n.source_document_id
+            WHERE d.source_key = ? AND n.name = ?
+            """,
+            (source_key, root_name),
+        ).fetchone()
+        if not root:
+            continue
+        inserted += _insert_related_breakdown(
+            conn,
+            parent_id,
+            int(root[0]),
+            crosswalk_id,
+            100,
+            f"ndis:{source_key}:{root_name}",
+        )
+    return inserted
+
+
 def link_austender_under_s6(conn: sqlite3.Connection) -> int:
     """Hang AusTender contract aggregates under Defence / Health / Transport A.6.1."""
     return link_path_children_under_cascade(

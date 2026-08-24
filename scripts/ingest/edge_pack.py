@@ -20,6 +20,7 @@ from breakdown_pack import (  # noqa: E402
     link_dss_under_pbs,
     link_grants_under_pbs,
     link_historical_fbo_related,
+    link_ndis_participant_statistics,
     link_pbs_to_components,
     link_related_crosswalk,
     link_same_group_from_paths,
@@ -146,6 +147,8 @@ def rebuild_edge_set(conn: sqlite3.Connection, policy: EdgeSetPolicy) -> Any:
         "contracts_under_statement_6": link_austender_under_s6,
         "grants_under_pbs": link_grants_under_pbs,
         "recipients_under_pbs": link_dss_under_pbs,
+        "ndis_participants_under_statement6": link_ndis_participant_statistics,
+        "ndis_average_budget_under_statement6": link_ndis_participant_statistics,
     }
     if policy.id == "pbs_programs_all_under_s6":
         return load_pbs_edges(conn, load_pbs_crosswalk())

@@ -210,3 +210,54 @@ edge_sets:
       - federal_pbs_2022_23_march_treasury
       - federal_pbs_2023_24_treasury
     sort_order: 31
+
+  # NDIA participant/plan-budget statistics (Federal deep-data mission
+  # Priority 2). Two separate branch families, deliberately never merged:
+  # participant counts and average committed plan budget are distinct
+  # measures the source itself never sums into one another (see
+  # migrations/028_ndis_participant_plan_budgets_measures.sql).
+  - id: ndis_participants_source_native
+    crosswalk_id: null
+    branch_family: ndis_participants
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_ndis_participant_count
+    sort_order: 32
+
+  - id: ndis_average_budget_source_native
+    crosswalk_id: null
+    branch_family: ndis_average_budget
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_ndis_average_committed_plan_budget
+    sort_order: 33
+
+  - id: ndis_participants_under_statement6
+    crosswalk_id: ndis_participants_under_statement6
+    branch_family: ndis_participants
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: navigation
+    folder_label: NDIS participant statistics
+    source_key_prefixes:
+      - federal_ndis_participant_count
+    sort_order: 34
+
+  - id: ndis_average_budget_under_statement6
+    crosswalk_id: ndis_average_budget_under_statement6
+    branch_family: ndis_average_budget
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: navigation
+    folder_label: NDIS average committed plan budget
+    source_key_prefixes:
+      - federal_ndis_average_committed_plan_budget
+    sort_order: 35
