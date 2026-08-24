@@ -829,12 +829,64 @@ matrix regen) - see commit log for exact hashes. Pushed; `HEAD == origin/main` c
   documented in Loop 7) means this depth is proven correct and complete in the data/graph
   layer, but not yet visible to a real user without a future, separate UI feature.
 
+### Loop 9 (forensics only, not yet built) - NDIS payments data: a genuinely richer, verified-additive opportunity, deliberately not rushed
+
+Searched for and found NDIA's official "Payments data" (`dataresearch.ndis.gov.au/datasets/
+payments-datasets`, June 2026 edition, `payments_june_2026.csv`, 120,774 rows). Unlike the
+Part B participant dataset (counts/averages, never additive), this one reports **actual
+aggregate dollars paid** (`PmtAmt`, "Total amount paid to participants in the preceding 12
+months") by `SuppClass` (support class) → `SuppCatNm` (support category) → `SuppItemNmbr`
+(individual support item), each also cross-tabulated with geography/disability/age in
+various combinations.
+
+**Verified, not assumed**:
+- The implied grand total (summing the 4 non-`ALL` `SuppClass`-level rows: Core $40.53B +
+  Capacity Building $9.40B + Capital $1.52B + Missing -$3,000) = **$51.45B**, close to but
+  **not exactly** the canonical NDIS $53.778B (Statement 6 components, FY2025-26) - a ~4.3%
+  gap plausibly explained by different accounting basis/period ("preceding 12 months" ending
+  30 June 2026 is a rolling actual-payments window, not the same construct as a Statement 6
+  estimate) or scope differences. **This must attach as `related`, never replace or
+  additively merge with the canonical total** - the same discipline applied to the
+  participant dataset.
+- `SuppClass → SuppCatNm` **is** a genuine, verified, near-exact additive partition *within*
+  this source: the 9 categories under "Capacity Building" sum to $9,400,383,000 against the
+  class total of $9,400,381,000 (a $2,000 rounding difference on $9.4B) - unlike the
+  participant dataset's support-class dimension (where multiple classes per participant
+  made summing invalid), a single *payment* transaction belongs to exactly one class and
+  category, so summing dollars is safe here.
+- `SuppCatNm → SuppItemNmbr` also exists (70,616 item-level rows across 16 categories,
+  individual items like "Early Childhood Intervention Professional - Psychologist") but is
+  **only published jointly with geography** (state specific, never `ALL`) for the categories
+  checked - reconstructing a national item total requires summing across all 9
+  state/territory values first, not a simple marginal read.
+- The dataset's dimension-availability pattern is **not uniform** like the participant
+  dataset's clean single-dimension marginals: 12 distinct "which dimensions are `ALL` vs
+  specific" combinations appear across the 120,774 rows (e.g. item-level rows pair with
+  geography but never disability/age; class-level rows pair with disability×age jointly but
+  never geography). A correct, faithful extractor needs dataset-specific handling per
+  pattern, not the participant extractor's uniform "one dimension free, rest `ALL`" logic.
+
+**Deliberately not built this loop**: the participant-dataset build (Loop 8) hit three
+distinct, real bugs before landing correctly (a same-name collision, a folder-sum
+non-reconciliation trap on two of five dimensions, a root-name mismatch) - each caught only
+through careful, repeated empirical verification. This payments dataset's more complex,
+non-uniform structure raises the same risk class further, and rushing it within this loop's
+remaining budget would trade away exactly the rigor that caught those three bugs. Recording
+the verified forensics above (grand total non-reconciliation, confirmed-safe
+`SuppClass→SuppCatNm` additive nesting, the state-joint item-level caveat, the 12-pattern
+non-uniformity) so a dedicated follow-up loop can build this efficiently and correctly
+without repeating the discovery work. Raw file cached locally (not yet formally registered
+in `procurement_sources.yaml` or moved into `data/raw/` - a deliberate half-step, since
+formal registration is normally done alongside, not ahead of, the ingestion it supports).
+
 ## Next
 
-1. Continue through Aged Care/Health, Defence, Education per the mission's priority order
-   (NDIS payment/provider/service depth, Priority 2's second half, remains open - search for
-   NDIA payment/provider datasets before Aged Care/Health), applying the same audit-before-
-   ingest discipline established so far.
+1. Build the NDIS payments extractor (Loop 9's forensics above), attaching `SuppClass →
+   SuppCatNm` as a genuinely additive same_group family under a new `related_breakdown`
+   crossing (mirroring Loop 8's canonical-safety pattern exactly), with geography/disability
+   /age and the state-joint item-level detail as further related dimensions.
+2. Continue through Aged Care/Health, Defence, Education per the mission's priority order,
+   applying the same audit-before-ingest discipline established so far.
 2. Follow-on (not urgent, disclosed above): harden `/item/{id}/children`'s
    `build_related_subtree()` call to pass an explicit `edge_set_ids` filter per policy,
    matching `attach_related_to_tree()`'s own safer pattern (would remove the need for the

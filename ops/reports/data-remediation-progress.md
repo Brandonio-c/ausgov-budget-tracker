@@ -2483,6 +2483,10 @@ Disposable-copy-first verified throughout (facts/nodes/edges each +267, 0 quaran
 
 Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 8).
 
+**Loop 9 (forensics only, deliberately not built).** Found NDIA's official "Payments data" (June 2026, 120,774 rows) - unlike Loop 8's participant dataset, this reports actual aggregate dollars paid (`PmtAmt`) by support class -> support category -> support item. Verified: implied grand total ($51.45B) is close to but not exactly the canonical NDIS $53.778B (different accounting basis/period - must stay `related`, never merged); `SuppClass -> SuppCatNm` is a genuine, near-exact additive partition within the source (9 categories under "Capacity Building" sum to $9,400,383,000 vs class total $9,400,381,000 - a $2,000 rounding gap on $9.4B); item-level data is only published jointly with geography, not as its own marginal; the dataset's dimension-availability pattern is non-uniform (12 distinct combinations, unlike the participant dataset's clean single-dimension marginals). Deliberately not built this loop - the participant-dataset build hit three distinct real bugs before landing correctly, and this dataset's more complex structure raises that risk further; recording verified forensics so a dedicated follow-up can build it efficiently without repeating discovery work.
+
+Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 9).
+
 ### Next item (this phase)
 
-NDIS payment/provider/service depth (Priority 2's second half) - search for NDIA payment/provider datasets before moving on. Then continue through Aged Care/Health, Defence, Education per the mission's priority order.
+Build the NDIS payments extractor (Loop 9's forensics above). Then continue through Aged Care/Health, Defence, Education per the mission's priority order.
