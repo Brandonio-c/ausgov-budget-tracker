@@ -149,6 +149,7 @@ def rebuild_edge_set(conn: sqlite3.Connection, policy: EdgeSetPolicy) -> Any:
         "recipients_under_pbs": link_dss_under_pbs,
         "ndis_participants_under_statement6": link_ndis_participant_statistics,
         "ndis_average_budget_under_statement6": link_ndis_participant_statistics,
+        "ndis_payments_under_statement6": link_ndis_participant_statistics,
     }
     if policy.id == "pbs_programs_all_under_s6":
         return load_pbs_edges(conn, load_pbs_crosswalk())

@@ -13111,3 +13111,47 @@ sources:
   - Age band definitions changed from December 2024 (0 to 8 / 9 to 14
     replacing 0 to 6 / 7 to 14) - not relevant to this single-quarter load,
     but relevant if a future loop adds further editions.
+
+- id: ndis_payments_data
+  priority: P2
+  publisher: National Disability Insurance Agency
+  jurisdiction: Commonwealth
+  government_level: federal
+  source_family: ndis_payment_statistics
+  title: NDIS Payments Data
+  landing_url: https://dataresearch.ndis.gov.au/datasets/payments-datasets
+  resource_url: https://dataresearch.ndis.gov.au/media/4577/download?attachment
+  access_method: direct_file
+  automation: manual
+  formats:
+  - csv
+  enabled: true
+  access:
+    type: direct_file
+    allowed_domains:
+    - dataresearch.ndis.gov.au
+  handoff_action_bucket: INGEST_FIRST_ALREADY_ON_DISK
+  handoff_data_domain: related_evidence
+  handoff_fills_gap: ndis_payment_category_depth
+  handoff_already_on_disk: true
+  handoff_repo_source_key: federal_ndis_payment_amount
+  handoff_verification_status: ALREADY_ON_DISK
+  parser_strategy: Publish as related, non-additive-with-canonical evidence
+    attached to the existing canonical NDIS expenditure node. Support
+    class -> support category IS a verified, near-exact additive
+    partition within this source (never across sources) - see
+    migrations/029_ndis_payment_amount_measure.sql. The source's own
+    implied grand total ($51.45B) does not reconcile exactly to the
+    canonical NDIS Statement 6 figure ($53.778B) - different accounting
+    basis/period - never merge the two.
+  caveats:
+  - Single-quarter snapshot (30 June 2026) - the source publishes each
+    quarter as a separate downloadable file; no time series is loaded here.
+  - Support-item-level detail is only published jointly with geography
+    (state), not as its own national marginal - not ingested in the first
+    pass; support class -> support category only.
+  - Dimension-availability pattern is non-uniform across the dataset (12
+    distinct "which fields are ALL vs specific" combinations found during
+    forensics) - only the class/category marginal slices (verified safe)
+    are ingested; cross-tabulated views (item x geography, class x
+    disability x age) are deliberately deferred.

@@ -640,17 +640,23 @@ NDIS_STATS_ROOTS = (
         "NDIA Average Committed Plan Budget",
         "ndis_average_budget_under_statement6",
     ),
+    (
+        "federal_ndis_payment_amount",
+        "NDIA Payments",
+        "ndis_payments_under_statement6",
+    ),
 )
 
 
 def link_ndis_participant_statistics(conn: sqlite3.Connection) -> int:
     """One related_breakdown edge per NDIS statistics measure, from the
     canonical Statement 6 NDIS expenditure node to each measure's own
-    source-native root node. Deliberately two separate edges/branch
-    families (never merged): participant counts and average committed
-    plan budget are distinct measures the source itself never sums into
-    one another - see migrations/028_ndis_participant_plan_budgets_
-    measures.sql. Uses related_breakdown (not same_group) since there is
+    source-native root node. Deliberately separate edges/branch families
+    (never merged): participant counts, average committed plan budget,
+    and payment amounts are distinct measures none of the underlying
+    sources ever sums into one another - see migrations/028_ndis_
+    participant_plan_budgets_measures.sql and 029_ndis_payment_amount_
+    measure.sql. Uses related_breakdown (not same_group) since there is
     no existing consumer relying on same_group chain continuity through
     this brand-new attach point (unlike the pbs_dss_bridge/a61_to_
     components case investigated and reverted in Loop 7 of the Federal

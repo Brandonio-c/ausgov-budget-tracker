@@ -261,3 +261,26 @@ edge_sets:
     source_key_prefixes:
       - federal_ndis_average_committed_plan_budget
     sort_order: 35
+
+  - id: ndis_payments_source_native
+    crosswalk_id: null
+    branch_family: ndis_payments
+    edge_kind: same_group
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: data
+    source_key_prefixes:
+      - federal_ndis_payment_amount
+    sort_order: 36
+
+  - id: ndis_payments_under_statement6
+    crosswalk_id: ndis_payments_under_statement6
+    branch_family: ndis_payments
+    edge_kind: related_breakdown
+    projection_policy: augment
+    fallback_policy: nearest_earlier
+    presentation_role: navigation
+    folder_label: NDIS payments by support class/category
+    source_key_prefixes:
+      - federal_ndis_payment_amount
+    sort_order: 37

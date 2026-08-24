@@ -1,0 +1,27 @@
+source_id: federal_ndis_payment_amount
+title: NDIS payment amount by support class and support category (Jun 2026)
+publisher: National Disability Insurance Agency
+jurisdiction: Commonwealth
+government_level: federal
+source_family: ndis_payment_statistics
+measure_type: ndis_payment_amount
+accounting_basis: cash
+estimate_status: actual
+period_granularity: financial_year
+native_unit: AUD
+input:
+  path: data/staging/breakdowns/ndis_payment_amount.csv
+  format: csv
+columns:
+  financial_year: fy
+  amount_aud: amount
+  node_name: category
+  estimate_status: estimate_status
+  locator: locator
+  landing_url: landing_url
+  original_resource_url: resource_url
+attribution:
+  landing_url_column: landing_url
+  original_resource_url_column: resource_url
+  cached_copy_path: data/raw/federal/ndis_payments/snapshots/20260824T044821Z/files/payments-june-2026.csv
+fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'
