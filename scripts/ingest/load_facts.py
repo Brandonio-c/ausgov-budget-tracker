@@ -203,6 +203,12 @@ def upsert_fact(
     valuation_basis = row.get("valuation_basis") or mapping.get("valuation_basis")
     amount_granularity = row.get("amount_granularity") or mapping.get("amount_granularity")
     canonical_dataset_id = canonical_dataset_for_source(mapping["source_id"])
+    # native_unit lets a mapping declare its measure isn't dollars (e.g.
+    # "recipients" for a headcount source) - without this, every source
+    # silently got 'AUD' regardless, indistinguishable from a genuine dollar
+    # figure wherever downstream code reads facts.unit directly rather than
+    # measure_type/compatibility_group.
+    unit = mapping.get("native_unit") or "AUD"
     conn.execute(
         """
         INSERT INTO facts (
@@ -211,9 +217,10 @@ def upsert_fact(
             source_document_id, source_retrieval_id, source_locator_json,
             retrieved_at, observation_date, publication_date,
             valuation_basis, amount_granularity, canonical_dataset_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'AUD', ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(fact_key) DO UPDATE SET
             amount_aud = excluded.amount_aud,
+            unit = excluded.unit,
             source_retrieval_id = excluded.source_retrieval_id,
             source_locator_json = excluded.source_locator_json,
             retrieved_at = excluded.retrieved_at,
@@ -231,6 +238,7 @@ def upsert_fact(
             mapping["accounting_basis"],
             row.get("_estimate_status") or mapping["estimate_status"],
             amount,
+            unit,
             source_document_id,
             retrieval_id,
             locator_json,
@@ -283,6 +291,7 @@ def quarantine_fact(
         amount = None
     if amount is None:
         amount = 0.0  # satisfy CHECK; reason captures real failure
+    unit = mapping.get("native_unit") or "AUD"
     conn.execute(
         """
         INSERT INTO facts_pending_attribution (
@@ -290,12 +299,13 @@ def quarantine_fact(
             accounting_basis, estimate_status, amount_aud, unit, currency,
             source_document_id, source_locator_json, retrieved_at,
             is_publishable, quarantine_reason, quarantined_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AUD', 'AUD', ?, ?, ?, 0, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'AUD', ?, ?, ?, 0, ?, ?)
         ON CONFLICT(fact_key) DO UPDATE SET
             quarantine_reason = excluded.quarantine_reason,
             quarantined_at = excluded.quarantined_at,
             source_locator_json = excluded.source_locator_json,
-            amount_aud = excluded.amount_aud
+            amount_aud = excluded.amount_aud,
+            unit = excluded.unit
         """,
         (
             fact_key,
@@ -305,6 +315,7 @@ def quarantine_fact(
             mapping["accounting_basis"],
             row.get("_estimate_status") or mapping["estimate_status"],
             amount,
+            unit,
             source_document_id,
             locator_json,
             row.get("_retrieved_at") or _utc_now(),
