@@ -440,6 +440,20 @@ def build_same_group_subtree(
                 match_quality=match_quality_from_notes(edge.get("notes")),
                 presentation_role=policy.presentation_role,
             ),
+            # This node's own published fact.amount_aud is always
+            # authoritative - never silently replaced by sum(children) when
+            # this dict is later serialized (_to_tree_node()'s default for
+            # a node with children and no preserve_amount). Without this,
+            # any node reached here that also has its own nested same_group
+            # children reports whatever those children happen to sum to
+            # instead of its real fact amount (found live: "Arts and
+            # cultural heritage" via /item/{id}/children read $1.1996B -
+            # the sum of 13 partial PBS program facts - instead of its
+            # actual $2.329B Statement 6 A.6.1 figure). The main /tree
+            # endpoint already gets this right via _build_tree_dict()'s own
+            # preserve_amount marking (see dashboard.py); this is the same
+            # fix for this second, independent tree-building path.
+            "preserve_amount": True,
             "_edge_policy": policy,
         }
         meta = _child_meta_from_fact(fact, tree_year=financial_year)
