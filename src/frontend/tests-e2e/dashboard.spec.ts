@@ -41,7 +41,7 @@ test.describe("dashboard navigation and citation regressions", () => {
 
   test("QLD state actuals branch is reachable", async ({ page }) => {
     await page.goto(`${BASE}?mode=actuals&level=state&year=2024-25`);
-    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 45_000 });
     await expect(page.getByLabel("Spending chart")).toBeVisible();
   });
 

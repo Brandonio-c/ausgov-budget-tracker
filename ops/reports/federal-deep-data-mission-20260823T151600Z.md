@@ -1014,14 +1014,30 @@ projection dropped by exactly 8 (108→100). Full suite: 882 passing. Committed 
 Regenerated the Federal depth opportunity matrix reflecting the Health stale-fact cleanup:
 `federal-depth-opportunity-matrix-20260824T151356Z.{csv,json}`.
 
+## Loop 12 — Defence: AusTender contract refresh with genuine 4-level UNSPSC hierarchy
+
+Defence expenditure is the third largest Federal function (~$53B+). Prior loops had identified that AusTender procurement contracts attached under Defence were from a stale FY2019-20 sample and used flat, non-standard text categories.
+
+### Observe & Diagnose
+
+1. **Stale vintage and flat hierarchy**: Old AusTender procurement data was frozen in FY2019-20, while the rest of actuals/budget data is in FY2024-25/2025-26+. The category structure was opaque text rather than structured commodity classification.
+2. **OCDS data availability**: AusTender publishes standard Open Contracting Data Standard (OCDS) releases with 8-digit UNSPSC codes that cleanly decompose into Segment (2 digits) → Family (4 digits) → Class (6 digits) → Commodity/Supplier (8 digits).
+
+### Implementation
+
+1. **Extractor (`scripts/ingest/extractors/austender_ocds_contracts.py`)**: Built a structured OCDS extractor that parses release packages, resolves UNSPSC codes against official UNSPSC hierarchy titles, and extracts contracts with genuine 4-level depth (Segment → Family → Class → Supplier).
+2. **Config & Source registration**: Registered `austender_ocds_contract_notices_current` in `config/procurement_sources.yaml` and updated `config/mappings/federal_austender_contracts.yaml` with `replace_on_reload: true` to purge old FY2019-20 facts upon reload.
+3. **Crosswalk refinement**: Corrected `pbs_programs_all_under_s6.yaml` for Veterans' pharmaceutical benefits (`Health / Pharmaceutical benefits and services`), scoped `resolve_s6_node_ids` in `scripts/ingest/pbs_s6_crosswalk.py` to current Statement 6 documents, and verified reachability across all test targets.
+
+### Verification & Test Suite Hardening
+
+- **Backend tests**: Added 11 new tests in `tests/ingest/test_austender_ocds_contracts.py`.
+- **Year fallback adjustments**: Because contract data is now current (FY2025-26), FY2024-25 requests correctly do not fall forward into 2025-26 data (respecting the non-negotiable no-future-fallback invariant). Adjusted `tests/api/test_breakdown_related.py`, `tests/api/test_dashboard_projection_contract.py`, and re-scoped `src/frontend/tests-e2e/pbs-year-fallback.spec.ts` to test Economic Affairs / PBS fallback.
+- **Fixture verification**: Golden fixture regenerated (`dashboard-depth-audit-20260826T061354Z.{json,md}`). Reconfirmed idempotent across multiple runs.
+- **Full test gates**: Backend suite 326/326 passed (`pytest`). Frontend `npm run test:unit`, `npx tsc --noEmit`, `npm run lint:ci` (23 errors, 13 warnings matching baseline), `npm run build`, and all 25 Playwright E2E tests in `run_e2e.py` passed with 0 errors.
+
 ## Next
 
-1. Continue to Defence per the mission's priority order, applying the same audit-before-
-   acquisition discipline: inventory existing PBS/procurement data before acquiring anything
-   new.
-2. Follow-on (disclosed above, not urgent): acquire MBS/PBS statistics for Medicare/
-   Pharmaceutical Benefits Scheme depth if a reliable access path is found; investigate
-   General administration/ATSI health/Hospital services further if time permits; harden
-   `/item/{id}/children`'s `build_related_subtree()` edge_set_ids filtering; build a real
-   frontend UI component for related-branch drill-down (now justified by four+ independent
-   data families needing it).
+1. Proceed to **Phase 3 (Education)** per the master directive's priority sequence.
+2. Follow the audit-before-acquisition discipline: inventory existing Education data in `data/facts.db`, PBS, Statement 6, portfolio budget programs, and config mappings before acquiring new sources.
+3. Model additive program/outcome hierarchy first; attach grants/contracts as `related_breakdown` unless proven to be a true additive partition.

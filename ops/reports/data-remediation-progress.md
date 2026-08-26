@@ -2499,6 +2499,10 @@ Confirmed Aged Care data ($35.7B: Residential Care Subsidies, Specialist Aged Ca
 
 Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 11).
 
+**Loop 12 - Defence: AusTender contract refresh with genuine 4-level UNSPSC hierarchy.** Refreshed stale FY2019-20 AusTender procurement contract sample with current (FY2025-26, 8-week OCDS sample) extraction. Implemented new `scripts/ingest/extractors/austender_ocds_contracts.py` creating genuine 4-level UNSPSC hierarchy (Segment → Family → Class → Supplier) and registered in `config/procurement_sources.yaml` with `replace_on_reload: true`. Refined `pbs_programs_all_under_s6.yaml` for Veterans' pharmaceutical benefits (`Health / Pharmaceutical benefits and services`) and scoped `resolve_s6_node_ids` in `scripts/ingest/pbs_s6_crosswalk.py` to current Statement 6 documents. Verified year fallback adjustments in `tests/api/test_breakdown_related.py`, `tests/api/test_dashboard_projection_contract.py`, and `src/frontend/tests-e2e/pbs-year-fallback.spec.ts`. Golden fixture updated and verified idempotent (`dashboard-depth-audit-20260826T061354Z.{json,md}`). 326/326 backend tests and 25/25 Playwright E2E tests passed.
+
+Full narrative in `federal-deep-data-mission-20260823T151600Z.md` (Loop 12).
+
 ### Next item (this phase)
 
-Continue to Defence per the mission's priority order.
+Proceed to Phase 3 (Education) per the mission's priority order.

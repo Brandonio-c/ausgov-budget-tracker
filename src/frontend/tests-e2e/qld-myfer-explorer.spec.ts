@@ -7,7 +7,7 @@ test.describe("Queensland MYFER explorer", () => {
     await page.goto(`${BASE}explorers/gfs/?view=qld_myfer`);
 
     await expect(page.getByRole("button", { name: "QLD MYFER" })).toBeVisible();
-    await expect(page.getByText("Vintage: each listed MYFER edition; status: revised estimate")).toBeVisible({
+    await expect(page.getByText(/API availability:.*revised estimate/i)).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByText(/2015-16 MYFER \(revised estimate\)/).first()).toBeVisible();

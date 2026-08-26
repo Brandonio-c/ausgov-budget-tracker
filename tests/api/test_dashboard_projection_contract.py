@@ -43,7 +43,16 @@ def test_projection_contract_covers_every_non_root_node(client: TestClient) -> N
         "requested_level": "federal",
         "requested_financial_year": "2024-25",
         "selected_accounting_basis": "gfs",
-        "max_visible_depth": 4,
+        # 3, not 4: the AusTender "contracts" related branch (previously
+        # depth 4 via nearest-earlier fallback to stale 2019-20 data) was
+        # refreshed to a current (2025-26+) sample - since fallback only
+        # ever looks to an EARLIER year, never a future one, that branch is
+        # now correctly absent for a 2024-25 request. The deepest surviving
+        # branch for this year is "grants"/"pbs" at depth 3 (see
+        # test_canonical_parent_stays_additive_and_related_edges_are_explicit,
+        # which moved to 2025-26 to keep exercising AusTender's deep
+        # cascade specifically).
+        "max_visible_depth": 3,
         "max_additive_depth": 2,
         "contains_related_branches": True,
     }
@@ -63,15 +72,22 @@ def test_projection_contract_covers_every_non_root_node(client: TestClient) -> N
 def test_canonical_parent_stays_additive_and_related_edges_are_explicit(
     client: TestClient,
 ) -> None:
+    # 2025-26, not 2024-25: this test specifically exercises the deep
+    # related cascade (PBS -> AusTender contracts), which after the
+    # AusTender refresh to current (2025-26+) data only reaches its full
+    # depth for years the current sample actually covers - a 2024-25
+    # request now correctly stops at the bare Statement 6/FBO wrapper
+    # nodes (verified live; see test_projection_contract_covers_every_
+    # non_root_node's max_visible_depth comment for the full explanation).
     body = client.get(
         "/v2/dashboard/tree",
-        params={"mode": "actuals", "level": "federal", "year": "2024-25"},
+        params={"mode": "actuals", "level": "federal", "year": "2025-26"},
     ).json()
     commonwealth = next(child for child in body["children"] if child["name"] == "Commonwealth")
     defence = next(child for child in commonwealth["children"] if child["name"] == "Defence")
     assert defence["relationship"]["branch_kind"] == "additive"
     assert defence["relationship"]["compatibility_group"] == "actual_expense"
-    assert defence["value"] == 50175000000.0
+    assert defence["value"] == 46040125000.0
 
     related_defence = next(child for child in defence["children"] if child["name"] == "Defence")
     relation = related_defence["relationship"]

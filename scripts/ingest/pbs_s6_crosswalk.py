@@ -137,22 +137,30 @@ def classify_program(
 _s6_node_id_cache: dict[str, list[int]] = {}
 
 
+CURRENT_S6_SOURCE_KEYS = (
+    "federal_budget_statement_6_a61",
+    "federal_budget_statement_6_components",
+    "federal_budget_statement_6_2026_27",
+)
+
+
 def resolve_s6_node_ids(conn: sqlite3.Connection, exact_name: str) -> list[int]:
-    """All node ids across every Statement 6 edition with this exact name -
+    """All node ids across current Statement 6 editions with this exact name -
     the rendered tree may resolve to any one of the editions depending on
     year, so the edge must exist from all of them for the related_breakdown
     to be reachable regardless of which edition's fact wins that render.
-    Memoized: the crosswalk only names ~15 distinct S6 targets, looked up
-    once each rather than once per PBS node (thousands of calls)."""
+    Historical editions (2022-23 march/october, 2023-24) have their own
+    edition-locked crosswalks and are explicitly excluded here."""
     if exact_name in _s6_node_id_cache:
         return _s6_node_id_cache[exact_name]
+    placeholders = ",".join("?" for _ in CURRENT_S6_SOURCE_KEYS)
     rows = conn.execute(
-        """
+        f"""
         SELECT n.id FROM nodes n
         JOIN source_documents d ON d.id = n.source_document_id
-        WHERE d.source_key LIKE ? AND n.name = ?
+        WHERE d.source_key IN ({placeholders}) AND n.name = ?
         """,
-        (f"{S6_SOURCE_KEY_PREFIX}%", exact_name),
+        (*CURRENT_S6_SOURCE_KEYS, exact_name),
     ).fetchall()
     result = [int(r[0]) for r in rows]
     _s6_node_id_cache[exact_name] = result

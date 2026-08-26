@@ -13155,3 +13155,50 @@ sources:
     forensics) - only the class/category marginal slices (verified safe)
     are ingested; cross-tabulated views (item x geography, class x
     disability x age) are deliberately deferred.
+
+- id: austender_ocds_contract_notices_current
+  priority: P1
+  publisher: Department of Finance (AusTender)
+  jurisdiction: Commonwealth
+  government_level: federal
+  source_family: contracts
+  title: AusTender contract notices - current (OCDS API, 2026-Q3 sample)
+  landing_url: https://www.tenders.gov.au/
+  resource_url: https://api.tenders.gov.au/ocds/
+  access_method: ocds_api
+  automation: manual
+  formats:
+  - json
+  enabled: true
+  access:
+    type: ocds_api
+    allowed_domains:
+    - api.tenders.gov.au
+    discovery:
+      financial_year_start: "2026-06-27"
+      financial_year_end: "2026-08-22"
+      latest_only: false
+  handoff_action_bucket: INGEST_FIRST_ALREADY_ON_DISK
+  handoff_data_domain: related_evidence
+  handoff_fills_gap: defence_current_procurement_depth
+  handoff_already_on_disk: true
+  handoff_repo_source_key: federal_austender_contracts
+  handoff_verification_status: ALREADY_ON_DISK
+  parser_strategy: Replaces the prior 2019-20 AusTender extraction with a
+    current 8-week sample (a full financial year needs ~1,200 paginated
+    requests, judged infeasible for one loop). Publish as a related,
+    non-additive contracts explorer attached to the canonical Statement 6
+    node via contracts_under_statement_6 - contract values are commitments,
+    never GFS/accrual expenditure, and must never be summed into a
+    canonical total. UNSPSC codes decoded to genuine 4-level segment/
+    family/class/commodity hierarchy via a public UNSPSC reference table
+    (O*NET Resource Center), not treated as one opaque text category.
+  caveats:
+  - 8-week sample (2026-06-27 to 2026-08-22), not a full financial year -
+    a genuine "top contracts" sample, matching the design of the prior
+    2019-20 extraction it replaces, not an exhaustive annual account.
+  - Contract values are commitments (accounting_basis=commitment), not
+    GFS/accrual expenditure - never additive with canonical totals.
+  - UNSPSC reference table is a third-party (O*NET) mirror of the global
+    UNSPSC codeset, not an AusTender-published artifact - cited separately
+    from the contract facts themselves.

@@ -1,5 +1,5 @@
 source_id: federal_austender_contracts
-title: AusTender top contracts under Defence / Health / Infrastructure (CN 2019–20)
+title: AusTender top contracts under Defence / Health / Infrastructure (OCDS, 2026-Q3 sample)
 publisher: Department of Finance (AusTender)
 jurisdiction: Commonwealth
 government_level: federal
@@ -8,6 +8,12 @@ measure_type: contract_value
 accounting_basis: commitment
 estimate_status: contract
 period_granularity: financial_year
+# fact_key includes node_name (built from UNSPSC segment/family/class titles
+# and supplier names, which change completely between the prior 2019-20
+# extraction and this current OCDS-sourced one) - without this the old
+# 2019-20 facts would never be purged, just accumulate alongside the new
+# ones.
+replace_on_reload: true
 input:
   path: data/staging/breakdowns/austender_contracts_topn.csv
   format: csv
@@ -22,5 +28,5 @@ columns:
 attribution:
   landing_url_column: landing_url
   original_resource_url_column: resource_url
-  cached_copy_path: data/raw/federal/federal_austender_ocds_api/snapshots/20260721T024615Z/files/2019-20-australian-government-contract-data.xlsx
+  cached_copy_path: data/raw/federal/federal_austender_ocds_api/snapshots/20260824T111930Z/files/window_0.json
 fact_key_template: '{source_id}|{financial_year}|{node_name}|{measure_type}|{estimate_status}'

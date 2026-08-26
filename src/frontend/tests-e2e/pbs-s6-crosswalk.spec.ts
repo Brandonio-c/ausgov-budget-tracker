@@ -22,10 +22,10 @@ const API_BASE = "http://localhost:8000";
 const CASES: { label: string; factId: number; year: string }[] = [
   { label: "Social Services", factId: 257892, year: "2029-30" },
   { label: "Health", factId: 257838, year: "2029-30" },
-  { label: "NDIA", factId: 258258, year: "2029-30" },
+  { label: "NDIA", factId: 600203, year: "2029-30" },
   { label: "Defence", factId: 257718, year: "2029-30" },
   { label: "Education", factId: 257790, year: "2029-30" },
-  { label: "DVA health", factId: 258178, year: "2029-30" },
+  { label: "DVA health", factId: 600163, year: "2029-30" },
   { label: "DVA welfare", factId: 257850, year: "2029-30" },
 ];
 

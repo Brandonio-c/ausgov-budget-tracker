@@ -65,7 +65,7 @@ PBS_S6_VERIFICATION_TARGETS: list[dict[str, str]] = [
     {"label": "ndia", "s6_node_name": "Social security and welfare / Assistance to people with disabilities / National Disability Insurance Scheme"},
     {"label": "defence", "s6_node_name": "Defence"},
     {"label": "education", "s6_node_name": "Education"},
-    {"label": "dva_health", "s6_node_name": "Health / Medical services and benefits / Veterans' pharmaceutical benefits"},
+    {"label": "dva_health", "s6_node_name": "Health / Pharmaceutical benefits and services / Veterans' pharmaceutical benefits"},
     {"label": "dva_welfare", "s6_node_name": "Social security and welfare / Assistance to veterans and dependants"},
 ]
 

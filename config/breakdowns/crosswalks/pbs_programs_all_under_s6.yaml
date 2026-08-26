@@ -299,8 +299,8 @@ program_label_overrides:
   - pbs_portfolio: "Veterans' Affairs"
     label_contains: "pharmaceutical"
     statement6_function: "Health"
-    statement6_subfunction: "Health / Medical services and benefits"
-    statement6_component: "Health / Medical services and benefits / Veterans' pharmaceutical benefits"
+    statement6_subfunction: "Health / Pharmaceutical benefits and services"
+    statement6_component: "Health / Pharmaceutical benefits and services / Veterans' pharmaceutical benefits"
     confidence: high
     evidence: exact_label_with_portfolio_context
     status: mapped

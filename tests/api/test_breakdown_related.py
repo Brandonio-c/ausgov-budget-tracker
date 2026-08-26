@@ -201,14 +201,24 @@ def test_thin_purposes_have_related_depth(client: TestClient) -> None:
         assert node is not None, purpose
         assert _max_depth(node) > 1, f"{purpose} should expose related depth"
 
-    defence = _find_named(tree, "Defence")
     # Task 7: the PBS "Program ..." same_group cascade only has budget-year
     # (2025-26+) data published, which is a *future* year relative to this
     # 2024-25 actuals request and must not be silently substituted in - so
-    # it is correctly absent here. The AusTender contracts related cascade
-    # (a distinct, same-year-scoped related_breakdown link) still proves
-    # depth works: it reaches named supplier-level detail several levels down.
-    assert any("–" in c["name"] for c in _walk(defence)), (
+    # it is correctly absent here. AusTender contracts were refreshed from
+    # a stale 2019-20 sample (which happened to fall within 2024-25's
+    # nearest-earlier range) to a current 2025-26+ sample (which, being
+    # later than 2024-25, correctly does NOT fall back into this request -
+    # fallback only ever looks earlier, never later). Verify the same
+    # named supplier-level detail on the year the current sample actually
+    # covers instead of pretending the (now historical) 2024-25 view still
+    # reaches it.
+    tree_current = client.get(
+        "/v2/dashboard/tree",
+        params={"mode": "actuals", "level": "federal", "year": "2025-26"},
+    ).json()
+    defence_current = _find_named(tree_current, "Defence")
+    assert defence_current is not None
+    assert any("–" in c["name"] for c in _walk(defence_current)), (
         "Defence related cascade should still reach named contract-level detail"
     )
 
