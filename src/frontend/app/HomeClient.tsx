@@ -21,6 +21,8 @@ import {
   additiveChildren,
   perFunctionDepth,
   nestableChildren,
+  ringRootChildren,
+  functionSemanticSummary,
 } from "@/lib/sunburstTree";
 
 const BRANCH_LABELS: Record<string, string> = {
@@ -175,16 +177,6 @@ export default function HomeClient() {
   const currentNode = drillPath.length > 0 ? drillPath[drillPath.length - 1] : rootNode;
   const rawChildren = currentNode?.children ?? null;
   // Exclude Statement 6 / FBO navigation folders from pie/bar — they preserve the
-  // parent amount and would double the chart total (e.g. Social protection $286B + FBO $286B).
-  // The undrilled top level is the well-known, bounded federal/state function list —
-  // never fold it into "Other"; folding is only appropriate once drilled deeper.
-  const displayedChildren = useMemo(() => {
-    if (!rawChildren?.length) return [];
-    const additive = additiveChildren(rawChildren);
-    return drillPath.length === 0 ? additive : foldToTopN(additive);
-  }, [rawChildren, drillPath.length]);
-  const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
-  const safeRingDepth = Math.max(1, tree?.projection?.max_visible_depth ?? 2);
   const branchChoices = useMemo(() => {
     const found = new Set<string>();
     const walk = (nodes: TreeNode[] | null | undefined) => {
@@ -223,13 +215,44 @@ export default function HomeClient() {
     : branchChoices.includes("all")
       ? "all"
       : "canonical";
+
+  const displayedChildren = useMemo(() => {
+    if (!rawChildren?.length) return [];
+    if (activeBranchChoice !== "canonical") {
+      const nest =
+        drillPath.length === 0
+          ? ringRootChildren(rawChildren, activeBranchChoice)
+          : currentNode
+            ? nestableChildren(currentNode, activeBranchChoice)
+            : rawChildren;
+      if (nest.length > 0) {
+        return drillPath.length === 0 ? nest : foldToTopN(nest);
+      }
+    }
+    const additive = additiveChildren(rawChildren);
+    if (additive.length > 0) {
+      return drillPath.length === 0 ? additive : foldToTopN(additive);
+    }
+    const fallback = ringRootChildren(rawChildren, activeBranchChoice);
+    return drillPath.length === 0 ? fallback : foldToTopN(fallback);
+  }, [rawChildren, drillPath.length, activeBranchChoice, currentNode]);
+  const chartNodes = chartType === "rings" ? rawChildren ?? [] : displayedChildren;
+  const safeRingDepth = Math.max(1, tree?.projection?.max_visible_depth ?? 2);
   const maxRingDepth = useMemo(
     () => Math.max(1, maxVisibleDepth(rawChildren, activeBranchChoice)),
     [rawChildren, activeBranchChoice],
   );
-  const functionDepths = useMemo(
-    () => perFunctionDepth(rawChildren, activeBranchChoice),
-    [rawChildren, activeBranchChoice],
+  const maxAdditiveDepth = useMemo(
+    () => Math.max(1, maxVisibleDepth(rawChildren, "canonical")),
+    [rawChildren],
+  );
+  const maxSemanticDepth = useMemo(
+    () => Math.max(1, maxVisibleDepth(rawChildren, "all")),
+    [rawChildren],
+  );
+  const semanticSummaries = useMemo(
+    () => functionSemanticSummary(rawChildren),
+    [rawChildren],
   );
   // The rings chart shows multiple nested levels at once (unlike pie/bar,
   // where drilling replaces the view), so ECharts' on-canvas labels for the
@@ -588,15 +611,29 @@ export default function HomeClient() {
               ? "Deep exploration unfolds Statement 6, PBS programs, AusTender contracts, grants, NDIS, and demographics. Quantitative amounts and sources are disclosed per wedge."
               : `Focusing on ${BRANCH_LABELS[activeBranchChoice] ?? activeBranchChoice}. Related branches never change canonical totals.`}
           </p>
-          {functionDepths.length > 1 && functionDepths.some((f) => f.depth !== functionDepths[0].depth) ? (
+          <div className="flex flex-wrap gap-2 pt-1 text-xs">
+            <span className="rounded bg-blue-50 px-2.5 py-1 font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+              Deep exploration: Up to {maxSemanticDepth} semantic levels available
+            </span>
+            <span className="rounded bg-zinc-100 px-2.5 py-1 font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              Canonical actual: {maxAdditiveDepth} additive level
+            </span>
+          </div>
+          {semanticSummaries.length > 0 ? (
             <details className="text-xs text-zinc-500 dark:text-zinc-400">
               <summary className="cursor-pointer">
-                Depth varies by function in this branch (up to {maxRingDepth} — not every wedge goes that deep)
+                Function depth & dimension details ({semanticSummaries.filter((s) => s.semanticDepth > 1).length} of {semanticSummaries.length} functions have deep data)
               </summary>
-              <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 pl-1">
-                {functionDepths.map((f) => (
-                  <li key={f.name}>
-                    {f.name}: {f.depth} {f.depth === 1 ? "(leaf)" : "levels"}
+              <ul className="mt-2 space-y-1.5 pl-1">
+                {semanticSummaries.map((f) => (
+                  <li key={f.name} className="flex flex-col sm:flex-row sm:gap-2">
+                    <strong className="text-zinc-700 dark:text-zinc-200">{f.name}:</strong>
+                    <span>Canonical: {f.additiveDepth} {f.additiveDepth === 1 ? "level" : "levels"} · Semantic: {f.semanticDepth} {f.semanticDepth === 1 ? "level" : "levels"}</span>
+                    {f.availableDimensions.length > 0 ? (
+                      <span className="text-zinc-500">
+                        (Available: {f.availableDimensions.map((d) => BRANCH_LABELS[d] ?? d.replaceAll("_", " ")).join(", ")})
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>

@@ -402,6 +402,263 @@ try {
     "Capability Sustainment Program",
   );
 
+  // Phase 9: Comprehensive NDIS Multi-Dimensional Exploration & Visual Semantics Invariant Tests
+  const hunterDistrictParticipants = node(
+    "Hunter New England",
+    45_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_participants",
+      compatibility_group: "participant_count",
+      unit: "participants",
+    }),
+  );
+  const nswParticipants = node(
+    "New South Wales",
+    220_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_participants",
+      compatibility_group: "participant_count",
+      unit: "participants",
+    }),
+    [hunterDistrictParticipants],
+  );
+  const geographyParticipants = node(
+    "Participants by geography",
+    660_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_participants",
+      compatibility_group: "participant_count",
+      unit: "participants",
+    }),
+    [nswParticipants],
+  );
+  const ndiaParticipantsRoot = node(
+    "NDIA Participant Statistics",
+    660_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_participants",
+      compatibility_group: "participant_count",
+      unit: "participants",
+    }),
+    [geographyParticipants],
+  );
+  const ndisParticipantsFolder = node(
+    "NDIS participant statistics",
+    660_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_participants",
+      presentation_role: "navigation",
+      unit: "participants",
+    }),
+    [ndiaParticipantsRoot],
+  );
+
+  const hunterDistrictAvgBudget = node(
+    "Hunter New England (Budget)",
+    68_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_average_budget",
+      compatibility_group: "average_committed_plan_budget",
+      unit: "AUD_per_participant",
+    }),
+  );
+  const nswAvgBudget = node(
+    "New South Wales (Budget)",
+    68_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_average_budget",
+      compatibility_group: "average_committed_plan_budget",
+      unit: "AUD_per_participant",
+    }),
+    [hunterDistrictAvgBudget],
+  );
+  const geographyAvgBudget = node(
+    "Participants by geography (Budget)",
+    68_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_average_budget",
+      compatibility_group: "average_committed_plan_budget",
+      unit: "AUD_per_participant",
+    }),
+    [nswAvgBudget],
+  );
+  const ndiaAvgBudgetRoot = node(
+    "NDIA Average Committed Plan Budget",
+    68_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_average_budget",
+      compatibility_group: "average_committed_plan_budget",
+      unit: "AUD_per_participant",
+    }),
+    [geographyAvgBudget],
+  );
+  const ndisAvgBudgetFolder = node(
+    "NDIS average committed plan budget",
+    68_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_average_budget",
+      presentation_role: "navigation",
+      unit: "AUD_per_participant",
+    }),
+    [ndiaAvgBudgetRoot],
+  );
+
+  const cbCategoryPayments = node(
+    "Support Category Daily Activities",
+    5_200_000_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_payments",
+      compatibility_group: "ndia_payments",
+      unit: "AUD",
+    }),
+  );
+  const cbClassPayments = node(
+    "Capacity Building",
+    12_000_000_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_payments",
+      compatibility_group: "ndia_payments",
+      unit: "AUD",
+    }),
+    [cbCategoryPayments],
+  );
+  const ndiaPaymentsRoot = node(
+    "NDIA Payments",
+    42_500_000_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_payments",
+      compatibility_group: "ndia_payments",
+      unit: "AUD",
+    }),
+    [cbClassPayments],
+  );
+  const ndisPaymentsFolder = node(
+    "NDIS payments by support class/category",
+    42_500_000_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "ndis_payments",
+      presentation_role: "navigation",
+      unit: "AUD",
+    }),
+    [ndiaPaymentsRoot],
+  );
+
+  const ndisComponent = node(
+    "National Disability Insurance Scheme",
+    41_900_000_000,
+    relationship({
+      branch_kind: "additive",
+      branch_family: "statement_6",
+      compatibility_group: "budget_expense",
+      unit: "AUD",
+    }),
+    [ndisParticipantsFolder, ndisAvgBudgetFolder, ndisPaymentsFolder],
+  );
+
+  const disabilitiesSubFunction = node(
+    "Assistance to people with disabilities",
+    93_358_000_000,
+    relationship({
+      branch_kind: "additive",
+      branch_family: "statement_6",
+      compatibility_group: "budget_expense",
+      unit: "AUD",
+    }),
+    [ndisComponent],
+  );
+
+  const s6WelfareFolder = node(
+    "Social security and welfare (Statement 6)",
+    269_500_000_000,
+    relationship({
+      branch_kind: "related",
+      branch_family: "statement_6",
+      presentation_role: "navigation",
+      unit: "AUD",
+    }),
+    [disabilitiesSubFunction],
+  );
+
+  const socialSecurityFunction = node(
+    "Social security and welfare",
+    269_500_000_000,
+    relationship({
+      branch_kind: "additive",
+      compatibility_group: "budget_expense",
+      unit: "AUD",
+    }),
+    [s6WelfareFolder],
+  );
+
+  // 1. Canonical actual: depth 1, no related scaling, quantitative total preserved
+  const s6Canonical = buildSunburst([socialSecurityFunction], 8, false, "canonical");
+  assert.equal(s6Canonical.data[0].children, undefined);
+  assert.equal(perFunctionDepth([socialSecurityFunction], "canonical")[0].depth, 1);
+
+  // 2. Deep exploration ("all"): reaches full depth 7 (with navigation folders unpacked)!
+  const s6All = buildSunburst([socialSecurityFunction], 8, false, "all");
+  assert.equal(perFunctionDepth([socialSecurityFunction], "all")[0].depth, 7);
+
+  // 3. Verify that under NDIS, orthogonal dimensions get topological layout and are NEVER
+  // scaled to sum to $41.9B AUD:
+  const ndisWedge = s6All.data[0].children[0].children[0];
+  assert.equal(ndisWedge.name, "National Disability Insurance Scheme");
+  assert.equal(ndisWedge.reportedValue, 41_900_000_000);
+  assert.equal(ndisWedge.children.length, 3);
+  // All 3 orthogonal folders receive equal layout weight (1)
+  assert.equal(ndisWedge.children[0].value, 1);
+  assert.equal(ndisWedge.children[1].value, 1);
+  assert.equal(ndisWedge.children[2].value, 1);
+
+  // 4. Verify participant counts retain exact reported values and units, with reportedParentValue = null:
+  const participantsRootWedge = ndisWedge.children.find(c => c.name === "NDIA Participant Statistics");
+  assert.ok(participantsRootWedge, "NDIA Participant Statistics wedge found");
+  assert.equal(participantsRootWedge.reportedValue, 660_000);
+  assert.equal(participantsRootWedge.reportedUnit, "participants");
+  assert.equal(participantsRootWedge.reportedParentValue, null);
+  assert.equal(participantsRootWedge.isRelated, true);
+
+  // 5. Verify average plan budget retains AUD_per_participant:
+  const avgBudgetRootWedge = ndisWedge.children.find(c => c.name === "NDIA Average Committed Plan Budget");
+  assert.ok(avgBudgetRootWedge, "NDIA Average Committed Plan Budget wedge found");
+  assert.equal(avgBudgetRootWedge.reportedValue, 68_000);
+  assert.equal(avgBudgetRootWedge.reportedUnit, "AUD_per_participant");
+  assert.equal(avgBudgetRootWedge.reportedParentValue, null);
+
+  // 6. Verify payments retain AUD payments:
+  const paymentsRootWedge = ndisWedge.children.find(c => c.name === "NDIA Payments");
+  assert.ok(paymentsRootWedge, "NDIA Payments wedge found");
+  assert.equal(paymentsRootWedge.reportedValue, 42_500_000_000);
+  assert.equal(paymentsRootWedge.reportedUnit, "AUD");
+
+  // 7. Verify focused branch navigation:
+  const s6ParticipantsOnly = buildSunburst([socialSecurityFunction], 8, false, "ndis_participants");
+  assert.ok(s6ParticipantsOnly.data[0].children?.length > 0, "s6ParticipantsOnly has children");
+  assert.equal(perFunctionDepth([socialSecurityFunction], "ndis_participants")[0].depth, 7);
+
+  const s6PaymentsOnly = buildSunburst([socialSecurityFunction], 8, false, "ndis_payments");
+  assert.ok(s6PaymentsOnly.data[0].children?.length > 0, "s6PaymentsOnly has children");
+  assert.equal(perFunctionDepth([socialSecurityFunction], "ndis_payments")[0].depth, 6);
+
+  // 8. Tooltip verifies prominent boundary formatting
+  const tooltipText = reportedTooltip("Hunter New England", participantsRootWedge, 660_000, "participants");
+  assert.ok(tooltipText.includes("── Related:"));
+  assert.ok(tooltipText.includes("Not additive to parent") || tooltipText.includes("not a percent of parent"));
+
   console.log("chart semantic unit tests passed");
 } finally {
   rmSync(buildDir, { recursive: true, force: true });

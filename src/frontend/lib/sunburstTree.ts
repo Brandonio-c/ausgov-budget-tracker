@@ -321,20 +321,117 @@ function positiveChildren(nodes: TreeNode[] | null | undefined): TreeNode[] {
   return (nodes ?? []).filter((n) => n.value > 0);
 }
 
-/** Scale a sunburst subtree so values sum to `target` (keeps ECharts arcs aligned). */
-function scaleToSum(nodes: SunburstDatum[], target: number): SunburstDatum[] {
+/** Check whether `children` form a legitimate, validated additive partition of `parent`. */
+export function isAdditivePartition(
+  parent: TreeNode | null | undefined,
+  children: TreeNode[],
+): boolean {
+  if (!parent || children.length === 0) return false;
+  const pRel = parent.relationship;
+  const pBrk = parent.breakdown;
+  const pRelated = pRel?.branch_kind === "related" || pBrk?.kind === "related_breakdown";
+  if (pRelated) return false;
+
+  const parentUnit = pRel?.unit ?? parent.unit ?? "AUD";
+  const parentCompat = pRel?.compatibility_group ?? pBrk?.compatibility_group ?? "budget_expense";
+  const parentYear = pRel?.fact_financial_year ?? pBrk?.fact_financial_year ?? null;
+
+  for (const child of children) {
+    const cRel = child.relationship;
+    const cBrk = child.breakdown;
+    if (cRel?.branch_kind === "related" || cBrk?.kind === "related_breakdown") {
+      return false;
+    }
+    const cUnit = cRel?.unit ?? child.unit ?? "AUD";
+    const cCompat = cRel?.compatibility_group ?? cBrk?.compatibility_group ?? "budget_expense";
+    const cYear = cRel?.fact_financial_year ?? cBrk?.fact_financial_year ?? null;
+    if (cUnit !== parentUnit || cCompat !== parentCompat) {
+      return false;
+    }
+    if (parentYear && cYear && parentYear !== cYear) {
+      return false;
+    }
+  }
+
+  const childSum = children.reduce((sum, c) => sum + c.value, 0);
+  if (parent.value > 0 && childSum > parent.value * 1.25) {
+    return false;
+  }
+  return true;
+}
+
+/** Scale a sunburst subtree so values sum to `target` (keeps ECharts arcs aligned for additive partitions). */
+export function scaleToSum(nodes: SunburstDatum[], target: number): SunburstDatum[] {
   const sum = nodes.reduce((s, n) => s + n.value, 0);
   if (!(sum > 0) || !(target > 0)) return nodes;
   if (Math.abs(sum - target) < 0.5) return nodes;
   const scale = target / sum;
   return nodes.map((n) => {
     const value = n.value * scale;
+    const canRecurse =
+      Boolean(n.children?.length) &&
+      !n.isRelated &&
+      (n.children ?? []).every(
+        (c) => !c.isRelated && c.relationship?.branch_kind !== "related",
+      );
     return {
       ...n,
       value,
-      children: n.children?.length ? scaleToSum(n.children, value) : n.children,
+      children: canRecurse && n.children ? scaleToSum(n.children, value) : n.children,
     };
   });
+}
+
+/**
+ * Layout a child list for concentric sunburst rendering without falsely scaling
+ * non-additive or related children into parent expenditure values.
+ */
+export function layoutChildren(
+  parent: TreeNode,
+  children: SunburstDatum[],
+  isPureAdditive: boolean,
+): SunburstDatum[] {
+  if (!children || children.length === 0) return children;
+
+  if (isPureAdditive) {
+    // Pure additive partition: apply scaleToSum to align concentric ring arcs
+    return scaleToSum(children, parent.value);
+  }
+
+  // Related or non-additive children: NEVER scale to sum of parent!
+  // Determine if children represent orthogonal dimensions / navigation folders,
+  // or a homogenous metric within a single domain.
+  const units = new Set(children.map((c) => c.reportedUnit ?? c.relationship?.unit ?? "AUD"));
+  const compatGroups = new Set(
+    children.map((c) => c.relationship?.compatibility_group ?? "unknown"),
+  );
+  const isOrthogonalFolders =
+    units.size > 1 ||
+    compatGroups.size > 1 ||
+    children.some(
+      (c) =>
+        c.relationship?.presentation_role === "navigation" ||
+        c.name.startsWith("NDIS ") ||
+        c.name.startsWith("Related ") ||
+        c.name.startsWith("Contracts ") ||
+        c.name.startsWith("Statement 6 "),
+    );
+
+  if (isOrthogonalFolders) {
+    // Give each orthogonal folder an equal visual wedge (topological allocation)
+    return children.map((c) => ({
+      ...c,
+      value: 1,
+    }));
+  }
+
+  // Homogenous metric family within a single domain (e.g. 8 demographic regions in NSW):
+  // Preserve their authentic relative values so visual shares within that domain are faithful,
+  // without scaling into parent AUD!
+  return children.map((c) => ({
+    ...c,
+    value: c.reportedValue > 0 ? c.reportedValue : 1,
+  }));
 }
 
 function buildLevel(
@@ -346,6 +443,7 @@ function buildLevel(
   dark: boolean,
   labelDepth: number,
   currentDepth: number,
+  parentTreeNode: TreeNode | null,
   reportedParentValue: number | null,
   branchChoice: BranchChoice,
   foldFirstRing: boolean,
@@ -369,7 +467,11 @@ function buildLevel(
       )
     : colorsFor(folded, dark);
 
-  return folded.map((node, i) => {
+  const isPureAdditive = parentTreeNode
+    ? isAdditivePartition(parentTreeNode, folded)
+    : currentDepth === 1 && branchChoice === "canonical";
+
+  const rawChildren: SunburstDatum[] = folded.map((node, i) => {
     const prepared = collapseSameNameChain(node);
     const names = [...pathNames, prepared.name];
     const nodeKey = pathKey(names);
@@ -378,7 +480,7 @@ function buildLevel(
 
     const color = topColors[i];
     const nest = depthRemaining > 1 ? nestableChildren(prepared, branchChoice) : [];
-    const rawChildren =
+    const childDatums =
       nest.length > 0
         ? buildLevel(
             nest,
@@ -389,36 +491,30 @@ function buildLevel(
             dark,
             labelDepth,
             currentDepth + 1,
+            prepared,
             prepared.value,
             branchChoice,
             foldFirstRing,
           )
         : undefined;
 
-    // Published amount is authoritative — never replace it with sum(children),
-    // which inflates Combined rings when related packs are attached.
-    const value = prepared.value;
-    const children =
-      rawChildren && rawChildren.length > 0
-        ? scaleToSum(rawChildren, value)
-        : undefined;
+    const isNodeRelated =
+      prepared.relationship?.branch_kind === "related" ||
+      prepared.breakdown?.kind === "related_breakdown" ||
+      !isPureAdditive;
 
     return {
       name: prepared.name,
-      value,
+      value: prepared.value,
       reportedValue: prepared.value,
       reportedUnit: prepared.relationship?.unit ?? prepared.unit ?? null,
-      reportedParentValue:
-        prepared.relationship?.branch_kind === "related" ||
-        prepared.breakdown?.kind === "related_breakdown"
-          ? null
-          : currentDepth === 1
-            ? additiveSiblingTotal(folded, prepared)
-            : reportedParentValue,
+      reportedParentValue: isNodeRelated
+        ? null
+        : currentDepth === 1
+          ? additiveSiblingTotal(folded, prepared)
+          : reportedParentValue,
       relationship: prepared.relationship ?? null,
-      isRelated:
-        prepared.relationship?.branch_kind === "related" ||
-        prepared.breakdown?.kind === "related_breakdown",
+      isRelated: isNodeRelated,
       nodeKey,
       itemStyle: {
         color,
@@ -432,9 +528,15 @@ function buildLevel(
         rotate: "radial" as const,
         minAngle: 8,
       },
-      children: children && children.length > 0 ? children : undefined,
+      children: childDatums && childDatums.length > 0 ? childDatums : undefined,
     };
   });
+
+  if (parentTreeNode) {
+    return layoutChildren(parentTreeNode, rawChildren, isPureAdditive);
+  }
+
+  return rawChildren;
 }
 
 /**
@@ -471,12 +573,72 @@ export function buildSunburst(
     dark,
     depth,
     1,
+    null,
     rootReportedTotal,
     branchChoice,
     foldFirstRing,
   );
   const total = data.reduce((s, n) => s + n.value, 0);
   return { data, lookup, total };
+}
+
+/** Mode A: Pure additive quantitative sunburst. */
+export function buildQuantitativeSunburst(
+  children: TreeNode[],
+  ringDepth: number,
+  dark: boolean,
+  foldFirstRing = true,
+): SunburstBuild {
+  return buildSunburst(children, ringDepth, dark, "canonical", foldFirstRing);
+}
+
+/** Mode B: Deep semantic explorer. */
+export function buildSemanticExplorer(
+  children: TreeNode[],
+  ringDepth: number,
+  dark: boolean,
+  branchChoice: BranchChoice = "all",
+  foldFirstRing = true,
+): SunburstBuild {
+  return buildSunburst(children, ringDepth, dark, branchChoice, foldFirstRing);
+}
+
+export interface FunctionSemanticSummary {
+  name: string;
+  additiveDepth: number;
+  semanticDepth: number;
+  availableDimensions: string[];
+}
+
+export function functionSemanticSummary(
+  nodes: TreeNode[] | null | undefined,
+): FunctionSemanticSummary[] {
+  const topNodes = ringRootChildren(nodes, "all");
+  return topNodes.map((node) => {
+    const additiveKids = additiveChildren(node.children);
+    const additiveDepth = additiveKids.length ? 1 + maxVisibleDepth(additiveKids, "canonical") : 1;
+    const semanticKids = nestableChildren(node, "all");
+    const semanticDepth = semanticKids.length ? 1 + maxVisibleDepth(semanticKids, "all") : 1;
+
+    const families = new Set<string>();
+    const walk = (n: TreeNode) => {
+      const rel = n.relationship;
+      if (rel?.branch_kind === "related" && rel.branch_family) {
+        families.add(rel.branch_family);
+      }
+      for (const c of n.children ?? []) {
+        walk(c);
+      }
+    };
+    walk(node);
+
+    return {
+      name: node.name,
+      additiveDepth,
+      semanticDepth,
+      availableDimensions: Array.from(families).sort(),
+    };
+  });
 }
 
 export function sunburstLevelStyles(dark: boolean, depth: number) {

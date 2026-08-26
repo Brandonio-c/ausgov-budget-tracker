@@ -47,10 +47,21 @@ export function reportedTooltip(
     !related && parentValue != null && parentValue > 0
       ? ` (${((reportedValue / parentValue) * 100).toFixed(1)}% of parent)`
       : "";
-  const relationshipNote = related
-    ? "<br/><span style='opacity:.75'>Related breakdown — not a percent of parent</span>"
-    : "";
   const relationship = datum.relationship;
+  let boundaryMarker = "";
+  if (related && relationship) {
+    const rawFamily =
+      relationship.branch_family ?? relationship.source_family ?? "related dataset";
+    const familyName = rawFamily
+      .replace(/^federal_/, "")
+      .replace(/^ndis_/, "NDIS ")
+      .replaceAll("_", " ");
+    boundaryMarker = `<br/><span style='opacity:.9;font-weight:600;'>── Related: ${familyName} · ${unit ?? "AUD"} ──</span>` +
+      `<br/><span style='opacity:.75'>Related breakdown — not a percent of parent · Independent dataset</span>`;
+  } else if (related) {
+    boundaryMarker = `<br/><span style='opacity:.9;font-weight:600;'>── Related dataset · ${unit ?? "AUD"} ──</span>` +
+      `<br/><span style='opacity:.75'>Related breakdown — not a percent of parent · Independent dataset</span>`;
+  }
   const semanticBadges = relationship
     ? `<br/><span style='opacity:.75'>${
         relationship.branch_kind === "additive" ? "Additive" : "Related"
@@ -61,9 +72,9 @@ export function reportedTooltip(
       `${relationship.estimate_status ? ` · ${relationship.estimate_status.replaceAll("_", " ")}` : ""}</span>`
     : "";
   const hint = datum.children?.length
-    ? "<br/><span style='opacity:.75'>Click to expand</span>"
+    ? "<br/><span style='opacity:.75'>Click to drill down</span>"
     : "";
-  return `${name}<br/>${formatMeasureValue(reportedValue, unit)}${percentage}${relationshipNote}${semanticBadges}${hint}`;
+  return `${name}<br/>${formatMeasureValue(reportedValue, unit)}${percentage}${boundaryMarker}${semanticBadges}${hint}`;
 }
 
 export function commonUnit(nodes: TreeNode[], fallback: string | null): string | null {
