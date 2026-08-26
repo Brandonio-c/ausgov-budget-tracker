@@ -312,3 +312,134 @@ program_label_overrides:
     confidence: medium
     evidence: exact_label_with_portfolio_context
     status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Higher Education"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "University"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Commonwealth Grant Scheme"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Research Training"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Research Support Program"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Research Capacity"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Higher education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Non-Government Schools"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    statement6_component: "Education / Non-government schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Government Schools"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    statement6_component: "Education / Government schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Australian Education Act"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "School"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Early Learning"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Teacher"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Literacy"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Schools"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Tertiary Access"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Student assistance"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Youth Support"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Student assistance"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+
+  - pbs_portfolio: "Education"
+    label_contains: "Workforce Mobility"
+    statement6_function: "Education"
+    statement6_subfunction: "Education / Vocational and other education"
+    confidence: high
+    evidence: exact_label_with_portfolio_context
+    status: mapped
+

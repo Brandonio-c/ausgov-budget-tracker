@@ -89,7 +89,7 @@ test.describe("PBS/related cross-year fallback disclosure (real browser <-> API)
     page,
   }) => {
     await page.goto(
-      `${BASE}?mode=actuals&level=federal&year=2024-25&fact=597724`,
+      `${BASE}?mode=actuals&level=federal&year=2024-25&fact=600592`,
     );
     await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
 

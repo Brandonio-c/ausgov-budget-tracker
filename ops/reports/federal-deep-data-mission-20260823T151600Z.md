@@ -1036,8 +1036,44 @@ Defence expenditure is the third largest Federal function (~$53B+). Prior loops 
 - **Fixture verification**: Golden fixture regenerated (`dashboard-depth-audit-20260826T061354Z.{json,md}`). Reconfirmed idempotent across multiple runs.
 - **Full test gates**: Backend suite 326/326 passed (`pytest`). Frontend `npm run test:unit`, `npx tsc --noEmit`, `npm run lint:ci` (23 errors, 13 warnings matching baseline), `npm run build`, and all 25 Playwright E2E tests in `run_e2e.py` passed with 0 errors.
 
+## Loop 13 — Education (Phase 3): Statement 6 Subfunction Routing and Bridge Classification Precision
+
+Education is the fourth largest Federal function (~$65B in FY2025-26 Budget, ~8% of total Commonwealth spending).
+
+### Observe & Diagnose
+
+1. **Subfunction mismatch in legacy bridge**: `scripts/ingest/extractors/pbs_programs_s6_bridge.py` originally emitted subfunction paths `Education / School education` (which did not match the official Statement 6 node name `Education / Schools`) and `Education / Vocational and industry training` (which did not match `Education / Vocational and other education`). Consequently, `Education / Schools` had 0 children attached in the bridge.
+2. **Artificial dumping into General administration**: Because unmatched Education programs defaulted to `General administration`, 27 major policy programs (including Needs-based school funding, NCRIS research infrastructure, Research Training Program, Launch Australia's Economic Accelerator, Quality Outcomes, Teacher Workforce) were dumped under `Education / General administration` instead of their authentic subfunctions.
+3. **Missing crosswalk overrides**: `config/breakdowns/crosswalks/pbs_programs_all_under_s6.yaml` lacked `program_label_overrides` for Education, attaching all Education PBS programs only to the root `Education` function node.
+
+### Implementation
+
+1. **Bridge Extractor Refinement (`scripts/ingest/extractors/pbs_programs_s6_bridge.py`)**:
+   - Corrected Education subfunction names to match Statement 6 exactly: `Higher education`, `Schools`, `Vocational and other education`, `Student assistance`.
+   - Integrated `pbs_label_classifier.py` (`classify_label`) to filter out raw table ledger noise and financial statement lines (`financial_statement_line`, `table_header`, `subtotal`, `total`).
+   - Mapped programs precisely by statutory program keywords (e.g. Higher Education Support Act, Australian Education Act, NCRIS, Research Support Program, Choice and Affordability Fund, Teacher Workforce, Quality Outcomes, Tertiary Access Payment).
+2. **Crosswalk Overrides (`config/breakdowns/crosswalks/pbs_programs_all_under_s6.yaml`)**:
+   - Added 17 high-confidence `exact_label_with_portfolio_context` overrides routing specific PBS programs to `Higher education`, `Schools`, `Government schools`, `Non-government schools`, `Student assistance`, and `Vocational and other education`.
+3. **Database Reload & Verification**:
+   - Ingested `federal_pbs_programs_s6_bridge` and rebuilt crosswalk `pbs_programs_all_under_s6` on disposable copy first, then applied live.
+   - Verified live reachability:
+     - `Education / Higher education`: 9 authentic children (Research Training Program, NCRIS, Study Hubs, etc.)
+     - `Education / Schools`: 23 authentic children (Choice and Affordability Fund, Quality Outcomes, Teacher Workforce, Disability Support, etc.)
+     - `Education / Student assistance`: 3 children (Tertiary Access Payment, Youth Support, Related PBS)
+     - `Education / Vocational and other education`: 2 children (Increase Workforce Mobility, Related PBS)
+     - `Education / General administration`: 0 dumped children (clean terminal leaf).
+
+### Verification & Test Suite Hardening
+
+- **New tests**: Added `tests/api/test_education_depth.py` (5/5 passing).
+- **Backend test suite**: 331/331 passing (`pytest`).
+- **Fixture verification**: Golden fixture updated (`dashboard-depth-audit-20260826T065813Z.{json,md}`) with 0 hard failures, 0 duplicate semantic edges, 0 cycles.
+- **Frontend test suite**: Unit tests passing, `npx tsc --noEmit` 0 errors, `npm run lint:ci` 23 errors / 13 warnings (exact baseline match), `npm run build` static export clean.
+- **Playwright E2E**: 25/25 passing in real browser against local backend.
+- **Opportunity Matrix**: Regenerated at `ops/reports/federal-depth-opportunity-matrix-20260826T070800Z.{csv,json}`.
+
 ## Next
 
-1. Proceed to **Phase 3 (Education)** per the master directive's priority sequence.
-2. Follow the audit-before-acquisition discipline: inventory existing Education data in `data/facts.db`, PBS, Statement 6, portfolio budget programs, and config mappings before acquiring new sources.
-3. Model additive program/outcome hierarchy first; attach grants/contracts as `related_breakdown` unless proven to be a true additive partition.
+1. Proceed to **Phase 4: Federal Dead-End Sweep** across all remaining Federal functions (Transport and Communication, Housing and Community Amenities, Public Order and Safety, Agriculture/Fuel/Energy, Mining/Manufacturing/Construction, General Public Services).
+2. For each remaining function: run audit-before-acquisition, attach available PBS/grants/procurement depth where high-confidence evidence exists, or document as genuine terminal leaf.
+3. Perform final Exhaustion Gate audit and summary report.

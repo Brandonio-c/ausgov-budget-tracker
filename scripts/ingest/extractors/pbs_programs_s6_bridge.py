@@ -12,6 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 IN_CSV = REPO_ROOT / "data/staging/breakdowns/pbs_programs_all.csv"
 OUT_CSV = REPO_ROOT / "data/staging/breakdowns/pbs_programs_s6_bridge.csv"
 
+sys.path.insert(0, str(REPO_ROOT / "scripts/ingest"))
+from pbs_label_classifier import classify_label  # noqa: E402
+
 # Portfolio substring (lower) → Statement 6 budget function
 PORTFOLIO_TO_S6 = [
     ("defence", "Defence"),
@@ -35,9 +38,10 @@ PORTFOLIO_TO_S6 = [
 
 # Optional subfunction hints from program labels
 SUBFUNCTION_HINTS = [
-    (re.compile(r"higher education|university", re.I), "Higher education"),
-    (re.compile(r"school|primary|secondary|early learning", re.I), "School education"),
-    (re.compile(r"vocational|vet\b|skills", re.I), "Vocational and industry training"),
+    (re.compile(r"higher education|university|hesa|hes |research training|ncris|research capacity|research infrastructure|indigenous student success|study hub|microcredential|practicum support|grant scheme|tuition protection|overseas student|economic accelerator|national institutes|discovery -|linkage -|research promotion", re.I), "Higher education"),
+    (re.compile(r"school|primary|secondary|early learning|preschool|teacher|boarding|literacy|child care|national schools reform|needs-based|quality outcomes|australian education act|choice and affordability|strong beginnings|assessment reform|snaicc|helping children with autism|first nations languages", re.I), "Schools"),
+    (re.compile(r"vocational|vet\b|skills|apprenticeship|workforce mobility", re.I), "Vocational and other education"),
+    (re.compile(r"student assistance|tertiary access|austudy|abstudy|youth support", re.I), "Student assistance"),
     (re.compile(r"aged care|age pension|seniors", re.I), "Assistance to the aged"),
     (re.compile(r"disabilit|ndis|carer", re.I), "Assistance to people with disabilities"),
     (re.compile(r"job ?seeker|unemploy|working age", re.I), "Assistance to the unemployed and the sick"),
@@ -63,7 +67,9 @@ NOISE = re.compile(
     r"RECONCILIATION OF CASH|Payables|appropriations|"
     r"Appropriation Bill|Supply Bill|s74 external|Special accounts|"
     r"Estimated Budget Forward|Ordinary annual services|"
-    r"Expenses not requiring appropriation|Sub-total transactions",
+    r"Expenses not requiring appropriation|Sub-total transactions|"
+    r"Totals by appropriation type|Total parent entity interest|"
+    r"Total program expenses|Total Schools Support",
     re.I,
 )
 
@@ -130,7 +136,12 @@ def _subfunction(function: str, program_label: str) -> str:
         if pattern.search(program_label or ""):
             if function == "Defence" and sub == "Defence":
                 return "Defence programs"
-            if function == "Education" and "education" in sub.lower():
+            if function == "Education" and sub in (
+                "Higher education",
+                "Schools",
+                "Vocational and other education",
+                "Student assistance",
+            ):
                 return sub
             if function == "Health" and "medical" in sub.lower():
                 return sub
@@ -158,7 +169,7 @@ def _subfunction(function: str, program_label: str) -> str:
         return "Arts and cultural heritage"
     defaults = {
         "Defence": "Defence programs",
-        "Education": "General administration",
+        "Education": "Schools",
         "Health": "Health services",
         "Social security and welfare": "Other welfare programs",
         "Transport and communication": "Other transport and communication",
@@ -212,13 +223,8 @@ def remap_rows(rows: list[dict]) -> list[dict]:
             continue
         if _is_noise(program_label):
             continue
-        port_l = portfolio.lower()
-        original = any(
-            k in port_l
-            for k in ("defence", "education", "home affairs", "infrastructure", "industry", "science and resources")
-        )
-        newly = not original
-        if newly and not PREFER_PROGRAM.search(program_label):
+        cl = classify_label(program_label)
+        if not cl.publishable and not PREFER_PROGRAM.search(program_label):
             continue
         try:
             amt = abs(float(r.get("amount") or 0))
