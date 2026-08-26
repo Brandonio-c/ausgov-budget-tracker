@@ -474,6 +474,38 @@ def build_same_group_subtree(
         )
         if nested:
             node["children"] = {c["name"]: c["node"] for c in nested}
+        # Also attach any declared related_breakdown edge sets on this node
+        if depth + 1 < max_depth:
+            rel_edges = child_edges(
+                conn, edge["child_node_id"], "related_breakdown", financial_year
+            )
+            if rel_edges:
+                rel_policies = {e["policy"].id: e["policy"] for e in rel_edges}
+                for rel_policy in sorted(
+                    rel_policies.values(),
+                    key=lambda item: (item.sort_order, item.id),
+                ):
+                    rel_list, rel_bd = build_related_subtree(
+                        conn,
+                        edge["child_node_id"],
+                        financial_year,
+                        parent_name=edge["child_name"],
+                        depth=depth + 1,
+                        max_depth=max_depth,
+                        edge_set_ids=(rel_policy.id,),
+                    )
+                    if rel_list and rel_bd:
+                        folder_label = (
+                            rel_policy.folder_label
+                            or f"Related {rel_policy.branch_family or 'detail'}"
+                        )
+                        if folder_label not in node["children"]:
+                            node["children"][folder_label] = _related_folder(
+                                related_list=rel_list,
+                                breakdown=rel_bd,
+                                parent_amount=float(fact["amount_aud"] or 0),
+                                parent_fact_id=fact["fact_id"],
+                            )
         out.append({"name": label, "node": node})
     return out, None
 

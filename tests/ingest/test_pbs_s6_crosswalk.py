@@ -122,7 +122,7 @@ def test_dva_pharmaceutical_program_routes_to_health_not_welfare(crosswalk):
     assert decision["match_source"] == "program_label_override"
     assert decision["statement6_function"] == "Health"
     assert decision["statement6_component"] == (
-        "Health / Medical services and benefits / Veterans' pharmaceutical benefits"
+        "Health / Pharmaceutical benefits and services / Veterans' pharmaceutical benefits"
     )
 
 

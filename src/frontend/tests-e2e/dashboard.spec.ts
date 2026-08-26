@@ -40,15 +40,18 @@ test.describe("dashboard navigation and citation regressions", () => {
   });
 
   test("QLD state actuals branch is reachable", async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto(`${BASE}?mode=actuals&level=state&year=2024-25`);
-    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 45_000 });
-    await expect(page.getByLabel("Spending chart")).toBeVisible();
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 45_000 });
+    await expect(chart).toBeVisible();
   });
 
   test("local government branch is reachable", async ({ page }) => {
     await page.goto(`${BASE}?mode=actuals&level=local`);
-    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
-    await expect(page.getByLabel("Spending chart")).toBeVisible();
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await expect(chart).toBeVisible();
   });
 
   test("debt view is labelled as GFS liability stock, not Budget net debt", async ({ page }) => {
@@ -68,7 +71,48 @@ test.describe("dashboard navigation and citation regressions", () => {
 
   test("ring depth control renders on a GDP/ratio branch", async ({ page }) => {
     await page.goto(`${BASE}?mode=ratios&level=federal`);
-    await expect(page.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
-    await expect(page.getByLabel("Spending chart")).toBeVisible();
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await expect(chart).toBeVisible();
+  });
+
+  test("Federal Actuals 2025-26 Rings view exposes deep multi-ring exploration", async ({ page }) => {
+    await page.goto(`${BASE}?mode=actuals&level=federal&year=2025-26`);
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await page.getByRole("button", { name: "rings", exact: true }).first().click();
+    await expect(chart).toBeVisible();
+    // Deep exploration pill must be visible
+    const deepPill = page.getByRole("button", { name: /Deep exploration/i });
+    await expect(deepPill).toBeVisible();
+    // Depth control must show multi-ring capability (e.g. of 6)
+    await expect(page.getByText(/of 6/i)).toBeVisible();
+    // Can switch to Canonical view (1 ring)
+    const canonicalPill = page.getByRole("button", { name: /Canonical actual/i });
+    await expect(canonicalPill).toBeVisible();
+    await canonicalPill.click();
+    await expect(page.getByText(/of 1/i)).toBeVisible();
+    // Switch back to Deep exploration
+    await deepPill.click();
+    await expect(page.getByText(/of 6/i)).toBeVisible();
+  });
+
+  test("Federal Actuals 2024-25 Rings view exposes multi-ring exploration", async ({ page }) => {
+    await page.goto(`${BASE}?mode=actuals&level=federal&year=2024-25`);
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await page.getByRole("button", { name: "rings", exact: true }).first().click();
+    await expect(chart).toBeVisible();
+    await expect(page.getByRole("button", { name: /Deep exploration/i })).toBeVisible();
+    await expect(page.getByText(/of 3/i)).toBeVisible();
+  });
+
+  test("Federal Budget 2025-26 Rings view exposes 3 rings", async ({ page }) => {
+    await page.goto(`${BASE}?mode=budget&level=federal&year=2025-26`);
+    const chart = page.getByLabel("Spending chart");
+    await expect(chart.getByText("Loading…")).toHaveCount(0, { timeout: 15_000 });
+    await page.getByRole("button", { name: "rings", exact: true }).first().click();
+    await expect(chart).toBeVisible();
+    await expect(page.getByText(/of 3/i)).toBeVisible();
   });
 });

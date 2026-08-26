@@ -13,6 +13,8 @@ export interface BreakdownMeta {
   fallback_reason?: string | null;
   source_budget_edition?: string | null;
   estimate_status?: string | null;
+  branch_family?: string | null;
+  folder_label?: string | null;
 }
 
 export interface RelationshipMeta {

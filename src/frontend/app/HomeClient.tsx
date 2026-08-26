@@ -24,13 +24,18 @@ import {
 } from "@/lib/sunburstTree";
 
 const BRANCH_LABELS: Record<string, string> = {
+  all: "Deep exploration (all depth)",
   canonical: "Canonical actual",
   fbo: "Audited FBO",
   statement_6: "Budget Statement 6",
-  contracts: "Contracts",
-  grants: "Grants",
-  pbs: "PBS programs",
-  recipients: "Recipients",
+  contracts: "AusTender Contracts",
+  grants: "GrantConnect Awards",
+  pbs: "PBS Programs",
+  ndis_participants: "NDIS Participants",
+  ndis_average_budget: "NDIS Average Budget",
+  ndis_payments: "NDIS Payments",
+  recipients: "DSS Recipients",
+  budget: "Budget Detail",
 };
 
 // A basis change is not just an accounting-convention footnote — GFS-basis
@@ -57,8 +62,8 @@ export default function HomeClient() {
   const [year, setYear] = useState<string>("");
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [chartType, setChartType] = useState<ChartType>("pie");
-  const [ringDepth, setRingDepth] = useState(2);
-  const [branchChoice, setBranchChoice] = useState("canonical");
+  const [ringDepth, setRingDepth] = useState(6);
+  const [branchChoice, setBranchChoice] = useState("all");
   const [drillPath, setDrillPath] = useState<TreeNode[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
@@ -192,33 +197,32 @@ export default function HomeClient() {
       }
     };
     walk(rawChildren);
-    return ["canonical", ...Array.from(found).sort()];
+    const families = Array.from(found).sort();
+    if (families.length > 0) {
+      return ["all", "canonical", ...families];
+    }
+    return ["canonical"];
   }, [rawChildren]);
   // How many of the current top-level nodes actually have data under each
-  // related branch — disclosed on the button itself, before the user picks
-  // one, so "Budget Statement 6" never reads as if it applies uniformly to
-  // every function when in reality most may have nothing under it (Loop 3
-  // showed 10 of 17 federal functions are leaves even under Statement 6).
+  // branch — disclosed on the button itself, before the user picks one.
   const branchCoverage = useMemo(() => {
-    const coverage: Record<string, { covered: number; total: number }> = {};
-    for (const family of branchChoices) {
-      if (family === "canonical") continue;
-      // Derived from perFunctionDepth (Loop 3) rather than reimplementing
-      // node preparation here — an earlier version used a plain
-      // additiveChildren() call that skipped collapseSameNameChain(), which
-      // silently produced a different (wrong) count than the depth
-      // disclosure below computes from the same underlying data.
-      const depths = perFunctionDepth(rawChildren, family);
-      coverage[family] = {
+    const coverage: Record<string, { covered: number; total: number; maxDepth: number }> = {};
+    for (const choice of branchChoices) {
+      const depths = perFunctionDepth(rawChildren, choice);
+      const maxD = Math.max(1, ...depths.map((f) => f.depth));
+      coverage[choice] = {
         covered: depths.filter((f) => f.depth > 1).length,
         total: depths.length,
+        maxDepth: maxD,
       };
     }
     return coverage;
   }, [rawChildren, branchChoices]);
   const activeBranchChoice = branchChoices.includes(branchChoice)
     ? branchChoice
-    : "canonical";
+    : branchChoices.includes("all")
+      ? "all"
+      : "canonical";
   const maxRingDepth = useMemo(
     () => Math.max(1, maxVisibleDepth(rawChildren, activeBranchChoice)),
     [rawChildren, activeBranchChoice],
@@ -272,8 +276,12 @@ export default function HomeClient() {
   }, [mode, selectedAvailability, year]);
 
   useEffect(() => {
-    if (ringDepth > maxRingDepth) setRingDepth(maxRingDepth);
-  }, [maxRingDepth, ringDepth]);
+    if (ringDepth > maxRingDepth) {
+      setRingDepth(maxRingDepth);
+    } else if (maxRingDepth > 1 && ringDepth === 1 && activeBranchChoice !== "canonical") {
+      setRingDepth(Math.min(maxRingDepth, 6));
+    }
+  }, [maxRingDepth, ringDepth, activeBranchChoice]);
 
   // After tree loads, drill/highlight from search deep-link.
   useEffect(() => {
@@ -557,7 +565,7 @@ export default function HomeClient() {
                 onClick={() => handleBranchChoiceChange(choice)}
                 title={
                   branchCoverage[choice]
-                    ? `${branchCoverage[choice].covered} of ${branchCoverage[choice].total} functions have data under this branch`
+                    ? `${branchCoverage[choice].covered} of ${branchCoverage[choice].total} functions have data under this branch (up to ${branchCoverage[choice].maxDepth} levels)`
                     : undefined
                 }
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
@@ -568,13 +576,17 @@ export default function HomeClient() {
               >
                 {BRANCH_LABELS[choice] ?? choice.replaceAll("_", " ")}
                 {branchCoverage[choice]
-                  ? ` (${branchCoverage[choice].covered}/${branchCoverage[choice].total})`
+                  ? ` (${branchCoverage[choice].covered}/${branchCoverage[choice].total}${branchCoverage[choice].maxDepth > 1 ? ` · ${branchCoverage[choice].maxDepth} rings` : ""})`
                   : ""}
               </button>
             ))}
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Canonical is the default. Related branches are alternatives and never change the canonical total.
+            {activeBranchChoice === "canonical"
+              ? "Canonical actual displays only strictly additive partitions of the published total."
+              : activeBranchChoice === "all"
+              ? "Deep exploration unfolds Statement 6, PBS programs, AusTender contracts, grants, NDIS, and demographics. Quantitative amounts and sources are disclosed per wedge."
+              : `Focusing on ${BRANCH_LABELS[activeBranchChoice] ?? activeBranchChoice}. Related branches never change canonical totals.`}
           </p>
           {functionDepths.length > 1 && functionDepths.some((f) => f.depth !== functionDepths[0].depth) ? (
             <details className="text-xs text-zinc-500 dark:text-zinc-400">

@@ -22,9 +22,11 @@ from ...abs_gfs_revenue_hierarchy import (
     is_abs_gfs_revenue_source,
 )
 from ...breakdown_graph import (
+    _relationship_from_breakdown,
     attach_related_to_tree,
     build_related_subtree,
     build_same_group_subtree,
+    child_edges,
     primary_node_id,
 )
 from ...compatibility import (
@@ -398,7 +400,7 @@ def _fact_rows(
     if preferred:
         sql += " AND f.accounting_basis = ?"
         params.append(preferred)
-    if valuation_basis and valuation_basis not in ("all", "comparison"):
+    if isinstance(valuation_basis, str) and valuation_basis not in ("all", "comparison"):
         sql += " AND COALESCE(f.valuation_basis, 'unspecified') = ?"
         params.append(valuation_basis)
     if mode == "budget" and level == "federal":
@@ -1175,35 +1177,51 @@ def dashboard_item_children(
         same_list, _ = build_same_group_subtree(
             conn, nid, fy, parent_name=row["node_name"]
         )
-        if same_list:
-            # A node can have BOTH same_group children (Statement 6's own
-            # further additive breakdown - functions/subfunctions almost
-            # always do, via the a61_to_components/pbs_under_component
-            # cascades) AND related_breakdown children (e.g. this
-            # crosswalk's PBS program detail). Surfacing only same_group
-            # here would make every related_breakdown edge on a
-            # non-leaf Statement 6 node permanently unreachable - append a
-            # clearly non-additive folder rather than dropping it.
-            related_list, related_bd = build_related_subtree(
-                conn, nid, fy, parent_name=row["node_name"]
+        # Collect related breakdown groups by policy to prevent collision
+        policies = {
+            edge["policy"].id: edge["policy"]
+            for edge in child_edges(conn, nid, "related_breakdown", fy)
+        }
+        related_folders: list[dict[str, Any]] = []
+        for policy in sorted(
+            policies.values(), key=lambda item: (item.sort_order, item.id)
+        ):
+            rel_list, rel_bd = build_related_subtree(
+                conn,
+                nid,
+                fy,
+                parent_name=row["node_name"],
+                edge_set_ids=(policy.id,),
             )
-            if related_list and related_bd:
-                same_list = list(same_list) + [
+            if rel_list and rel_bd:
+                folder_label = (
+                    policy.folder_label
+                    or f"Related {policy.branch_family or 'detail'}"
+                )
+                related_folders.append(
                     {
-                        "name": "Related PBS program detail",
+                        "name": folder_label,
                         "node": {
-                            "children": {item["name"]: item["node"] for item in related_list},
+                            "children": {
+                                item["name"]: item["node"] for item in rel_list
+                            },
                             "amount": float(row["amount_aud"] or 0),
                             "fact_id": None,
                             "node_id": None,
-                            "source_key": related_bd.get("source_key"),
-                            "compatibility_group": related_bd.get("compatibility_group"),
-                            "breakdown": related_bd,
+                            "source_key": rel_bd.get("source_key"),
+                            "compatibility_group": rel_bd.get("compatibility_group"),
+                            "breakdown": rel_bd,
+                            "relationship": _relationship_from_breakdown(
+                                rel_bd, presentation_role="navigation"
+                            ),
                             "presentation_role": "navigation",
                             "preserve_amount": True,
                         },
                     }
-                ]
+                )
+        if same_list:
+            if related_folders:
+                same_list = list(same_list) + related_folders
             children = [
                 _to_tree_node(
                     item["name"], item["node"], requested_financial_year=fy

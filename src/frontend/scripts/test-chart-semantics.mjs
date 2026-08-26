@@ -315,6 +315,93 @@ try {
     assert.ok(other.relationship, "synthetic Other retains relationship metadata");
   }
 
+  // Deep Exploration: verify that heterogeneous multi-family chains
+  // (ABS -> Statement 6 -> PBS -> AusTender Contracts) render fully
+  // when branchChoice is "all" or specific focus "contracts".
+  const supplierContract = node(
+    "HAULMARK TRAILERS – Vehicle Spares",
+    50,
+    relationship({ branch_kind: "related", branch_family: "contracts" }),
+  );
+  const contractClass = node(
+    "Vehicle bodies and trailers (Class)",
+    50,
+    relationship({ branch_kind: "related", branch_family: "contracts" }),
+    [supplierContract],
+  );
+  const contractFamily = node(
+    "Vehicle bodies and trailers (Family)",
+    50,
+    relationship({ branch_kind: "related", branch_family: "contracts" }),
+    [contractClass],
+  );
+  const contractSegment = node(
+    "Commercial and Military Vehicles (Segment)",
+    50,
+    relationship({ branch_kind: "related", branch_family: "contracts" }),
+    [contractFamily],
+  );
+  const contractsFolder = node(
+    "Contracts (AusTender 2026-Q3 sample)",
+    50,
+    relationship({
+      branch_kind: "related",
+      branch_family: "contracts",
+      presentation_role: "navigation",
+    }),
+    [contractSegment],
+  );
+  const pbsCapability = node(
+    "Capability Sustainment Program",
+    20,
+    relationship({ branch_kind: "related", branch_family: "pbs" }),
+  );
+  const defenceS6Component = node(
+    "Defence (Component)",
+    50,
+    relationship({ branch_kind: "related", branch_family: "statement_6" }),
+    [pbsCapability, contractsFolder],
+  );
+  const defenceS6A61 = node(
+    "Defence (Statement 6)",
+    50,
+    relationship({
+      branch_kind: "related",
+      branch_family: "statement_6",
+      presentation_role: "navigation",
+    }),
+    [defenceS6Component],
+  );
+  const defencePurpose = node(
+    "Defence",
+    50,
+    relationship(),
+    [defenceS6A61],
+  );
+
+  // In canonical mode: defence has 0 additive children -> depth 1
+  const defenceCanonical = buildSunburst([defencePurpose], 6, false, "canonical");
+  assert.equal(defenceCanonical.data[0].children, undefined);
+  assert.equal(perFunctionDepth([defencePurpose], "canonical")[0].depth, 1);
+
+  // In "all" (deep exploration) mode: reaches all 6 levels down to supplier contract!
+  const defenceAll = buildSunburst([defencePurpose], 6, false, "all");
+  assert.ok(defenceAll.data[0].children?.length > 0);
+  assert.equal(perFunctionDepth([defencePurpose], "all")[0].depth, 6);
+
+  // In "contracts" focus mode: filters directly down the contract branch to depth 6!
+  const defenceContracts = buildSunburst([defencePurpose], 6, false, "contracts");
+  assert.ok(defenceContracts.data[0].children?.length > 0);
+  assert.equal(perFunctionDepth([defencePurpose], "contracts")[0].depth, 6);
+
+  // In "pbs" focus mode: filters to the PBS program branch!
+  const defencePBS = buildSunburst([defencePurpose], 6, false, "pbs");
+  assert.ok(defencePBS.data[0].children?.length > 0);
+  assert.equal(
+    defencePBS.data[0].children[0].children[0].name,
+    "Capability Sustainment Program",
+  );
+
   console.log("chart semantic unit tests passed");
 } finally {
   rmSync(buildDir, { recursive: true, force: true });

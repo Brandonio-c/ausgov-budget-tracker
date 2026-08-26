@@ -75,46 +75,93 @@ export function additiveChildren(nodes: TreeNode[] | null | undefined): TreeNode
   });
 }
 
+export function nodeHasFamilyDescendant(
+  node: TreeNode | null | undefined,
+  targetFamily: string,
+): boolean {
+  if (!node) return false;
+  if (targetFamily === "all") return true;
+  const rel = node.relationship;
+  if (rel?.branch_family === targetFamily) return true;
+  const brk = node.breakdown;
+  if (brk?.branch_family === targetFamily) return true;
+  if (
+    targetFamily === "statement_6" &&
+    (node.name?.startsWith("Statement 6") || rel?.source_key?.includes("statement_6"))
+  ) {
+    return true;
+  }
+  if (
+    targetFamily === "fbo" &&
+    (node.name?.startsWith("FBO Appendix A") || rel?.source_key?.includes("fbo"))
+  ) {
+    return true;
+  }
+  for (const child of node.children ?? []) {
+    if (nodeHasFamilyDescendant(child, targetFamily)) return true;
+  }
+  return false;
+}
+
 /**
- * Positive-value related children for `branchFamily`, wherever they live:
- * either nested inside a single declared navigation folder (the common case
- * when a purpose has real additive siblings *and* a Statement 6/FBO pack
- * attached alongside them), or attached directly as bare siblings (the case
- * for a GFS purpose with no native additive breakdown at all, where the
- * backend grafts the first related family straight onto the leaf — see
- * `attach_related_to_tree`'s "leaf exposes the first declared related
- * family directly" branch in breakdown_graph.py). Both shapes must remain
- * reachable once `additiveChildren` stops treating either as canonical.
+ * Positive-value related children for `branchChoice`, wherever they live:
+ * either nested inside declared navigation folders, or attached directly as bare siblings.
+ * When `branchChoice === "all"`, unfolds all authentic related detail across all families.
+ * When `branchChoice` is a specific family (e.g. "contracts", "pbs", "statement_6", "ndis_participants"),
+ * filters/prioritizes paths matching or leading to that family.
  */
 function relatedFolderChildren(
   nodes: TreeNode[] | null | undefined,
-  branchFamily: string,
+  branchChoice: BranchChoice,
 ): TreeNode[] | null {
   const list = nodes ?? [];
-  const folder = list.find(
-    (n) =>
-      ((n.relationship?.branch_kind === "related" &&
-        n.relationship.presentation_role === "navigation" &&
-        n.relationship.branch_family === branchFamily) ||
-        (!n.relationship &&
-          n.breakdown?.kind === "related_breakdown" &&
-          (branchFamily === "statement_6"
-            ? n.name.startsWith("Statement 6")
-            : n.name.startsWith("FBO Appendix A")))) &&
-      (n.children?.length ?? 0) > 0,
-  );
-  if (folder?.children?.length) {
-    const positive = folder.children.filter((c) => c.value > 0);
-    if (positive.length) return positive;
+  if (branchChoice === "canonical") return null;
+
+  const result: TreeNode[] = [];
+
+  for (const n of list) {
+    if (!(n.value > 0)) continue;
+    const rel = n.relationship;
+    const role = rel?.presentation_role;
+    const bf = rel?.branch_family;
+
+    const isFolder =
+      role === "navigation" ||
+      (!rel &&
+        n.breakdown?.kind === "related_breakdown" &&
+        (n.name.startsWith("Statement 6") ||
+          n.name.startsWith("FBO Appendix A") ||
+          n.name.startsWith("Related ")));
+
+    if (isFolder && (n.children?.length ?? 0) > 0) {
+      if (
+        branchChoice === "all" ||
+        bf === branchChoice ||
+        nodeHasFamilyDescendant(n, branchChoice)
+      ) {
+        for (const sub of n.children ?? []) {
+          if (
+            sub.value > 0 &&
+            (branchChoice === "all" ||
+              sub.relationship?.branch_family === branchChoice ||
+              nodeHasFamilyDescendant(sub, branchChoice))
+          ) {
+            result.push(sub);
+          }
+        }
+      }
+    } else {
+      if (
+        branchChoice === "all" ||
+        bf === branchChoice ||
+        nodeHasFamilyDescendant(n, branchChoice)
+      ) {
+        result.push(n);
+      }
+    }
   }
 
-  const bareSiblings = list.filter(
-    (n) =>
-      n.value > 0 &&
-      n.relationship?.branch_kind === "related" &&
-      n.relationship.branch_family === branchFamily,
-  );
-  return bareSiblings.length ? bareSiblings : null;
+  return result.length ? result : null;
 }
 
 /**
