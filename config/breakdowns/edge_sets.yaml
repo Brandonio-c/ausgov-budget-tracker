@@ -16,7 +16,8 @@ edge_sets:
     presentation_role: data
     folder_label: Statement 6 (budget estimates)
     source_key_prefixes:
-      - federal_budget_statement_6
+      - federal_budget_statement_6_a61
+      - federal_budget_statement_6_20
     sort_order: 10
 
   - id: fbo_2024_25_under_abs

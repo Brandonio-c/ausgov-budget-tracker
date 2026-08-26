@@ -115,7 +115,7 @@ def test_historical_fbo_projection_is_exact_related_and_non_additive(
         params={"mode": "actuals", "level": "federal", "year": year},
     ).json()
     projection = body["projection"]
-    assert projection["max_visible_depth"] == 2
+    assert projection["max_visible_depth"] == 3
     assert projection["max_additive_depth"] == 2
     assert projection["contains_related_branches"] is True
     fbo_summary = next(
@@ -126,7 +126,7 @@ def test_historical_fbo_projection_is_exact_related_and_non_additive(
     assert fbo_summary == {
         "branch_family": "fbo",
         "branch_kind": "related",
-        "node_count": 79,
+        "node_count": 81,
         "max_depth": 2,
     }
     assert all(node["relationship"]["is_year_fallback"] is False for node in _walk(body))

@@ -131,14 +131,29 @@ def link_related_crosswalk(
             """
             SELECT n.id FROM nodes n
             JOIN source_documents d ON d.id = n.source_document_id
-            WHERE d.source_key LIKE 'abs_gfs_%'
-              AND (
-                n.name = ?
-                OR lower(n.name) = lower(?)
-                OR lower(n.name) = lower(?)
-              )
+            WHERE (
+                (d.source_key LIKE 'abs_gfs_%' AND (
+                    n.name = ?
+                    OR lower(n.name) = lower(?)
+                    OR lower(n.name) = lower(?)
+                ))
+                OR (d.source_key = 'federal_expense_by_function' AND (
+                    n.name = ?
+                    OR lower(n.name) = lower(?)
+                    OR lower(n.name) = lower(?)
+                    OR n.name = ?
+                    OR lower(n.name) = lower(?)
+                    OR n.name = ?
+                    OR lower(n.name) = lower(?)
+                ))
+            )
             """,
-            (abs_name, abs_name, f"Total {abs_name}"),
+            (
+                abs_name, abs_name, f"Total {abs_name}",
+                abs_name, abs_name, f"Total {abs_name}",
+                budget_fn, budget_fn,
+                budget_fn.split(" / ")[-1], budget_fn.split(" / ")[-1],
+            ),
         ).fetchall()
         # Also match "Total health" style (lowercase purpose word)
         if abs_name:
@@ -147,7 +162,7 @@ def link_related_crosswalk(
                 """
                 SELECT n.id FROM nodes n
                 JOIN source_documents d ON d.id = n.source_document_id
-                WHERE d.source_key LIKE 'abs_gfs_%' AND n.name = ?
+                WHERE (d.source_key LIKE 'abs_gfs_%' OR d.source_key = 'federal_expense_by_function') AND n.name = ?
                 """,
                 (total_lc,),
             ).fetchall()

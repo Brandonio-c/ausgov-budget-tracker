@@ -42,3 +42,30 @@ mappings:
   - abs: Transport
     budget: Transport and communication
     quality: approx
+  - abs: Agriculture, forestry and fishing
+    budget: Agriculture, forestry and fishing
+    quality: exact
+  - abs: Fuel and energy
+    budget: Fuel and energy
+    quality: exact
+  - abs: Mining, manufacturing and construction
+    budget: Mining, manufacturing and construction
+    quality: exact
+  - abs: Public debt transactions
+    budget: Other purposes / Public debt interest
+    quality: approx
+    notes: ABS Public debt transactions maps to Statement 6 Public debt interest.
+  - abs: General purpose inter-government transactions
+    budget: Other purposes / General purpose inter-government transactions
+    quality: exact
+  - abs: Public debt interest
+    budget: Other purposes / Public debt interest
+    quality: exact
+  - abs: Nominal superannuation interest
+    budget: Other purposes / Nominal superannuation interest
+    quality: exact
+  - abs: Natural disaster relief
+    budget: Other purposes / Natural disaster relief
+    quality: exact
+
+

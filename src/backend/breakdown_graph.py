@@ -78,6 +78,10 @@ ABS_PURPOSE_RELATED_TARGETS = frozenset(
         "Economic affairs",
         "Environmental protection",
         "Transport",
+        "Agriculture, forestry and fishing",
+        "Fuel and energy",
+        "Mining, manufacturing and construction",
+        "Public debt transactions",
     }
 )
 
@@ -894,12 +898,19 @@ def attach_related_to_tree(
                 groups.append((policy, related_list, breakdown))
 
         # A related source often repeats the canonical function at its own
-        # root (Defence -> Defence).  That attach node is a navigation bridge,
-        # not another semantic level; descendants retain their source-native
-        # data roles.
+        # root (Defence -> Defence, Social protection -> Social security and welfare).
+        # That attach node is a navigation bridge, not another semantic level;
+        # descendants retain their source-native data roles.
         for _policy, related_list, _breakdown in groups:
             for item in related_list:
-                if item["name"] != parent_name:
+                item_name = item["name"]
+                is_bridge = (
+                    item_name == parent_name
+                    or _budget_to_abs_purpose().get(item_name.lower()) == parent_name
+                    or _budget_to_abs_purpose().get(item_name.lower()) == parent_name.lower()
+                    or item_name.lower() == parent_name.lower()
+                )
+                if not is_bridge:
                     continue
                 item["node"].setdefault("relationship", {})[
                     "presentation_role"
